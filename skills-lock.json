@@ -95,6 +95,21 @@
       "source": "claude-office-skills/skills",
       "sourceType": "github",
       "computedHash": "e2d1e6e888803e24a5ac4bde08a9cac434d9911f0d3c2ba4e9cc7edf11dc5f08"
+    },
+    "browser-use": {
+      "source": "browser-use/browser-use",
+      "sourceType": "github",
+      "computedHash": "67ead9e22037eca2f2cd39d1f9984ece7f1d3f98eaaec894adb35fc72f3e1626"
+    },
+    "lighthouse-ci-integrator": {
+      "source": "nicholasgriffintn/claude-skills",
+      "sourceType": "github",
+      "computedHash": "db683af32e23405a384787e69cdbe1b79d37d80522cb26e20b05a01e1b251e37"
+    },
+    "github": {
+      "source": "nicholasgriffintn/claude-skills",
+      "sourceType": "github",
+      "computedHash": "701835c7dac54d59b22022809f57e1917e87c61de9bc4efaf4bdb65cdb004819"
     }
   }
 }
