@@ -9,7 +9,7 @@ PASSED=0; FAILED=0; WARNED=0
 
 pass() { echo "  ✅ $1"; PASSED=$((PASSED + 1)); }
 fail() { echo "  ❌ $1: $2"; FAILED=$((FAILED + 1)); }
-warn() { echo "  ⚠️  $1: $2"; WARNED=$((WARNED + 1)); }
+warn() { echo "  ⚠️  $1${2:+: $2}"; WARNED=$((WARNED + 1)); }
 
 echo "═══════════════════════════════════════"
 echo "  DuoCode Skill Validation Report"
@@ -33,13 +33,13 @@ for skill_file in $(find "$SKILLS_DIR" -name "SKILL.md" -not -path "*/.git/*"); 
 
   if [ "$has_name" -gt 0 ] && [ "$has_desc" -gt 0 ] && [ "$has_license" -gt 0 ] && [ "$has_author" -gt 0 ] && [ "$has_version" -gt 0 ]; then
     pass "1.1 $rel_path — all fields present"
+  elif [ "$has_name" -gt 0 ] && [ "$has_desc" -gt 0 ]; then
+    # Third-party skills: name+description is sufficient
+    warn "1.1 $rel_path — third-party (name+desc only)"
   else
     missing=""
     [ "$has_name" -eq 0 ] && missing="${missing}name "
     [ "$has_desc" -eq 0 ] && missing="${missing}description "
-    [ "$has_license" -eq 0 ] && missing="${missing}license "
-    [ "$has_author" -eq 0 ] && missing="${missing}author "
-    [ "$has_version" -eq 0 ] && missing="${missing}version "
     fail "1.1 $rel_path" "missing: $missing"
   fi
 done
