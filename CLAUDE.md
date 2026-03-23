@@ -1,102 +1,135 @@
-# DuoCode Pipeline — Project Instructions
+# DuoCode Pipeline
 
-## Project Overview
+Claude Code is the central brain orchestrating the entire pipeline. You (Claude) drive every phase — from lead discovery to site generation to deployment.
 
-DuoCode 自动化管道：发现马来西亚无网站商家 → AI 生成着陆页 → 质量门禁 → 批量部署 → WhatsApp 外展。
+## Pipeline Tools
 
-两层 Skill 架构：
-- **Layer 1** (`layer1-pipeline/`): 工具链 + 流程 + 质量门禁
-- **Layer 2** (`layer2-design/`): 渐进式前端设计系统 (7 行业)
+These are the tools YOU use to execute the pipeline. Know them well.
 
-## Quick Commands
+### Site Generation & Build
+| Tool | Command | Purpose |
+|------|---------|---------|
+| Next.js | `npm run build && npm run export` | Static site generation from templates |
+| TypeScript | `npx tsx packages/*.ts` | Run pipeline scripts |
+| SVGO | `npx svgo output/{place_id}/public/svgs/*.svg` | Optimize generated SVGs |
+| Sharp | via `packages/assets/optimize-images.ts` | Image resize → WebP (320/640/960/1280) |
+| node-vibrant | via `packages/assets/extract-colors.ts` | Extract brand colors from photos |
 
+### Quality Gates
+| Tool | Command | Purpose |
+|------|---------|---------|
+| Lighthouse | `npx lighthouse http://localhost:3456 --output json --output-path lighthouse.json --chrome-flags="--headless"` | Gate 2: Performance ≥ 90, A11y = 100, SEO ≥ 95 |
+| Lighthouse CI | `npx @lhci/cli autorun` | CI-integrated auditing (config: `.lighthouserc.json`) |
+| browser-use | `browser-use open http://localhost:3000` | Gate 3: Open generated site for visual QA |
+| browser-use | `browser-use screenshot screenshots/desktop.png` | Gate 3: Capture desktop screenshot |
+| browser-use | `browser-use screenshot screenshots/mobile.png --viewport 375x812` | Gate 3: Capture mobile screenshot |
+| Playwright MCP | `mcp__playwright__browser_navigate`, `browser_snapshot`, `browser_take_screenshot` | Alternative visual testing via MCP |
+
+### Deployment
+| Tool | Command | Purpose |
+|------|---------|---------|
+| Vercel SDK | via `packages/deploy/deploy.ts` | Programmatic deploy: create project → upload files → production |
+| Vercel CLI | `vercel deploy [path] -y --no-wait` | Fallback CLI deploy |
+| Vercel CLI | `vercel inspect <url>` | Check deployment status |
+
+### n8n Orchestration
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `http://localhost:5678/webhook/prepare-assets` | POST | Trigger asset preparation (photos + colors + optimize) |
+| `http://localhost:5678/webhook/log-work` | POST | Log generation results to WorkLog sheet |
+| `http://localhost:5678/webhook/lead-status` | POST | Update lead status in Sheets |
+| `http://localhost:5678/healthz` | GET | n8n health check |
+
+### Discovery & Data
+| Tool | Command | Purpose |
+|------|---------|---------|
+| Google Maps API | via `packages/discover/search.ts` | Find businesses without websites |
+| Unsplash API | via `packages/assets/stock-photos.ts` | Fallback stock photos |
+| Google Sheets | via n8n OAuth | Lead storage + WorkLog |
+| xh | `xh POST http://localhost:5678/webhook/... key=value` | Quick webhook testing |
+
+### Docker
 ```bash
-# 测试
-npm test                    # API keys + env + discover
-npm run test:all            # 完整测试 (run-all.sh, 7 组)
-npm run test:env            # 环境变量验证工具
-npm run test:deploy         # deploy 类型安全
-npm run build:check         # TypeScript 编译检查
-
-# 评测
-npm run eval:skills         # Skill 验证 (frontmatter/结构/引用/schema)
-npm run eval:templates      # 模板完整性 (组件/行业覆盖/示例)
-npm run eval:quality        # 质量指标 (Lighthouse/a11y/SEO)
-npm run eval:all            # 全部评测 + JSON 报告
-
-# Docker
-cd n8n && docker compose up -d    # 启动 n8n
-curl http://localhost:5678/healthz # 健康检查
-
-# 发现
-npm run discover -- --city "Kuala Lumpur" --category "restaurant" --limit 1
+cd n8n && docker compose up -d     # Start n8n (builds custom image with pre-installed packages)
+docker compose logs -f n8n         # Watch logs
+curl http://localhost:5678/healthz  # Health check
+# Uncomment evolution-api in docker-compose.yml for Phase 5 WhatsApp
 ```
-
-## Available CLI Tools
-
-项目中可使用以下已安装的高效 CLI 工具：
-
-| 工具 | 用途 | 示例 |
-|------|------|------|
-| `rg` (ripgrep) | 内容搜索 | `rg "requireEnv" packages/` |
-| `fd` | 文件查找 | `fd SKILL.md .claude/skills/` |
-| `bat` | 语法高亮查看 (aliased as `cat`) | `cat package.json` |
-| `eza` | 增强 ls (aliased: `ls`, `ll`, `la`, `lt`) | `lt .claude/skills/` |
-| `jq` | JSON 处理 | `cat eval/results/*.json \| jq .summary` |
-| `xh` | HTTP 客户端 | `xh GET http://localhost:5678/healthz` |
-| `tokei` | 代码统计 | `tokei packages/` |
-| `delta` | Git diff 美化 | 自动作为 git pager |
 
 ## Architecture
 
 ```
-src/
-├── .claude/skills/
-│   ├── layer1-pipeline/          # HOW to build
-│   │   ├── generate/             # 核心生成流程
-│   │   ├── prepare-assets/       # 资产预处理
-│   │   ├── quality-gate/         # 三道门禁编排
-│   │   ├── batch-orchestrator/   # 批量并行
-│   │   ├── deploy/               # Vercel 部署
-│   │   ├── discovery/            # Google Maps 发现
-│   │   ├── quality/              # 11 个质量检查 skills
-│   │   ├── toolchain/            # n8n, tailwind, favicon, sheets, svg
-│   │   ├── standards/            # code-conventions, data-schema
-│   │   ├── iterate-quality/      # Karpathy-style 迭代改进
-│   │   └── outreach/             # WhatsApp 外展
-│   ├── layer2-design/            # WHAT to build
-│   │   ├── duocode-design/       # 核心设计系统 (渐进式披露)
-│   │   │   ├── references/       # 行业设计指南 (7 个)
-│   │   │   ├── schemas/          # 行业数据 schema (7+1 base)
-│   │   │   ├── templates/        # 组件模板 (_shared + 行业)
-│   │   │   └── examples/         # 示例输出
-│   │   ├── brand-designer/       # 可选: 品牌设计
-│   │   └── landing-page-generator/ # 可选: 高转化着陆页
-│   └── skill-creator/            # Skill 评测框架
-├── packages/
-│   ├── assets/                   # 照片下载 + 色彩提取 + 图片优化
-│   ├── deploy/                   # Vercel SDK 部署
-│   ├── discover/                 # Google Maps 搜索
-│   └── utils/                    # requireEnv 等工具
-├── n8n/                          # Docker: n8n + Evolution API
-├── eval/                         # 评测脚本
-└── tests/                        # 测试套件
+YOU (Claude Code) ← central brain
+ │
+ ├── Phase 1: Discovery
+ │   └── packages/discover/search.ts → Google Maps → leads
+ │
+ ├── Phase 2: Classification
+ │   └── n8n webhook → Gemini 2.5 Flash → industry category
+ │
+ ├── Phase 3: Generation (per lead)
+ │   ├── prepare-assets (n8n webhook or packages/assets/*.ts)
+ │   ├── copy template (_shared + {industry})
+ │   ├── load design skill (duocode-design → references/{industry}.md)
+ │   ├── generate business.ts (4 languages: en, ms, zh-CN, zh-TW)
+ │   ├── generate SVGs → npx svgo optimize
+ │   ├── Gate 1: npm run build (zero errors)
+ │   ├── Gate 2: npx lighthouse (perf≥90, a11y=100, seo≥95)
+ │   └── Gate 3: browser-use screenshot + visual scoring (≥75/100)
+ │
+ ├── Phase 4: Deployment
+ │   └── packages/deploy/deploy.ts → Vercel SDK → {slug}.vercel.app
+ │
+ └── Phase 5: Outreach (future)
+     └── Evolution API → WhatsApp message with screenshot + link
 ```
 
-## Key Conventions
+## Two-Layer Skill System
 
-- **TypeScript strict mode** — 无 `any` 类型，用 `requireEnv()` 替代 `process.env.KEY!`
-- **SKILL.md frontmatter** — 必须有 name, description, license, metadata.author, metadata.version
-- **License** — 自建 skill 用 AGPL-3.0，第三方保留原 license
-- **环境变量** — `.env` 被 gitignore，`.env.template` 只含占位符
-- **分支命名** — 禁止包含 `claude` 关键字
-- **Git 身份** — LiuWei / sunflowers0607@outlook.com
+**Layer 1** (`layer1-pipeline/`) — HOW to build. Tools, process, quality.
+**Layer 2** (`layer2-design/`) — WHAT to build. Design decisions per industry.
 
-## Reference Docs (outside src/)
+When generating a site, load skills in this order:
+1. `generate/SKILL.md` — orchestration steps
+2. `duocode-design/SKILL.md` — shared design principles (always loaded, ~150 lines)
+3. `duocode-design/references/{industry}.md` — industry-specific design (on demand)
+4. `duocode-design/schemas/{industry}.schema.json` — data field definitions (on demand)
 
-核心架构文档在 `../reference/`，按优先级：
-1. `DuoCode-TwoLayer-Skill-Architecture.md` — 两层架构设计
-2. `DuoCode-Final-Guide.md` — 最终实施指南
-3. `DuoCode-Pipeline-Infra-Plan-v3.md` — 技术决策 + Roadmap
-4. `DuoCode-Claude-n8n-Collaboration.md` — n8n 工作流详解
-5. `AGENT-IMPLEMENTATION-PROMPT.md` — Agent 执行指令
+## Commands
+
+```bash
+# Tests
+npm test                     # API keys + env + discover
+npm run test:all             # Full suite (7 groups, run-all.sh)
+npm run build:check          # TypeScript compile check
+
+# Evals
+npm run eval:skills          # Skill validation (frontmatter, structure, references, schema)
+npm run eval:templates       # Template completeness (components, industry coverage)
+npm run eval:quality         # Quality metrics (Lighthouse config, a11y, SEO)
+npm run eval:all             # All evals + JSON report
+
+# Pipeline
+npm run discover -- --city "Kuala Lumpur" --category "restaurant" --limit 1
+npx tsx packages/assets/extract-colors.ts --image path/to/image.jpg
+npx tsx packages/deploy/deploy.ts --build-dir out --slug business-name
+```
+
+## Conventions
+
+- **TypeScript strict** — no `any`, use `requireEnv()` from `packages/utils/env.ts`
+- **SKILL.md frontmatter** — must have: name, description, license, metadata.author, metadata.version
+- **License** — AGPL-3.0 for DuoCode-authored skills, keep original for third-party
+- **Env vars** — `.env` is gitignored, `.env.template` has placeholders only
+- **Branch naming** — never include `claude` in branch names
+- **Git identity** — LiuWei / sunflowers0607@outlook.com
+- **Language** — all docs, skills, and code comments in English
+
+## Reference Docs
+
+Architecture docs live at `../reference/` (outside this repo). Priority:
+1. `DuoCode-TwoLayer-Skill-Architecture.md` — two-layer skill design
+2. `DuoCode-Final-Guide.md` — latest implementation guide
+3. `DuoCode-Pipeline-Infra-Plan-v3.md` — tech decisions + roadmap
+4. `DuoCode-Claude-n8n-Collaboration.md` — n8n workflow details
+5. `AGENT-IMPLEMENTATION-PROMPT.md` — agent execution instructions
