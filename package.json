@@ -20,6 +20,7 @@
     "eval:templates": "bash eval/validate-templates.sh",
     "eval:all": "bash eval/run-all-evals.sh",
     "discover": "npx tsx packages/discover/search.ts",
+    "batch": "npx tsx packages/batch/orchestrate.ts",
     "build:check": "npx tsc --noEmit"
   },
   "keywords": [],
@@ -28,7 +29,6 @@
   "type": "commonjs",
   "dependencies": {
     "@googlemaps/google-maps-services-js": "^3.4.2",
-    "@vercel/sdk": "^1.19.11",
     "autoprefixer": "^10.4.27",
     "dotenv": "^17.3.1",
     "next": "^14.2.35",

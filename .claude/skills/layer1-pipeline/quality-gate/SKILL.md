@@ -62,10 +62,10 @@ if (( $(echo "$SEO < 0.95" | bc -l) )); then echo "FAIL: SEO $SEO < 0.95"; exit 
 ```
 
 Refer to detailed guidance in `quality/` skills:
-- `quality/core-web-vitals/SKILL.md` — LCP, INP, CLS optimization
-- `quality/performance/SKILL.md` — Performance budget and optimization
-- `quality/accessibility/SKILL.md` — WCAG 2.2 compliance
-- `quality/seo/SKILL.md` — SEO best practices
+- `quality/core-web-vitals/SKILL.md` -- LCP, INP, CLS optimization
+- `quality/performance/SKILL.md` -- Performance budget and optimization
+- `quality/accessibility/SKILL.md` -- WCAG 2.2 compliance
+- `quality/seo/SKILL.md` -- SEO best practices
 
 ## Gate 3: Visual QA
 
@@ -76,12 +76,16 @@ sleep 3
 
 # Desktop screenshot
 browser-use open http://localhost:3456/en/
-sleep 2
+sleep 3
 browser-use screenshot screenshots/desktop.png
+browser-use close
 
 # Mobile screenshot
+browser-use open http://localhost:3456/en/
 browser-use eval "await page.setViewportSize({width: 375, height: 812})"
+sleep 2
 browser-use screenshot screenshots/mobile.png
+browser-use close
 
 kill %1
 ```
