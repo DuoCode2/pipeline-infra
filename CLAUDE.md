@@ -25,12 +25,23 @@ These are the tools YOU use to execute the pipeline. Know them well.
 | browser-use | `browser-use screenshot screenshots/mobile.png --viewport 375x812` | Gate 3: Capture mobile screenshot |
 | Playwright MCP | `mcp__playwright__browser_navigate`, `browser_snapshot`, `browser_take_screenshot` | Alternative visual testing via MCP |
 
-### Deployment
+### Deployment & GitHub Push
 | Tool | Command | Purpose |
 |------|---------|---------|
+| GitHub CLI | `gh repo create DuoCode2/{slug} --private --clone` | Create repo under DuoCode2 org |
+| GitHub CLI | `gh repo view DuoCode2/{slug}` | Check if repo exists |
+| git | `git push -u origin main` | Push generated site to DuoCode2 org |
 | Vercel SDK | via `packages/deploy/deploy.ts` | Programmatic deploy: create project → upload files → production |
 | Vercel CLI | `vercel deploy [path] -y --no-wait` | Fallback CLI deploy |
 | Vercel CLI | `vercel inspect <url>` | Check deployment status |
+
+**Post-generation push workflow:**
+```bash
+cd output/{place_id}
+git init && git add -A && git commit -m "feat: generated site for {business_name}"
+gh repo create DuoCode2/{slug} --private --source=. --push
+# Then deploy via Vercel SDK or link to Vercel for auto-deploy
+```
 
 ### n8n Orchestration
 | Endpoint | Method | Purpose |
@@ -77,7 +88,8 @@ YOU (Claude Code) ← central brain
  │   ├── Gate 2: npx lighthouse (perf≥90, a11y=100, seo≥95)
  │   └── Gate 3: browser-use screenshot + visual scoring (≥75/100)
  │
- ├── Phase 4: Deployment
+ ├── Phase 4: Push & Deploy
+ │   ├── gh repo create DuoCode2/{slug} --private --source=. --push
  │   └── packages/deploy/deploy.ts → Vercel SDK → {slug}.vercel.app
  │
  └── Phase 5: Outreach (future)
@@ -113,6 +125,34 @@ npm run eval:all             # All evals + JSON report
 npm run discover -- --city "Kuala Lumpur" --category "restaurant" --limit 1
 npx tsx packages/assets/extract-colors.ts --image path/to/image.jpg
 npx tsx packages/deploy/deploy.ts --build-dir out --slug business-name
+```
+
+## Installed Skills (from verified sources)
+
+| Skill | Source | Path |
+|-------|--------|------|
+| browser-use | Official (browser-use repo) | `toolchain/browser-use/` |
+| lighthouse-ci | Community (claude-skill-registry) | `toolchain/lighthouse-ci/` |
+| github | Community (claude-skill-registry) | `toolchain/github/` |
+| webapp-testing | Official (Anthropic) | `quality/webapp-testing/` |
+| deploy-to-vercel | Official (Vercel) | `deploy/deploy-to-vercel/` |
+| Playwright MCP | MCP Server (configured) | via `mcp__playwright__*` tools |
+
+## GitHub Organization
+
+All generated sites push to **DuoCode2** org: `https://github.com/DuoCode2`
+
+```bash
+# Verify access
+gh org list                    # Should show DuoCode2
+gh repo list DuoCode2          # List existing repos
+
+# Create + push a generated site
+gh repo create DuoCode2/{slug} --private --source=output/{place_id} --push
+
+# Git config for this project
+git config user.name "LiuWei"
+git config user.email "sunflowers0607@outlook.com"
 ```
 
 ## Conventions
