@@ -1,21 +1,71 @@
+# DuoCode Pipeline — Docker Compose
+# 启动: docker compose up -d
+# 健康检查: curl http://localhost:5678/healthz
+
 services:
+  # ── n8n 工作流引擎 ──────────────────────────────────
   n8n:
-    image: n8nio/n8n
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports: ["5678:5678"]
+    restart: unless-stopped
     volumes:
       - n8n_data:/home/node/.n8n
       - ../output:/output
     environment:
+      # 认证
       - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
-      - NODE_FUNCTION_ALLOW_EXTERNAL=node-vibrant,sharp,svgo,@vercel/sdk
+      # Code Node 允许的外部包
+      - NODE_FUNCTION_ALLOW_EXTERNAL=node-vibrant,sharp,svgo,@vercel/sdk,@googlemaps/google-maps-services-js
       - NODE_FUNCTION_ALLOW_BUILTIN=fs,path,crypto
+      # API Keys (从 .env 注入)
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - UNSPLASH_ACCESS_KEY=${UNSPLASH_ACCESS_KEY}
       - VERCEL_TOKEN=${VERCEL_TOKEN}
+      # Evolution API 内部通信 (Phase 5)
+      - EVOLUTION_API_URL=http://evolution-api:8080
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY}
     env_file:
       - ../.env
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - duocode
+
+  # ── Evolution API (Phase 5: WhatsApp 外联) ──────────
+  # 取消注释以启用 WhatsApp 外联功能
+  # evolution-api:
+  #   image: atendai/evolution-api:latest
+  #   ports: ["8080:8080"]
+  #   restart: unless-stopped
+  #   volumes:
+  #     - evolution_data:/evolution/instances
+  #   environment:
+  #     - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
+  #     # 使用 SQLite (无需 PostgreSQL)
+  #     - DATABASE_PROVIDER=sqlite
+  #     - DATABASE_CONNECTION_URI=file:///evolution/data/evolution.db
+  #     # 速率限制: 8s 间隔 + 随机抖动 (防封号)
+  #     - GLOBAL_WEBHOOK_ENABLED=true
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -sf http://localhost:8080/ping || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   networks:
+  #     - duocode
 
 volumes:
   n8n_data:
+  # evolution_data:
+
+networks:
+  duocode:
+    driver: bridge
