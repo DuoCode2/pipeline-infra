@@ -1,0 +1,284 @@
+{
+  "updatedAt": "2026-03-23T20:58:54.858Z",
+  "createdAt": "2026-03-23T13:14:42.345Z",
+  "id": "iN89Sm7Uj4bH9NaU",
+  "name": "lead-status",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "ls-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "path": "lead-status",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "typeVersion": 2,
+      "webhookId": "lead-status-id"
+    },
+    {
+      "id": "ls-read-placeholder",
+      "name": "Google Sheets Read (Configure OAuth)",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        300,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// PLACEHOLDER: Replace this Code node with a Google Sheets node after configuring OAuth.\n// This node reads from local JSON files as fallback.\n// To configure: Delete this node, add a Google Sheets node, set operation to 'read',\n// connect your Google account, select your Leads spreadsheet.\n\nconst fs = require('fs');\nconst path = require('path');\n\nconst leadsDir = '/data/leads';\nlet allLeads = [];\n\ntry {\n  const files = fs.readdirSync(leadsDir).filter(f => f.endsWith('.json')).sort();\n  for (const file of files) {\n    const data = JSON.parse(fs.readFileSync(path.join(leadsDir, file), 'utf8'));\n    if (Array.isArray(data)) {\n      allLeads.push(...data);\n    } else {\n      allLeads.push(data);\n    }\n  }\n} catch (e) {\n  // No leads files found\n}\n\nif (allLeads.length === 0) {\n  return [{ json: { _placeholder: true, message: 'No leads data found. Configure Google Sheets OAuth to read from your spreadsheet.' } }];\n}\n\nreturn allLeads.map(lead => ({ json: lead }));"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "ls-filter-aggregate",
+      "name": "Filter and Aggregate",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        600,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const webhookData = $('Webhook Trigger').first().json;\nconst body = webhookData.body || {};\nconst filter = body.filter || {};\nconst wantSummary = body.summary === true;\n\nlet leads = $input.all().map(item => item.json);\n\n// Handle placeholder response\nif (leads.length === 1 && leads[0]._placeholder) {\n  return [{ json: leads[0] }];\n}\n\n// Apply filters\nif (filter.status) {\n  leads = leads.filter(l => (l.status || '').toLowerCase() === filter.status.toLowerCase());\n}\nif (filter.industry) {\n  leads = leads.filter(l => (l.industry || '').toLowerCase().includes(filter.industry.toLowerCase()));\n}\n\nif (wantSummary) {\n  const summary = {\n    total: leads.length,\n    by_status: {},\n    by_industry: {},\n    avg_lead_score: 0,\n    by_urgency: {}\n  };\n  \n  let scoreSum = 0;\n  for (const lead of leads) {\n    const status = lead.status || 'unknown';\n    summary.by_status[status] = (summary.by_status[status] || 0) + 1;\n    const industry = lead.industry || 'unknown';\n    summary.by_industry[industry] = (summary.by_industry[industry] || 0) + 1;\n    const urgency = lead.website_urgency || 'unknown';\n    summary.by_urgency[urgency] = (summary.by_urgency[urgency] || 0) + 1;\n    scoreSum += parseFloat(lead.lead_score) || 0;\n  }\n  summary.avg_lead_score = leads.length > 0 ? Math.round((scoreSum / leads.length) * 10) / 10 : 0;\n  \n  return [{ json: { type: 'summary', ...summary } }];\n} else {\n  return [{ json: { type: 'leads', total: leads.length, leads } }];\n}"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "ls-respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "typeVersion": 1.1
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets Read (Configure OAuth)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Read (Configure OAuth)": {
+      "main": [
+        [
+          {
+            "node": "Filter and Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter and Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "1314cae1-360b-421c-8e34-a0d76428dc60",
+  "activeVersionId": "1314cae1-360b-421c-8e34-a0d76428dc60",
+  "versionCounter": 9,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-23T13:14:42.347Z",
+      "createdAt": "2026-03-23T13:14:42.347Z",
+      "role": "workflow:owner",
+      "workflowId": "iN89Sm7Uj4bH9NaU",
+      "projectId": "q4dXsuJzhJK6N4X1",
+      "project": {
+        "updatedAt": "2026-03-23T13:04:58.636Z",
+        "createdAt": "2026-03-23T13:02:32.255Z",
+        "id": "q4dXsuJzhJK6N4X1",
+        "name": "Code Duo <duocodetechu@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "99904267-68ab-430e-abde-6e2cc0eadac9"
+      }
+    }
+  ],
+  "tags": [],
+  "parentFolder": null,
+  "activeVersion": {
+    "updatedAt": "2026-03-23T13:18:28.521Z",
+    "createdAt": "2026-03-23T13:18:28.521Z",
+    "versionId": "1314cae1-360b-421c-8e34-a0d76428dc60",
+    "workflowId": "iN89Sm7Uj4bH9NaU",
+    "nodes": [
+      {
+        "id": "ls-webhook",
+        "name": "Webhook Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "position": [
+          0,
+          300
+        ],
+        "parameters": {
+          "path": "lead-status",
+          "httpMethod": "POST",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "typeVersion": 2,
+        "webhookId": "lead-status-id"
+      },
+      {
+        "id": "ls-read-placeholder",
+        "name": "Google Sheets Read (Configure OAuth)",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          300,
+          300
+        ],
+        "parameters": {
+          "jsCode": "// PLACEHOLDER: Replace this Code node with a Google Sheets node after configuring OAuth.\n// This node reads from local JSON files as fallback.\n// To configure: Delete this node, add a Google Sheets node, set operation to 'read',\n// connect your Google account, select your Leads spreadsheet.\n\nconst fs = require('fs');\nconst path = require('path');\n\nconst leadsDir = '/data/leads';\nlet allLeads = [];\n\ntry {\n  const files = fs.readdirSync(leadsDir).filter(f => f.endsWith('.json')).sort();\n  for (const file of files) {\n    const data = JSON.parse(fs.readFileSync(path.join(leadsDir, file), 'utf8'));\n    if (Array.isArray(data)) {\n      allLeads.push(...data);\n    } else {\n      allLeads.push(data);\n    }\n  }\n} catch (e) {\n  // No leads files found\n}\n\nif (allLeads.length === 0) {\n  return [{ json: { _placeholder: true, message: 'No leads data found. Configure Google Sheets OAuth to read from your spreadsheet.' } }];\n}\n\nreturn allLeads.map(lead => ({ json: lead }));"
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "ls-filter-aggregate",
+        "name": "Filter and Aggregate",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          600,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const webhookData = $('Webhook Trigger').first().json;\nconst body = webhookData.body || {};\nconst filter = body.filter || {};\nconst wantSummary = body.summary === true;\n\nlet leads = $input.all().map(item => item.json);\n\n// Handle placeholder response\nif (leads.length === 1 && leads[0]._placeholder) {\n  return [{ json: leads[0] }];\n}\n\n// Apply filters\nif (filter.status) {\n  leads = leads.filter(l => (l.status || '').toLowerCase() === filter.status.toLowerCase());\n}\nif (filter.industry) {\n  leads = leads.filter(l => (l.industry || '').toLowerCase().includes(filter.industry.toLowerCase()));\n}\n\nif (wantSummary) {\n  const summary = {\n    total: leads.length,\n    by_status: {},\n    by_industry: {},\n    avg_lead_score: 0,\n    by_urgency: {}\n  };\n  \n  let scoreSum = 0;\n  for (const lead of leads) {\n    const status = lead.status || 'unknown';\n    summary.by_status[status] = (summary.by_status[status] || 0) + 1;\n    const industry = lead.industry || 'unknown';\n    summary.by_industry[industry] = (summary.by_industry[industry] || 0) + 1;\n    const urgency = lead.website_urgency || 'unknown';\n    summary.by_urgency[urgency] = (summary.by_urgency[urgency] || 0) + 1;\n    scoreSum += parseFloat(lead.lead_score) || 0;\n  }\n  summary.avg_lead_score = leads.length > 0 ? Math.round((scoreSum / leads.length) * 10) / 10 : 0;\n  \n  return [{ json: { type: 'summary', ...summary } }];\n} else {\n  return [{ json: { type: 'leads', total: leads.length, leads } }];\n}"
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "ls-respond",
+        "name": "Respond to Webhook",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "position": [
+          900,
+          300
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Content-Type",
+                  "value": "application/json"
+                }
+              ]
+            }
+          }
+        },
+        "typeVersion": 1.1
+      }
+    ],
+    "connections": {
+      "Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "Google Sheets Read (Configure OAuth)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Sheets Read (Configure OAuth)": {
+        "main": [
+          [
+            {
+              "node": "Filter and Aggregate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filter and Aggregate": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Code Duo",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-23T13:18:36.846Z",
+        "id": 7,
+        "workflowId": "iN89Sm7Uj4bH9NaU",
+        "versionId": "1314cae1-360b-421c-8e34-a0d76428dc60",
+        "event": "activated",
+        "userId": "99904267-68ab-430e-abde-6e2cc0eadac9"
+      }
+    ]
+  },
+  "scopes": [
+    "workflow:create",
+    "workflow:delete",
+    "workflow:execute",
+    "workflow:execute-chat",
+    "workflow:list",
+    "workflow:move",
+    "workflow:publish",
+    "workflow:read",
+    "workflow:share",
+    "workflow:unpublish",
+    "workflow:unshare",
+    "workflow:update",
+    "workflow:updateRedactionSetting"
+  ],
+  "checksum": "d278584f90265ec0e05a7e8e495fe4f8a9d3d064449b4334fe489018b1bb76b6"
+}

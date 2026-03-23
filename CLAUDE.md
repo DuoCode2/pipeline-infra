@@ -9,7 +9,7 @@ These are the tools YOU use to execute the pipeline. Know them well.
 ### Site Generation & Build
 | Tool | Command | Purpose |
 |------|---------|---------|
-| Next.js | `npm run build && npm run export` | Static site generation from templates |
+| Next.js | `npm run build` | Static site generation from templates |
 | TypeScript | `npx tsx packages/*.ts` | Run pipeline scripts |
 | SVGO | `npx svgo output/{place_id}/public/svgs/*.svg` | Optimize generated SVGs |
 | Sharp | via `packages/assets/optimize-images.ts` | Image resize → WebP (320/640/960/1280) |

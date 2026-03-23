@@ -1,0 +1,236 @@
+{
+  "updatedAt": "2026-03-23T13:14:49.700Z",
+  "createdAt": "2026-03-23T13:14:40.751Z",
+  "id": "wy0083GnA328iHpN",
+  "name": "deploy-vercel",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "id": "dv-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "path": "deploy-vercel",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "typeVersion": 2,
+      "webhookId": "deploy-vercel-id"
+    },
+    {
+      "id": "dv-deploy",
+      "name": "Vercel Deploy",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        400,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const fs = require('fs');\nconst path = require('path');\n\nconst { place_id, slug, build_dir } = $input.first().json.body;\n\nconst vercelToken = process.env.VERCEL_TOKEN || $env.VERCEL_TOKEN;\nconst vercelTeam = process.env.VERCEL_TEAM_ID || $env.VERCEL_TEAM_ID || '';\n\nif (!vercelToken) {\n  return [{ json: { error: 'VERCEL_TOKEN not configured' } }];\n}\n\nif (!build_dir || !slug) {\n  return [{ json: { error: 'Missing required fields: slug, build_dir' } }];\n}\n\nconst projectName = `duocode-${slug}`;\nconst baseUrl = 'https://api.vercel.com';\nconst headers = {\n  'Authorization': `Bearer ${vercelToken}`,\n  'Content-Type': 'application/json'\n};\n\n// Step 1: Create or get project\nlet projectId;\ntry {\n  const createResp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `${baseUrl}/v10/projects${vercelTeam ? '?teamId=' + vercelTeam : ''}`,\n    headers,\n    body: {\n      name: projectName,\n      framework: null,\n      buildCommand: '',\n      outputDirectory: ''\n    }\n  });\n  projectId = createResp.id;\n} catch (err) {\n  // Project may already exist, try to get it\n  try {\n    const getResp = await this.helpers.httpRequest({\n      method: 'GET',\n      url: `${baseUrl}/v9/projects/${projectName}${vercelTeam ? '?teamId=' + vercelTeam : ''}`,\n      headers\n    });\n    projectId = getResp.id;\n  } catch (e) {\n    return [{ json: { error: 'Failed to create/get project: ' + e.message } }];\n  }\n}\n\n// Step 2: Collect files from build_dir\nfunction collectFiles(dir, base = '') {\n  const results = [];\n  try {\n    const entries = fs.readdirSync(dir, { withFileTypes: true });\n    for (const entry of entries) {\n      const fullPath = path.join(dir, entry.name);\n      const relPath = base ? `${base}/${entry.name}` : entry.name;\n      if (entry.isDirectory()) {\n        results.push(...collectFiles(fullPath, relPath));\n      } else {\n        const content = fs.readFileSync(fullPath);\n        results.push({\n          file: relPath,\n          data: content.toString('base64'),\n          encoding: 'base64'\n        });\n      }\n    }\n  } catch (e) {\n    // directory may not exist\n  }\n  return results;\n}\n\nconst files = collectFiles(build_dir);\n\nif (files.length === 0) {\n  return [{ json: { error: 'No files found in build_dir: ' + build_dir } }];\n}\n\n// Step 3: Create deployment\ntry {\n  const deployResp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `${baseUrl}/v13/deployments${vercelTeam ? '?teamId=' + vercelTeam : ''}`,\n    headers,\n    body: {\n      name: projectName,\n      files,\n      target: 'production',\n      projectSettings: {\n        framework: null\n      }\n    }\n  });\n\n  return [{\n    json: {\n      status: 'deployed',\n      place_id,\n      slug,\n      project_name: projectName,\n      project_id: projectId,\n      deployment_id: deployResp.id,\n      url: `https://${deployResp.url}`,\n      ready_state: deployResp.readyState || 'QUEUED',\n      created_at: new Date().toISOString()\n    }\n  }];\n} catch (err) {\n  return [{ json: { error: 'Deployment failed: ' + err.message, place_id, slug } }];\n}"
+      },
+      "typeVersion": 2
+    },
+    {
+      "id": "dv-respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        800,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "typeVersion": 1.1
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Vercel Deploy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vercel Deploy": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "a6b65974-b241-4b8b-be1c-5032869badbd",
+  "activeVersionId": "a6b65974-b241-4b8b-be1c-5032869badbd",
+  "versionCounter": 6,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-23T13:14:40.752Z",
+      "createdAt": "2026-03-23T13:14:40.752Z",
+      "role": "workflow:owner",
+      "workflowId": "wy0083GnA328iHpN",
+      "projectId": "q4dXsuJzhJK6N4X1",
+      "project": {
+        "updatedAt": "2026-03-23T13:04:58.636Z",
+        "createdAt": "2026-03-23T13:02:32.255Z",
+        "id": "q4dXsuJzhJK6N4X1",
+        "name": "Code Duo <duocodetechu@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "99904267-68ab-430e-abde-6e2cc0eadac9"
+      }
+    }
+  ],
+  "tags": [],
+  "parentFolder": null,
+  "activeVersion": {
+    "updatedAt": "2026-03-23T13:14:40.754Z",
+    "createdAt": "2026-03-23T13:14:40.754Z",
+    "versionId": "a6b65974-b241-4b8b-be1c-5032869badbd",
+    "workflowId": "wy0083GnA328iHpN",
+    "nodes": [
+      {
+        "id": "dv-webhook",
+        "name": "Webhook Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "position": [
+          0,
+          300
+        ],
+        "parameters": {
+          "path": "deploy-vercel",
+          "httpMethod": "POST",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "typeVersion": 2,
+        "webhookId": "deploy-vercel-id"
+      },
+      {
+        "id": "dv-deploy",
+        "name": "Vercel Deploy",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          400,
+          300
+        ],
+        "parameters": {
+          "jsCode": "const fs = require('fs');\nconst path = require('path');\n\nconst { place_id, slug, build_dir } = $input.first().json.body;\n\nconst vercelToken = process.env.VERCEL_TOKEN || $env.VERCEL_TOKEN;\nconst vercelTeam = process.env.VERCEL_TEAM_ID || $env.VERCEL_TEAM_ID || '';\n\nif (!vercelToken) {\n  return [{ json: { error: 'VERCEL_TOKEN not configured' } }];\n}\n\nif (!build_dir || !slug) {\n  return [{ json: { error: 'Missing required fields: slug, build_dir' } }];\n}\n\nconst projectName = `duocode-${slug}`;\nconst baseUrl = 'https://api.vercel.com';\nconst headers = {\n  'Authorization': `Bearer ${vercelToken}`,\n  'Content-Type': 'application/json'\n};\n\n// Step 1: Create or get project\nlet projectId;\ntry {\n  const createResp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `${baseUrl}/v10/projects${vercelTeam ? '?teamId=' + vercelTeam : ''}`,\n    headers,\n    body: {\n      name: projectName,\n      framework: null,\n      buildCommand: '',\n      outputDirectory: ''\n    }\n  });\n  projectId = createResp.id;\n} catch (err) {\n  // Project may already exist, try to get it\n  try {\n    const getResp = await this.helpers.httpRequest({\n      method: 'GET',\n      url: `${baseUrl}/v9/projects/${projectName}${vercelTeam ? '?teamId=' + vercelTeam : ''}`,\n      headers\n    });\n    projectId = getResp.id;\n  } catch (e) {\n    return [{ json: { error: 'Failed to create/get project: ' + e.message } }];\n  }\n}\n\n// Step 2: Collect files from build_dir\nfunction collectFiles(dir, base = '') {\n  const results = [];\n  try {\n    const entries = fs.readdirSync(dir, { withFileTypes: true });\n    for (const entry of entries) {\n      const fullPath = path.join(dir, entry.name);\n      const relPath = base ? `${base}/${entry.name}` : entry.name;\n      if (entry.isDirectory()) {\n        results.push(...collectFiles(fullPath, relPath));\n      } else {\n        const content = fs.readFileSync(fullPath);\n        results.push({\n          file: relPath,\n          data: content.toString('base64'),\n          encoding: 'base64'\n        });\n      }\n    }\n  } catch (e) {\n    // directory may not exist\n  }\n  return results;\n}\n\nconst files = collectFiles(build_dir);\n\nif (files.length === 0) {\n  return [{ json: { error: 'No files found in build_dir: ' + build_dir } }];\n}\n\n// Step 3: Create deployment\ntry {\n  const deployResp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `${baseUrl}/v13/deployments${vercelTeam ? '?teamId=' + vercelTeam : ''}`,\n    headers,\n    body: {\n      name: projectName,\n      files,\n      target: 'production',\n      projectSettings: {\n        framework: null\n      }\n    }\n  });\n\n  return [{\n    json: {\n      status: 'deployed',\n      place_id,\n      slug,\n      project_name: projectName,\n      project_id: projectId,\n      deployment_id: deployResp.id,\n      url: `https://${deployResp.url}`,\n      ready_state: deployResp.readyState || 'QUEUED',\n      created_at: new Date().toISOString()\n    }\n  }];\n} catch (err) {\n  return [{ json: { error: 'Deployment failed: ' + err.message, place_id, slug } }];\n}"
+        },
+        "typeVersion": 2
+      },
+      {
+        "id": "dv-respond",
+        "name": "Respond to Webhook",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "position": [
+          800,
+          300
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Content-Type",
+                  "value": "application/json"
+                }
+              ]
+            }
+          }
+        },
+        "typeVersion": 1.1
+      }
+    ],
+    "connections": {
+      "Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "Vercel Deploy",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Vercel Deploy": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Code Duo",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-03-23T13:16:19.343Z",
+        "id": 3,
+        "workflowId": "wy0083GnA328iHpN",
+        "versionId": "a6b65974-b241-4b8b-be1c-5032869badbd",
+        "event": "activated",
+        "userId": "99904267-68ab-430e-abde-6e2cc0eadac9"
+      }
+    ]
+  },
+  "scopes": [
+    "workflow:create",
+    "workflow:delete",
+    "workflow:execute",
+    "workflow:execute-chat",
+    "workflow:list",
+    "workflow:move",
+    "workflow:publish",
+    "workflow:read",
+    "workflow:share",
+    "workflow:unpublish",
+    "workflow:unshare",
+    "workflow:update",
+    "workflow:updateRedactionSetting"
+  ],
+  "checksum": "8921880de0fb789cd08f5fd9e6f48f33ccd09f24f8aec0f9b9551c193340fa2a"
+}

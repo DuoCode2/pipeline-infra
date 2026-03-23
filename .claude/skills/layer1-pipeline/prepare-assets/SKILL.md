@@ -34,19 +34,35 @@ Fetch and process all visual assets for a business lead before site generation.
 ## Workflow
 
 ### Step 1: Download Maps Photos
-<!-- TODO: Call packages/assets/maps-photos.ts -->
+```bash
+npx tsx packages/assets/maps-photos.ts \
+  --photos '{{photos_refs_json}}' \
+  --output output/{{place_id}}/public/images
+```
 
 ### Step 2: Fetch Stock Photos (fallback)
-<!-- TODO: Call packages/assets/stock-photos.ts if Maps photos < 3 -->
+```bash
+npx tsx packages/assets/stock-photos.ts \
+  --industry {{industry}} \
+  --output output/{{place_id}}/public/images
+```
 
 ### Step 3: Extract Brand Colors
-<!-- TODO: Call packages/assets/extract-colors.ts on best photo -->
+```bash
+npx tsx packages/assets/extract-colors.ts \
+  --image output/{{place_id}}/public/images/maps-1.jpg \
+  --output output/{{place_id}}
+```
 
 ### Step 4: Optimize All Images
-<!-- TODO: Call packages/assets/optimize-images.ts → WebP at 320/640/960/1280px -->
+```bash
+npx tsx packages/assets/optimize-images.ts \
+  --input output/{{place_id}}/public/images \
+  --output output/{{place_id}}/public/images
+```
 
 ### Step 5: Generate Manifests
-<!-- TODO: Write image-manifest.json and brand-colors.json -->
+Write `brand-colors.json` and `image-manifest.json` — already produced by Steps 3-4.
 
 ## Dependencies
 

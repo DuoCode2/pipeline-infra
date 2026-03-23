@@ -35,9 +35,31 @@ npm install && npm run build
 
 ## Gate 2: Lighthouse CI Audit
 
-<!-- TODO: Configure .lighthouserc.json -->
-<!-- TODO: Run npx @lhci/cli autorun -->
-<!-- TODO: Parse JSON report, check thresholds -->
+```bash
+cd output/{place_id}
+npx serve out -l 3456 &
+sleep 3
+
+npx lighthouse http://localhost:3456/en/ \
+  --output json \
+  --output-path lighthouse.json \
+  --chrome-flags="--headless --no-sandbox"
+
+kill %1
+
+# Parse results
+PERF=$(jq '.categories.performance.score' lighthouse.json)
+A11Y=$(jq '.categories.accessibility.score' lighthouse.json)
+SEO=$(jq '.categories.seo.score' lighthouse.json)
+BP=$(jq '.categories["best-practices"].score' lighthouse.json)
+
+echo "Performance: $PERF | Accessibility: $A11Y | SEO: $SEO | Best Practices: $BP"
+
+# Check thresholds
+if (( $(echo "$PERF < 0.9" | bc -l) )); then echo "FAIL: Performance $PERF < 0.9"; exit 1; fi
+if (( $(echo "$A11Y < 1.0" | bc -l) )); then echo "FAIL: Accessibility $A11Y < 1.0"; exit 1; fi
+if (( $(echo "$SEO < 0.95" | bc -l) )); then echo "FAIL: SEO $SEO < 0.95"; exit 1; fi
+```
 
 Refer to detailed guidance in `quality/` skills:
 - `quality/core-web-vitals/SKILL.md` — LCP, INP, CLS optimization
@@ -47,8 +69,25 @@ Refer to detailed guidance in `quality/` skills:
 
 ## Gate 3: Visual QA
 
-<!-- TODO: Desktop + mobile screenshots via Playwright -->
-<!-- TODO: 100-point rubric scoring -->
+```bash
+cd output/{place_id}
+npx serve out -l 3456 &
+sleep 3
+
+# Desktop screenshot
+browser-use open http://localhost:3456/en/
+sleep 2
+browser-use screenshot screenshots/desktop.png
+
+# Mobile screenshot
+browser-use eval "await page.setViewportSize({width: 375, height: 812})"
+browser-use screenshot screenshots/mobile.png
+
+kill %1
+```
+
+Then visually inspect the screenshots against the scoring rubric below.
+Score each dimension. Total >= 75/100 = PASS.
 
 ### Scoring Rubric (100 points)
 

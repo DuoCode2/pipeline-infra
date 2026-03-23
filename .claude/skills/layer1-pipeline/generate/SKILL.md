@@ -31,21 +31,38 @@ Verify: `brand-colors.json` and `image-manifest.json` exist in output dir.
 ### Step 2: Load Design Context
 **CRITICAL**: Before generating anything:
 ```
-Read .claude/skills/design/frontend-design/SKILL.md
-Read .claude/skills/design/frontend-design/references/{{industry}}.md
-Read .claude/skills/design/frontend-design/schemas/{{industry}}.schema.json
+Read .claude/skills/layer2-design/duocode-design/SKILL.md
+Read .claude/skills/layer2-design/duocode-design/references/{{industry}}.md
+Read .claude/skills/layer2-design/duocode-design/schemas/{{industry}}.schema.json
 ```
 
-### Step 3: Copy Template
+### Step 3: Copy & Layer Templates
 ```bash
-cp -r .claude/skills/design/frontend-design/templates/_shared/* output/{{place_id}}/src/
-cp -r .claude/skills/design/frontend-design/templates/{{industry}}/* output/{{place_id}}/src/
+DESIGN=".claude/skills/layer2-design/duocode-design"
+OUT="output/{{place_id}}"
+
+# Base structure (config files at root level)
+cp $DESIGN/templates/_shared/package.json $OUT/
+cp $DESIGN/templates/_shared/next.config.js $OUT/
+cp $DESIGN/templates/_shared/tailwind.config.ts $OUT/
+cp $DESIGN/templates/_shared/tsconfig.json $OUT/
+cp $DESIGN/templates/_shared/postcss.config.js $OUT/
+
+# Source code
+cp -r $DESIGN/templates/_shared/src/* $OUT/src/
+
+# Industry-specific overrides (page.tsx + components)
+if [ -d "$DESIGN/templates/{{industry}}" ]; then
+  # Override page.tsx with industry version
+  cp $DESIGN/templates/{{industry}}/page.tsx $OUT/src/app/[locale]/page.tsx 2>/dev/null || true
+  # Merge industry components into components dir
+  cp $DESIGN/templates/{{industry}}/components/*.tsx $OUT/src/components/ 2>/dev/null || true
+fi
 ```
-Also copy: package.json, next.config.js, tailwind.config.ts, tsconfig.json from templates/_shared/
 
 ### Step 4: Study Examples
 ```
-Read .claude/skills/design/frontend-design/examples/{{industry}}/*/business.ts
+Read .claude/skills/layer2-design/duocode-design/examples/{{industry}}/*/business.ts
 ```
 
 ### Step 5: Generate business.ts
@@ -79,14 +96,21 @@ kill %1
 ```
 Check: Performance ≥ 90, Accessibility = 100, SEO ≥ 95. Fail → fix → retry.
 
-### Step 9: Gate 3 — Visual QA
+### Step 9: Visual QA (Gate 3)
 ```bash
-cd output/{{place_id}} && npm run dev &
-sleep 5
-browser-use open http://localhost:3000
+cd output/{{place_id}}
+npx serve out -l 3456 &
+sleep 3
+
+# Desktop screenshot
+browser-use open http://localhost:3456/en/
+sleep 2
 browser-use screenshot screenshots/desktop.png
-# Set mobile viewport
+
+# Mobile screenshot (resize viewport first)
+browser-use eval "await page.setViewportSize({width: 375, height: 812})"
 browser-use screenshot screenshots/mobile.png
+
 kill %1
 ```
 I analyze both screenshots. Rubric (100 pts):

@@ -124,9 +124,9 @@ if (require.main === module) {
   searchPlaces(category, city, limit, noWebsite)
     .then((results) => {
       console.log(JSON.stringify(results, null, 2));
-      console.log(`\nTotal: ${results.length} results`);
+      console.error(`\nTotal: ${results.length} results`);
       const withoutWebsite = results.filter((r) => !r.websiteUri).length;
-      console.log(`Without website: ${withoutWebsite}`);
+      console.error(`Without website: ${withoutWebsite}`);
     })
     .catch((err) => {
       console.error('Error:', err.message);

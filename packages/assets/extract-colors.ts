@@ -92,11 +92,11 @@ if (require.main === module) {
     return idx >= 0 && args[idx + 1] ? args[idx + 1] : fallback;
   };
 
-  const input = getArg('input', '');
+  const input = getArg('image', '') || getArg('input', '');
   const output = getArg('output', 'output/test');
 
   if (!input) {
-    console.error('Usage: --input <image-path> --output <output-dir>');
+    console.error('Usage: --image <image-path> --output <output-dir>');
     process.exit(1);
   }
 

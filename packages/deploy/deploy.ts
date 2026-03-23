@@ -62,6 +62,10 @@ export async function deployToVercel(
       const fullPath = path.join(dir, entry.name);
       const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.isDirectory()) {
+        // Skip large build artifacts
+        if (entry.name === '.next' || entry.name === 'node_modules' || entry.name === '.git') {
+          continue;
+        }
         collectFiles(fullPath, relativePath);
       } else {
         const data = fs.readFileSync(fullPath).toString('base64');

@@ -29,6 +29,11 @@ export interface BusinessContent {
 }
 
 export interface BusinessData {
+  /**
+   * Theme is FLAT — colors and fonts at the same level.
+   * CORRECT: business.theme.primary
+   * WRONG:   business.theme.colors.primary (DO NOT nest!)
+   */
   theme: {
     primary: string;
     primaryDark: string;
