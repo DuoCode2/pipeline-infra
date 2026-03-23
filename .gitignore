@@ -12,3 +12,4 @@ package-lock.json
 eval/results/
 eval/backstop/
 .claude/settings.local.json
+n8n/service-account.json
