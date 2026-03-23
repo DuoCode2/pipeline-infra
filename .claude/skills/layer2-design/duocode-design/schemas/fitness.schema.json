@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "duocode-fitness",
+  "title": "DuoCode Fitness Schema",
+  "description": "Schema for Malaysian fitness center and gym business websites. Extends base with classes, memberships, trainers, and facilities.",
+  "allOf": [
+    { "$ref": "./_base.schema.json" },
+    {
+      "type": "object",
+      "required": ["classes", "memberships", "trainers", "facilities"],
+      "properties": {
+        "classes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "description", "schedule"],
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "schedule": { "type": "string" },
+              "instructor": { "type": "string" }
+            }
+          }
+        },
+        "memberships": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["tier", "price", "features"],
+            "properties": {
+              "tier": { "type": "string" },
+              "price": { "type": "string" },
+              "features": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "trainers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "specialization"],
+            "properties": {
+              "name": { "type": "string" },
+              "specialization": { "type": "string" },
+              "image": { "type": "string" }
+            }
+          }
+        },
+        "facilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of available facilities"
+        }
+      }
+    }
+  ]
+}

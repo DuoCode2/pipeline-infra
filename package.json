@@ -1,0 +1,49 @@
+{
+  "name": "duocode-pipeline",
+  "version": "1.0.0",
+  "description": "DuoCode: Automated business website generation pipeline",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "npx tsx tests/api-keys.test.ts && npx tsx tests/env.test.ts && npx tsx tests/discover.test.ts",
+    "test:keys": "npx tsx tests/api-keys.test.ts",
+    "test:discover": "npx tsx tests/discover.test.ts",
+    "test:all": "bash tests/run-all.sh",
+    "test:env": "npx tsx tests/env.test.ts",
+    "test:deploy": "npx tsx tests/deploy.test.ts",
+    "test:assets": "npx tsx tests/assets.test.ts",
+    "eval": "bash tests/eval-pipeline.sh",
+    "eval:skills": "bash eval/validate-skills.sh",
+    "eval:quality": "bash eval/quality-metrics.sh",
+    "eval:templates": "bash eval/validate-templates.sh",
+    "eval:all": "bash eval/run-all-evals.sh",
+    "discover": "npx tsx packages/discover/search.ts",
+    "build:check": "npx tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@googlemaps/google-maps-services-js": "^3.4.2",
+    "@vercel/sdk": "^1.19.11",
+    "autoprefixer": "^10.4.27",
+    "dotenv": "^17.3.1",
+    "next": "^14.2.35",
+    "node-vibrant": "^4.0.4",
+    "postcss": "^8.5.8",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sharp": "^0.34.5",
+    "tailwindcss": "^3.4.19"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "svgo": "^4.0.1",
+    "@types/react": "^19.2.14",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

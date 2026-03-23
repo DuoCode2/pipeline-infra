@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "duocode-base",
+  "type": "object",
+  "required": ["theme", "assets", "content"],
+  "properties": {
+    "theme": {
+      "type": "object",
+      "required": ["primary", "primaryDark", "accent", "surface", "textTitle", "textBody", "fontDisplay", "fontBody"],
+      "properties": {
+        "primary": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "primaryDark": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "accent": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "surface": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "textTitle": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "textBody": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "fontDisplay": { "type": "string" },
+        "fontBody": { "type": "string" }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "required": ["heroImage", "galleryImages"],
+      "properties": {
+        "heroImage": { "type": "string" },
+        "galleryImages": { "type": "array", "items": { "type": "string" } },
+        "logo": { "type": "string" }
+      }
+    },
+    "content": {
+      "type": "object",
+      "required": ["en", "ms", "zh-CN", "zh-TW"],
+      "patternProperties": {
+        "^(en|ms|zh-CN|zh-TW)$": {
+          "$ref": "#/definitions/localeContent"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "localeContent": {
+      "type": "object",
+      "required": ["meta", "hero", "hours", "location", "contact", "reviews"],
+      "properties": {
+        "meta": {
+          "type": "object",
+          "required": ["title", "description"],
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "ogImage": { "type": "string" }
+          }
+        },
+        "hero": {
+          "type": "object",
+          "required": ["title", "subtitle", "cta"],
+          "properties": {
+            "title": { "type": "string" },
+            "subtitle": { "type": "string" },
+            "cta": { "type": "string" },
+            "image": { "type": "string" },
+            "badge": { "type": "string" }
+          }
+        },
+        "hours": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "location": {
+          "type": "object",
+          "required": ["address", "mapsUrl"],
+          "properties": {
+            "address": { "type": "string" },
+            "mapsUrl": { "type": "string" },
+            "coordinates": {
+              "type": "object",
+              "properties": {
+                "lat": { "type": "number" },
+                "lng": { "type": "number" }
+              }
+            }
+          }
+        },
+        "contact": {
+          "type": "object",
+          "required": ["phone"],
+          "properties": {
+            "phone": { "type": "string" },
+            "email": { "type": "string" },
+            "whatsapp": { "type": "string" }
+          }
+        },
+        "reviews": {
+          "type": "object",
+          "required": ["rating", "count", "featured"],
+          "properties": {
+            "rating": { "type": "number" },
+            "count": { "type": "number" },
+            "featured": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["author", "text", "rating"],
+                "properties": {
+                  "author": { "type": "string" },
+                  "text": { "type": "string" },
+                  "rating": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "trustBar": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["icon", "label", "value"],
+                "properties": {
+                  "icon": { "type": "string" },
+                  "label": { "type": "string" },
+                  "value": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

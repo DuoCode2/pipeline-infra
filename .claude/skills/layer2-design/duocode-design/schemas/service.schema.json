@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "duocode-service",
+  "title": "DuoCode Service Schema",
+  "description": "Schema for Malaysian general service business websites. Extends base with services, process steps, and certifications.",
+  "allOf": [
+    { "$ref": "./_base.schema.json" },
+    {
+      "type": "object",
+      "required": ["services", "process", "certifications"],
+      "properties": {
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "description", "price"],
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "price": { "type": "string" },
+              "duration": { "type": "string" }
+            }
+          }
+        },
+        "process": {
+          "type": "array",
+          "description": "Step-by-step description of how the service works",
+          "items": {
+            "type": "object",
+            "required": ["step", "title", "description"],
+            "properties": {
+              "step": { "type": "number" },
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "certifications": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of professional certifications held"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "duocode-sites",
+  "viewports": [
+    {"label": "mobile", "width": 375, "height": 812},
+    {"label": "tablet", "width": 768, "height": 1024},
+    {"label": "desktop", "width": 1440, "height": 900}
+  ],
+  "scenarios": [],
+  "paths": {
+    "bitmaps_reference": "eval/backstop/reference",
+    "bitmaps_test": "eval/backstop/test",
+    "html_report": "eval/backstop/report",
+    "ci_report": "eval/backstop/ci"
+  },
+  "report": ["CI"],
+  "engine": "playwright",
+  "engineOptions": {
+    "args": ["--no-sandbox"]
+  },
+  "asyncCaptureLimit": 5,
+  "asyncCompareLimit": 50,
+  "misMatchThreshold": 0.1,
+  "resembleOutputOptions": {
+    "ignoreAntialiasing": true,
+    "usePreciseMatching": true
+  }
+}

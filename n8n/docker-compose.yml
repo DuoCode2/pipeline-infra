@@ -1,0 +1,21 @@
+services:
+  n8n:
+    image: n8nio/n8n
+    ports: ["5678:5678"]
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ../output:/output
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - NODE_FUNCTION_ALLOW_EXTERNAL=node-vibrant,sharp,svgo,@vercel/sdk
+      - NODE_FUNCTION_ALLOW_BUILTIN=fs,path,crypto
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - UNSPLASH_ACCESS_KEY=${UNSPLASH_ACCESS_KEY}
+      - VERCEL_TOKEN=${VERCEL_TOKEN}
+    env_file:
+      - ../.env
+
+volumes:
+  n8n_data:
