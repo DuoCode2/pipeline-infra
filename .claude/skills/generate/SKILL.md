@@ -49,7 +49,7 @@ cp .claude/skills/duocode-design/templates/_shared/.gitignore output/$SLUG/
 
 ## Step 3: Design & Build (Creative Phase)
 
-Use the `frontend-design` skill. Provide it with:
+Invoke the `frontend-design` skill (global Anthropic skill, available via Skill tool). Provide it with:
 - Business name, industry, location, hours, contact info
 - Brand colors from `brand-colors.json`
 - Photos from `public/images/` (visually inspect to choose best hero — NEVER use maps-1)
@@ -75,6 +75,7 @@ Zero errors required. Max 3 fix-and-retry cycles.
 **Gate 2 — Lighthouse:**
 ```bash
 npx serve out -l 3456 &
+sleep 2
 npx lighthouse http://localhost:3456/en/ --output json --output-path lighthouse.json --chrome-flags="--headless"
 kill %1
 ```
@@ -82,12 +83,16 @@ Thresholds: Performance ≥ 90, Accessibility = 100, SEO ≥ 95
 
 **Gate 3 — Visual QA (browser-use CLI):**
 ```bash
+npx serve out -l 3456 &
+sleep 2
 browser-use open http://localhost:3456/en/
 browser-use screenshot screenshots/desktop.png
-browser-use eval "await page.setViewportSize({width: 375, height: 812})"
+browser-use python "browser._run(browser._session._cdp_set_viewport(375, 812))"
 browser-use screenshot screenshots/mobile.png
+browser-use close
+kill %1
 ```
-Evaluate with design judgment — does it look professional and match the business identity?
+Evaluate: professional quality? Matches business identity? Mobile layout clean?
 If not satisfied, iterate (max 3 rounds).
 
 ## Step 5: Deploy
