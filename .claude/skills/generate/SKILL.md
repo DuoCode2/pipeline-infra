@@ -49,7 +49,7 @@ cp .claude/skills/duocode-design/templates/_shared/.gitignore output/$SLUG/
 
 ## Step 3: Design & Build (Creative Phase)
 
-Invoke the `frontend-design` skill (global Anthropic skill, available via Skill tool). Provide it with:
+Read `.claude/skills/frontend-design/SKILL.md` (Anthropic official design skill) and apply its principles. Provide it with:
 - Business name, industry, location, hours, contact info
 - Brand colors from `brand-colors.json`
 - Photos from `public/images/` (visually inspect to choose best hero — NEVER use maps-1)

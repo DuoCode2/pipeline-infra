@@ -1,6 +1,6 @@
 ---
 name: toolchain
-description: Quick reference for browser-use CLI and Lighthouse commands used in the pipeline.
+description: "Reference for browser-use CLI (screenshots, viewport, headless) and Lighthouse (audit thresholds). Auto-loaded during quality gates."
 disable-model-invocation: true
 ---
 

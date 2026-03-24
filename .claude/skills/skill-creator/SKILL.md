@@ -1,7 +1,8 @@
 ---
 name: skill-creator
 description: "Create new skills, modify and improve existing skills, and measure skill performance. Use for creating skills from scratch, editing skills, running evals, benchmarking, or optimizing skill descriptions."
-allowed-tools: Bash, Read, Write, Edit
+allowed-tools: [Bash, Read, Write, Edit]
+user-invocable: true
 ---
 
 # Skill Creator

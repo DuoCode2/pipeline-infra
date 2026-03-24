@@ -1,0 +1,387 @@
+{
+  "id": "sheets-rebuild-001",
+  "name": "Sheets Rebuild",
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        200,
+        300
+      ],
+      "parameters": {
+        "path": "sheets-rebuild",
+        "httpMethod": "POST",
+        "responseMode": "lastNode"
+      },
+      "typeVersion": 2,
+      "webhookId": "sheets-rebuild-001"
+    },
+    {
+      "id": "clear-worklog",
+      "name": "Clear WorkLog",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        400,
+        300
+      ],
+      "parameters": {
+        "operation": "clear",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "16Jr3k5OZD02p7-HMSkda5jyKApPbE_KAureiV4ovYOk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "WorkLog"
+        },
+        "options": {}
+      },
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Cm08O9cPWBANNWMw",
+          "name": "Google Sheets (DuoCode)"
+        }
+      }
+    },
+    {
+      "id": "clear-leads",
+      "name": "Clear Leads",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        600,
+        300
+      ],
+      "parameters": {
+        "operation": "clear",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "16Jr3k5OZD02p7-HMSkda5jyKApPbE_KAureiV4ovYOk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "options": {}
+      },
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Cm08O9cPWBANNWMw",
+          "name": "Google Sheets (DuoCode)"
+        }
+      }
+    },
+    {
+      "id": "worklog-headers",
+      "name": "WorkLog Headers",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        800,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "timestamp",
+              "value": "timestamp",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "place_id",
+              "value": "place_id",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "slug",
+              "value": "slug",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "action",
+              "value": "action",
+              "type": "string"
+            },
+            {
+              "id": "5",
+              "name": "result",
+              "value": "result",
+              "type": "string"
+            },
+            {
+              "id": "6",
+              "name": "qa_score",
+              "value": "qa_score",
+              "type": "string"
+            },
+            {
+              "id": "7",
+              "name": "url",
+              "value": "url",
+              "type": "string"
+            },
+            {
+              "id": "8",
+              "name": "details",
+              "value": "details",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "write-worklog",
+      "name": "Write WorkLog Headers",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1000,
+        300
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "16Jr3k5OZD02p7-HMSkda5jyKApPbE_KAureiV4ovYOk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "WorkLog"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData"
+        },
+        "options": {}
+      },
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Cm08O9cPWBANNWMw",
+          "name": "Google Sheets (DuoCode)"
+        }
+      }
+    },
+    {
+      "id": "leads-headers",
+      "name": "Leads Headers",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1200,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "place_id",
+              "value": "place_id",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "name",
+              "value": "name",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "slug",
+              "value": "slug",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "industry",
+              "value": "industry",
+              "type": "string"
+            },
+            {
+              "id": "5",
+              "name": "address",
+              "value": "address",
+              "type": "string"
+            },
+            {
+              "id": "6",
+              "name": "phone",
+              "value": "phone",
+              "type": "string"
+            },
+            {
+              "id": "7",
+              "name": "rating",
+              "value": "rating",
+              "type": "string"
+            },
+            {
+              "id": "8",
+              "name": "reviews_count",
+              "value": "reviews_count",
+              "type": "string"
+            },
+            {
+              "id": "9",
+              "name": "maps_url",
+              "value": "maps_url",
+              "type": "string"
+            },
+            {
+              "id": "10",
+              "name": "status",
+              "value": "status",
+              "type": "string"
+            },
+            {
+              "id": "11",
+              "name": "qa_score",
+              "value": "qa_score",
+              "type": "string"
+            },
+            {
+              "id": "12",
+              "name": "url",
+              "value": "url",
+              "type": "string"
+            },
+            {
+              "id": "13",
+              "name": "github_repo",
+              "value": "github_repo",
+              "type": "string"
+            },
+            {
+              "id": "14",
+              "name": "created_at",
+              "value": "created_at",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "write-leads",
+      "name": "Write Leads Headers",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1400,
+        300
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "16Jr3k5OZD02p7-HMSkda5jyKApPbE_KAureiV4ovYOk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData"
+        },
+        "options": {}
+      },
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Cm08O9cPWBANNWMw",
+          "name": "Google Sheets (DuoCode)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Clear WorkLog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear WorkLog": {
+      "main": [
+        [
+          {
+            "node": "Clear Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Leads": {
+      "main": [
+        [
+          {
+            "node": "WorkLog Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WorkLog Headers": {
+      "main": [
+        [
+          {
+            "node": "Write WorkLog Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write WorkLog Headers": {
+      "main": [
+        [
+          {
+            "node": "Leads Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leads Headers": {
+      "main": [
+        [
+          {
+            "node": "Write Leads Headers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

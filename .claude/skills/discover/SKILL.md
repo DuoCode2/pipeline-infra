@@ -1,116 +1,73 @@
 ---
 name: discover
-description: "Find local businesses without websites via Google Maps API. Extracts lead data (name, address, phone, hours, photos, rating, reviews) and enriches with website contact scraping. Use when user says 'discover', 'find leads', 'search businesses'."
-allowed-tools: Bash, Read, Write
+description: "Find local businesses via Google Maps API for site generation. Two modes: quick (TypeScript, for pipeline) and deep (Python, for B2B lead enrichment with contact scraping). Use when user says 'discover', 'find leads', 'search businesses'."
+allowed-tools: [Bash, Read, Write]
+user-invocable: true
 ---
 
-# Google Maps Lead Generation
-
-## Goal
-Generate high-quality B2B leads from Google Maps with deep contact enrichment by scraping websites and using Claude to extract structured contact data.
-
-## Inputs
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `--search` | Yes | Search query (e.g., "plumbers in Austin TX") |
-| `--limit` | No | Max results (default: 10) |
-| `--sheet-url` | No | Existing sheet to append to |
-| `--workers` | No | Parallel workers (default: 3) |
+# Google Maps Lead Discovery
 
 **If the search query (city + keyword) is not provided, use AskUserQuestion to ask for it.** Never output a plain-text question — always use the AskUserQuestion tool.
 
-## Scripts
-- `./scripts/gmaps_lead_pipeline.py` - Main orchestration
-- `./scripts/gmaps_parallel_pipeline.py` - Parallel version
-- `./scripts/scrape_google_maps.py` - Google Maps scraper
-- `./scripts/extract_website_contacts.py` - Website contact extractor
-- `./scripts/update_sheet.py` - Google Sheets sync
+## Mode 1: Pipeline Discovery (TypeScript) — DEFAULT
 
-## Process
+Lightweight search for feeding into `/generate` or `/batch`. Uses Google Places API directly.
 
-### Basic Usage
+```bash
+npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "restaurant" --limit 3
+```
+
+Returns JSON array of `PlaceResult` objects with: id, name, address, phone, rating, reviews, photos, hours, location. This is the primary discovery tool for the DuoCode pipeline.
+
+**Use this mode** when discovering leads for site generation.
+
+## Mode 2: Deep Lead Enrichment (Python)
+
+Comprehensive B2B pipeline with website scraping, contact extraction, and Google Sheets sync.
+
+### Scripts
+- `./scripts/gmaps_lead_pipeline.py` — Main orchestration
+- `./scripts/gmaps_parallel_pipeline.py` — Parallel version
+- `./scripts/scrape_google_maps.py` — Google Maps scraper (via Apify)
+- `./scripts/extract_website_contacts.py` — Website contact extractor
+- `./scripts/update_sheet.py` — Google Sheets sync
+
+### Usage
 ```bash
 # Create new sheet with 10 leads
 python3 ./scripts/gmaps_lead_pipeline.py --search "plumbers in Austin TX" --limit 10
 
-# Append to existing sheet (recommended for building database)
+# Append to existing sheet
 python3 ./scripts/gmaps_lead_pipeline.py --search "dentists in Miami FL" --limit 25 \
   --sheet-url "https://docs.google.com/spreadsheets/d/..."
 
-# Higher volume
+# Higher volume with parallel workers
 python3 ./scripts/gmaps_lead_pipeline.py --search "roofing contractors in Austin TX" \
   --limit 50 --workers 5
 ```
 
-## Pipeline Steps
+### Pipeline Steps
+1. **Google Maps Scrape** — Apify `compass/crawler-google-places`
+2. **Website Scraping** — main page + up to 5 contact pages
+3. **Web Search Enrichment** — DuckDuckGo for owner contact info
+4. **Claude Extraction** — Claude Haiku extracts structured contacts
+5. **Google Sheet Sync** — appends, deduplicates by lead_id
 
-1. **Google Maps Scrape** - Apify `compass/crawler-google-places` returns listings
-2. **Website Scraping** - Fetches main page + up to 5 contact pages
-3. **Web Search Enrichment** - DuckDuckGo search for owner contact info
-4. **Claude Extraction** - Claude 3.5 Haiku extracts structured contacts
-5. **Google Sheet Sync** - Appends new leads, deduplicates by lead_id
+### Output Schema (36 fields)
+- **Business:** name, category, address, city, state, zip, phone, website, rating, reviews
+- **Contacts:** emails, phones, hours
+- **Social:** facebook, twitter, linkedin, instagram, youtube, tiktok
+- **Owner:** name, title, email, phone, linkedin
+- **Team:** JSON array of members
+- **Metadata:** lead_id, scraped_at, query, pages_scraped, enrichment_status
 
-## Output Schema (36 fields)
-
-**Business Basics:** business_name, category, address, city, state, zip_code, phone, website, rating, review_count
-
-**Extracted Contacts:** emails, additional_phones, business_hours
-
-**Social Media:** facebook, twitter, linkedin, instagram, youtube, tiktok
-
-**Owner Info:** owner_name, owner_title, owner_email, owner_phone, owner_linkedin
-
-**Team Contacts:** JSON array of team members
-
-**Metadata:** lead_id, scraped_at, search_query, pages_scraped, enrichment_status
-
-## Cost
-| Component | Per Lead |
-|-----------|----------|
-| Apify Google Maps | ~$0.01-0.02 |
-| Claude Haiku | ~$0.002 |
-| DuckDuckGo/HTTP | Free |
-| **Total** | **~$0.012-0.022** |
-
-For 100 leads: ~$1.50-2.50 total
-
-## Troubleshooting
-
-- **"No businesses found"**: Include location in query
-- **403 Forbidden**: ~10-15% of sites block scrapers (handled gracefully)
-- **Auth issues**: Delete `token.json` and re-authenticate
-- **Duplicates**: Uses lead_id (MD5 of name|address) for deduplication
-
-## Environment
+### Environment (Mode 2 only)
 ```
 APIFY_API_TOKEN=your_token
 ANTHROPIC_API_KEY=your_key
 ```
 
-## Schema
+### Cost (Mode 2)
+~$0.012-0.022 per lead (~$1.50-2.50 per 100 leads)
 
-### Inputs
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `search` | string | Yes | Search query (e.g., 'plumbers in Austin TX') |
-| `limit` | integer | No | Max results (default: 10) |
-| `sheet_url` | string | No | Existing sheet to append to |
-| `workers` | integer | No | Parallel workers (default: 3) |
-
-### Outputs
-| Name | Type | Description |
-|------|------|-------------|
-| `sheet_url` | string | Google Sheet URL with 36-field lead data |
-| `lead_count` | integer | Number of leads scraped |
-
-### Credentials
-| Name | Source |
-|------|--------|
-| `APIFY_API_TOKEN` | .env |
-| `ANTHROPIC_API_KEY` | .env |
-
-### Composable With
-Skills that chain well with this one: `classify-leads`, `casualize-names`, `instantly-campaigns`, `onboarding-kickoff`
-
-### Cost
-$0.012-0.022 per lead
+**Use this mode** when building a lead database, enriching contacts, or syncing to Google Sheets.

@@ -1,6 +1,6 @@
 ---
 name: duocode-design
-description: Malaysia market rules and project scaffolding for DuoCode sites
+description: "Malaysia market rules (pricing RM format, phone +60, Halal, 4 languages) and Next.js scaffolding for DuoCode site generation. Auto-loaded during /generate and /batch."
 disable-model-invocation: true
 ---
 

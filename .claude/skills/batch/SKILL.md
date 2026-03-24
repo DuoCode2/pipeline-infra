@@ -15,12 +15,15 @@ Process multiple leads through: discover → prepare → generate → quality ga
 ## Workflow
 
 ### Phase 1: Parallel Asset Preparation
-Launch one Agent per lead for asset preparation (all run concurrently):
+Use the `Agent` tool to launch one agent per lead for concurrent asset preparation:
+
 ```
-Agent per lead:
-  npx tsx packages/assets/maps-photos.ts ...
-  npx tsx packages/assets/extract-colors.ts ...
-  npx tsx packages/assets/optimize-images.ts ...
+For each lead, launch an Agent:
+  Agent(prompt="Prepare assets for {business_name}:
+    npx tsx packages/assets/maps-photos.ts --photos '{photos}' --output output/{slug}/public/images
+    npx tsx packages/assets/extract-colors.ts --image output/{slug}/public/images/maps-2.jpg --output output/{slug}
+    npx tsx packages/assets/optimize-images.ts --input output/{slug}/public/images
+  ", mode="bypassPermissions")
 ```
 
 ### Phase 2: Sequential Site Generation

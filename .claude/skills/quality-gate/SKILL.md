@@ -1,6 +1,6 @@
 ---
 name: quality-gate
-description: Three-gate quality pipeline — build verification, Lighthouse audit, visual QA with browser-use screenshots.
+description: "Three-gate quality pipeline — build verification, Lighthouse audit (Perf≥90, A11y=100, SEO≥95), visual QA with browser-use screenshots. Use when user says 'qa', 'quality check', 'run gates', or 'check the site'."
 allowed-tools: [Bash, Read, Glob, Grep]
 user-invocable: true
 ---
@@ -52,6 +52,8 @@ browser-use screenshot screenshots/mobile.png
 browser-use close
 kill %1
 ```
+
+**Claude reviews the screenshots** — not the user. Read the screenshot files, evaluate them against the checklist, and either pass or fix issues autonomously.
 
 ### Evaluation Checklist
 Visually inspect both screenshots. Score each dimension:
