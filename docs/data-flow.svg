@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 440" fill="none">
+  <defs>
+    <style>
+      text { font-family: 'Inter', -apple-system, sans-serif; }
+      .title { font-size: 16px; font-weight: 700; fill: #0f172a; }
+      .node { font-size: 10px; font-weight: 600; }
+      .data { font-size: 8.5px; font-family: 'SF Mono', monospace; }
+      .desc { font-size: 9px; fill: #64748b; }
+      .type-label { font-size: 7.5px; font-weight: 700; letter-spacing: 1px; }
+    </style>
+    <filter id="sh" x="-3%" y="-5%" width="106%" height="115%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.06"/>
+    </filter>
+    <marker id="arr" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#64748b"/>
+    </marker>
+    <marker id="arr-g" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#10b981"/>
+    </marker>
+  </defs>
+
+  <rect width="1000" height="440" rx="10" fill="#fafbfc"/>
+  <text x="32" y="36" class="title">Data Flow — From Search Query to Live Website</text>
+
+  <!-- ROW 1: Input → Search → PlaceResult -->
+  <text x="32" y="68" class="type-label" fill="#64748b">INPUT</text>
+
+  <rect x="32" y="78" width="120" height="50" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="48" y="98" class="node" fill="#334155">CLI Arguments</text>
+  <text x="48" y="112" class="data" fill="#64748b">--city "KL"</text>
+  <text x="48" y="122" class="data" fill="#64748b">--category "restaurant"</text>
+
+  <line x1="152" y1="103" x2="176" y2="103" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <rect x="180" y="78" width="140" height="50" rx="6" fill="#dbeafe" stroke="#93c5fd" filter="url(#sh)"/>
+  <text x="196" y="98" class="node" fill="#1e40af">Google Maps API</text>
+  <text x="196" y="112" class="data" fill="#3b82f6">POST places:searchText</text>
+  <text x="196" y="122" class="data" fill="#3b82f6">pageSize: 20, maxPages: 3</text>
+
+  <line x1="320" y1="103" x2="344" y2="103" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <rect x="348" y="74" width="200" height="60" rx="6" fill="#ffffff" stroke="#6366f1" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="364" y="94" class="node" fill="#4338ca">PlaceResult[]</text>
+  <text x="364" y="108" class="data" fill="#6366f1">id · displayName · primaryType</text>
+  <text x="364" y="118" class="data" fill="#6366f1">photos[].name · rating · hours</text>
+  <text x="364" y="128" class="data" fill="#6366f1">formattedAddress · phone</text>
+
+  <line x1="548" y1="103" x2="572" y2="103" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <rect x="576" y="78" width="130" height="50" rx="6" fill="#fef3c7" stroke="#fbbf24" filter="url(#sh)"/>
+  <text x="592" y="98" class="node" fill="#92400e">classifyIndustry()</text>
+  <text x="592" y="112" class="data" fill="#a16207">primaryType → industry</text>
+  <text x="592" y="122" class="data" fill="#a16207">50+ type mappings</text>
+
+  <line x1="706" y1="103" x2="730" y2="103" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <rect x="734" y="78" width="110" height="50" rx="6" fill="#fff7ed" stroke="#fb923c" filter="url(#sh)"/>
+  <text x="750" y="98" class="node" fill="#c2410c">IndustryDesign</text>
+  <text x="750" y="112" class="data" fill="#ea580c">fonts · svgStyle</text>
+  <text x="750" y="122" class="data" fill="#ea580c">heroStyle · ctaStyle</text>
+
+  <!-- ROW 2: Asset pipeline -->
+  <text x="32" y="168" class="type-label" fill="#64748b">ASSET PIPELINE</text>
+
+  <rect x="32" y="178" width="155" height="56" rx="6" fill="#ffffff" stroke="#bae6fd" filter="url(#sh)"/>
+  <text x="48" y="198" class="node" fill="#0369a1">📷 Photo Download</text>
+  <text x="48" y="212" class="data" fill="#0284c7">Maps: maps-{n}.jpg (max 3)</text>
+  <text x="48" y="224" class="data" fill="#0284c7">Stock: stock-{n}.jpg (max 2)</text>
+
+  <line x1="187" y1="206" x2="208" y2="206" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="212" y="178" width="155" height="56" rx="6" fill="#ffffff" stroke="#fde68a" filter="url(#sh)"/>
+  <text x="228" y="198" class="node" fill="#a16207">🎨 Color Extraction</text>
+  <text x="228" y="212" class="data" fill="#ca8a04">node-vibrant → BrandColors</text>
+  <text x="228" y="224" class="data" fill="#ca8a04">6 hex vars → brand-colors.json</text>
+
+  <line x1="367" y1="206" x2="388" y2="206" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="392" y="178" width="155" height="56" rx="6" fill="#ffffff" stroke="#d8b4fe" filter="url(#sh)"/>
+  <text x="408" y="198" class="node" fill="#7e22ce">⚡ Image Optimize</text>
+  <text x="408" y="212" class="data" fill="#7c3aed">Sharp → WebP quality:80</text>
+  <text x="408" y="224" class="data" fill="#7c3aed">4 sizes → image-manifest.json</text>
+
+  <line x1="547" y1="206" x2="568" y2="206" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="572" y="174" width="200" height="64" rx="6" fill="#ffffff" stroke="#6366f1" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="588" y="194" class="node" fill="#4338ca">output/{place_id}/public/</text>
+  <text x="588" y="210" class="data" fill="#6366f1">images/maps-1-640.webp ...</text>
+  <text x="588" y="222" class="data" fill="#6366f1">svgs/steam.svg, wave-divider.svg</text>
+  <text x="588" y="232" class="data" fill="#6366f1">image-manifest.json</text>
+
+  <!-- ROW 3: Template + Build -->
+  <text x="32" y="270" class="type-label" fill="#64748b">TEMPLATE → BUILD</text>
+
+  <rect x="32" y="280" width="155" height="56" rx="6" fill="#ffffff" stroke="#bbf7d0" filter="url(#sh)"/>
+  <text x="48" y="300" class="node" fill="#15803d">📄 Copy Templates</text>
+  <text x="48" y="314" class="data" fill="#16a34a">_shared/ → output/{id}/</text>
+  <text x="48" y="326" class="data" fill="#16a34a">{industry}/ overlay components</text>
+
+  <line x1="187" y1="308" x2="208" y2="308" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="212" y="280" width="175" height="56" rx="6" fill="#ffffff" stroke="#fed7aa" filter="url(#sh)"/>
+  <text x="228" y="300" class="node" fill="#c2410c">✏️ Generate business.ts</text>
+  <text x="228" y="314" class="data" fill="#ea580c">theme: BrandColors + IndustryDesign</text>
+  <text x="228" y="326" class="data" fill="#ea580c">content: {en,ms,zh-CN,zh-TW}</text>
+
+  <line x1="387" y1="308" x2="408" y2="308" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="412" y="280" width="130" height="56" rx="6" fill="#ffffff" stroke="#93c5fd" filter="url(#sh)"/>
+  <text x="428" y="300" class="node" fill="#1d4ed8">🔨 Next.js Build</text>
+  <text x="428" y="314" class="data" fill="#2563eb">npm run build</text>
+  <text x="428" y="326" class="data" fill="#2563eb">→ out/ (static HTML)</text>
+
+  <line x1="542" y1="308" x2="563" y2="308" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr-g)"/>
+
+  <!-- Quality Gates -->
+  <rect x="567" y="276" width="180" height="64" rx="6" fill="#dcfce7" stroke="#4ade80" filter="url(#sh)"/>
+  <text x="583" y="296" class="node" fill="#166534">✅ Quality Gates</text>
+  <text x="583" y="310" class="data" fill="#15803d">Gate 1: build = 0 errors</text>
+  <text x="583" y="322" class="data" fill="#15803d">Gate 2: Lighthouse ≥ 90/100/95</text>
+  <text x="583" y="334" class="data" fill="#15803d">Gate 3: Visual QA ≥ 75</text>
+
+  <line x1="747" y1="308" x2="768" y2="308" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <rect x="772" y="276" width="100" height="64" rx="6" fill="#f0fdf4" stroke="#4ade80" stroke-width="2"/>
+  <text x="792" y="300" class="node" fill="#166534">PASS</text>
+  <text x="788" y="314" class="data" fill="#15803d">out/</text>
+  <text x="788" y="326" class="data" fill="#15803d">vercel.json</text>
+  <text x="788" y="336" class="data" fill="#15803d">Static files</text>
+
+  <!-- ROW 4: Deploy -->
+  <text x="32" y="372" class="type-label" fill="#64748b">DEPLOY</text>
+
+  <rect x="32" y="382" width="170" height="48" rx="6" fill="#ffffff" stroke="#c4b5fd" filter="url(#sh)"/>
+  <text x="48" y="402" class="node" fill="#5b21b6">🚀 Vercel API v13</text>
+  <text x="48" y="416" class="data" fill="#7c3aed">Base64 upload → poll READY</text>
+  <text x="48" y="426" class="data" fill="#7c3aed">routes: / → /en redirect</text>
+
+  <line x1="202" y1="406" x2="223" y2="406" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="227" y="382" width="170" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" filter="url(#sh)"/>
+  <text x="243" y="402" class="node" fill="#1e293b">📦 GitHub Push</text>
+  <text x="243" y="416" class="data" fill="#475569">gh repo create DuoCode2/{slug}</text>
+  <text x="243" y="426" class="data" fill="#475569">--private --source=. --push</text>
+
+  <line x1="397" y1="406" x2="418" y2="406" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="422" y="382" width="160" height="48" rx="6" fill="#ffffff" stroke="#fecdd3" filter="url(#sh)"/>
+  <text x="438" y="402" class="node" fill="#be123c">🔗 Link Vercel ↔ GH</text>
+  <text x="438" y="416" class="data" fill="#e11d48">PATCH /v9/projects/{slug}</text>
+  <text x="438" y="426" class="data" fill="#e11d48">gitRepository: DuoCode2/{slug}</text>
+
+  <line x1="582" y1="406" x2="603" y2="406" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="607" y="382" width="145" height="48" rx="6" fill="#ffffff" stroke="#fde68a" filter="url(#sh)"/>
+  <text x="623" y="402" class="node" fill="#a16207">📊 Log to n8n</text>
+  <text x="623" y="416" class="data" fill="#ca8a04">POST /webhook/log-work</text>
+  <text x="623" y="426" class="data" fill="#ca8a04">→ Google Sheets WorkLog</text>
+
+  <line x1="752" y1="406" x2="773" y2="406" stroke="#10b981" stroke-width="2" marker-end="url(#arr-g)"/>
+
+  <!-- Final output -->
+  <rect x="777" y="376" width="200" height="56" rx="8" fill="#6366f1" filter="url(#sh)"/>
+  <text x="800" y="400" style="font-size:12px; font-weight:700; fill:#ffffff;">✨ Live Website</text>
+  <text x="800" y="416" class="data" style="fill:rgba(255,255,255,0.8);">{slug}.vercel.app</text>
+  <text x="800" y="428" class="data" style="fill:rgba(255,255,255,0.6);">github.com/DuoCode2/{slug}</text>
+</svg>

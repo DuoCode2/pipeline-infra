@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" fill="none">
+  <defs>
+    <style>
+      text { font-family: 'Inter', -apple-system, sans-serif; }
+      .title { font-size: 16px; font-weight: 700; fill: #0f172a; }
+      .mod-name { font-size: 12px; font-weight: 600; }
+      .mod-file { font-size: 9px; font-family: 'SF Mono', monospace; fill: #64748b; }
+      .mod-desc { font-size: 9px; fill: #94a3b8; }
+      .dep-label { font-size: 8px; fill: #94a3b8; font-family: 'SF Mono', monospace; }
+      .section { font-size: 10px; font-weight: 700; fill: #64748b; letter-spacing: 1.5px; }
+    </style>
+    <filter id="s" x="-3%" y="-5%" width="106%" height="115%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2.5" flood-opacity="0.07"/>
+    </filter>
+    <marker id="ah" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#94a3b8"/>
+    </marker>
+    <marker id="ah-red" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#f87171"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="520" rx="10" fill="#fafbfc"/>
+
+  <!-- Title -->
+  <text x="32" y="36" class="title">Package Dependency Graph</text>
+  <text x="32" y="52" class="mod-desc" style="font-size:10px;">packages/ — TypeScript modules and their import relationships</text>
+
+  <!-- ═══ ORCHESTRATOR (center) ═══ -->
+  <rect x="310" y="80" width="280" height="100" rx="10" fill="#ffffff" stroke="#c7d2fe" stroke-width="1.5" filter="url(#s)"/>
+  <rect x="310" y="80" width="280" height="28" rx="10" fill="#eef2ff"/>
+  <rect x="310" y="100" width="280" height="8" fill="#eef2ff"/>
+  <text x="380" y="100" class="mod-name" fill="#4338ca">batch/orchestrate.ts</text>
+  <text x="322" y="126" class="mod-file">592 lines · Main entry point</text>
+  <text x="322" y="142" class="mod-desc">Batch processing: discover → classify → generate → deploy</text>
+  <text x="322" y="158" class="mod-desc">Imports ALL other packages · CLI: npm run batch</text>
+  <text x="322" y="172" class="mod-file">BatchConfig → BatchResult[]</text>
+
+  <!-- ═══ DISCOVER ═══ -->
+  <rect x="32" y="100" width="220" height="80" rx="8" fill="#ffffff" stroke="#bae6fd" filter="url(#s)"/>
+  <rect x="32" y="100" width="220" height="24" rx="8" fill="#f0f9ff"/>
+  <rect x="32" y="118" width="220" height="6" fill="#f0f9ff"/>
+  <text x="90" y="118" class="mod-name" fill="#0369a1">discover/search.ts</text>
+  <text x="44" y="142" class="mod-file">140 lines · Google Maps Places API (New)</text>
+  <text x="44" y="156" class="mod-desc">searchPlaces(category, city) → PlaceResult[]</text>
+  <text x="44" y="170" class="mod-file">Pagination · filter: no website</text>
+
+  <!-- ═══ INDUSTRY CONFIG ═══ -->
+  <rect x="638" y="100" width="230" height="80" rx="8" fill="#ffffff" stroke="#fed7aa" filter="url(#s)"/>
+  <rect x="638" y="100" width="230" height="24" rx="8" fill="#fff7ed"/>
+  <rect x="638" y="118" width="230" height="6" fill="#fff7ed"/>
+  <text x="680" y="118" class="mod-name" fill="#c2410c">generate/industry-config.ts</text>
+  <text x="650" y="142" class="mod-file">126 lines · Industry classification &amp; design</text>
+  <text x="650" y="156" class="mod-desc">classifyIndustry() · INDUSTRY_CONFIG · slugify()</text>
+  <text x="650" y="170" class="mod-file">7 industries · 50+ Google Maps type mappings</text>
+
+  <!-- ═══ ASSETS ROW ═══ -->
+  <text x="32" y="228" class="section">ASSETS PIPELINE</text>
+
+  <!-- maps-photos -->
+  <rect x="32" y="240" width="200" height="76" rx="8" fill="#ffffff" stroke="#bae6fd" filter="url(#s)"/>
+  <rect x="32" y="240" width="200" height="24" rx="8" fill="#f0f9ff"/>
+  <rect x="32" y="258" width="200" height="6" fill="#f0f9ff"/>
+  <text x="62" y="258" class="mod-name" fill="#0369a1">assets/maps-photos.ts</text>
+  <text x="44" y="280" class="mod-file">71 lines · Google Photos download</text>
+  <text x="44" y="294" class="mod-desc">downloadMapsPhotos(photoNames, dir)</text>
+  <text x="44" y="308" class="mod-file">Places Photo Media API · max 5</text>
+
+  <!-- stock-photos -->
+  <rect x="250" y="240" width="200" height="76" rx="8" fill="#ffffff" stroke="#fecdd3" filter="url(#s)"/>
+  <rect x="250" y="240" width="200" height="24" rx="8" fill="#fff1f2"/>
+  <rect x="250" y="258" width="200" height="6" fill="#fff1f2"/>
+  <text x="282" y="258" class="mod-name" fill="#be123c">assets/stock-photos.ts</text>
+  <text x="262" y="280" class="mod-file">106 lines · Unsplash fallback</text>
+  <text x="262" y="294" class="mod-desc">downloadStockPhotos(industry, dir)</text>
+  <text x="262" y="308" class="mod-file">Attribution compliance · Pexels alt</text>
+
+  <!-- extract-colors -->
+  <rect x="468" y="240" width="200" height="76" rx="8" fill="#ffffff" stroke="#fde68a" filter="url(#s)"/>
+  <rect x="468" y="240" width="200" height="24" rx="8" fill="#fefce8"/>
+  <rect x="468" y="258" width="200" height="6" fill="#fefce8"/>
+  <text x="490" y="258" class="mod-name" fill="#a16207">assets/extract-colors.ts</text>
+  <text x="480" y="280" class="mod-file">109 lines · node-vibrant palette</text>
+  <text x="480" y="294" class="mod-desc">extractColors(img) → BrandColors</text>
+  <text x="480" y="308" class="mod-file">6 semantic CSS vars · fallback defaults</text>
+
+  <!-- optimize-images -->
+  <rect x="686" y="240" width="200" height="76" rx="8" fill="#ffffff" stroke="#d8b4fe" filter="url(#s)"/>
+  <rect x="686" y="240" width="200" height="24" rx="8" fill="#faf5ff"/>
+  <rect x="686" y="258" width="200" height="6" fill="#faf5ff"/>
+  <text x="704" y="258" class="mod-name" fill="#7e22ce">assets/optimize-images.ts</text>
+  <text x="698" y="280" class="mod-file">88 lines · Sharp WebP conversion</text>
+  <text x="698" y="294" class="mod-desc">optimizeImages(dir) → ImageManifest</text>
+  <text x="698" y="308" class="mod-file">4 sizes: 320 · 640 · 960 · 1280</text>
+
+  <!-- ═══ DEPLOY ═══ -->
+  <text x="32" y="366" class="section">DEPLOYMENT</text>
+
+  <rect x="32" y="378" width="250" height="76" rx="8" fill="#ffffff" stroke="#c4b5fd" filter="url(#s)"/>
+  <rect x="32" y="378" width="250" height="24" rx="8" fill="#ede9fe"/>
+  <rect x="32" y="396" width="250" height="6" fill="#ede9fe"/>
+  <text x="100" y="396" class="mod-name" fill="#5b21b6">deploy/deploy.ts</text>
+  <text x="44" y="418" class="mod-file">101 lines · Vercel REST API v13</text>
+  <text x="44" y="432" class="mod-desc">deployToVercel(buildDir, slug) → DeployResult</text>
+  <text x="44" y="446" class="mod-file">Base64 upload · poll readyState · 60s timeout</text>
+
+  <!-- Utils -->
+  <rect x="32" y="470" width="170" height="40" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="74" y="495" class="mod-name" fill="#475569">utils/env.ts</text>
+  <text x="208" y="495" class="mod-file">14 lines · requireEnv(key) — shared by all modules</text>
+
+  <!-- ═══ DEPENDENCY ARROWS ═══ -->
+  <!-- orchestrate → discover -->
+  <path d="M 310 130 L 254 130" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#ah)"/>
+  <text x="266" y="124" class="dep-label">import</text>
+
+  <!-- orchestrate → industry-config -->
+  <path d="M 590 130 L 636 130" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#ah)"/>
+  <text x="600" y="124" class="dep-label">import</text>
+
+  <!-- orchestrate → maps-photos -->
+  <path d="M 350 180 L 180 238" stroke="#94a3b8" stroke-width="1" marker-end="url(#ah)" stroke-dasharray="3 2"/>
+
+  <!-- orchestrate → stock-photos -->
+  <path d="M 400 180 L 350 238" stroke="#94a3b8" stroke-width="1" marker-end="url(#ah)" stroke-dasharray="3 2"/>
+
+  <!-- orchestrate → extract-colors -->
+  <path d="M 500 180 L 540 238" stroke="#94a3b8" stroke-width="1" marker-end="url(#ah)" stroke-dasharray="3 2"/>
+
+  <!-- orchestrate → optimize-images -->
+  <path d="M 560 180 L 760 238" stroke="#94a3b8" stroke-width="1" marker-end="url(#ah)" stroke-dasharray="3 2"/>
+
+  <!-- orchestrate → deploy -->
+  <path d="M 370 180 L 180 376" stroke="#f87171" stroke-width="1.2" marker-end="url(#ah-red)" stroke-dasharray="4 2"/>
+  <text x="230" y="300" class="dep-label" style="fill:#f87171;">deploy</text>
+
+  <!-- all → utils/env -->
+  <line x1="100" y1="316" x2="100" y2="468" stroke="#e2e8f0" stroke-width="0.8" stroke-dasharray="2 2"/>
+  <line x1="350" y1="316" x2="140" y2="468" stroke="#e2e8f0" stroke-width="0.8" stroke-dasharray="2 2"/>
+
+  <!-- Legend -->
+  <rect x="600" y="380" width="280" height="100" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="616" y="402" class="section">LEGEND</text>
+  <line x1="616" y1="416" x2="656" y2="416" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#ah)"/>
+  <text x="664" y="420" class="mod-file">Direct import</text>
+  <line x1="616" y1="436" x2="656" y2="436" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#ah)"/>
+  <text x="664" y="440" class="mod-file">Import from orchestrator</text>
+  <line x1="616" y1="456" x2="656" y2="456" stroke="#f87171" stroke-width="1.2" stroke-dasharray="4 2" marker-end="url(#ah-red)"/>
+  <text x="664" y="460" class="mod-file">Deploy path (final step)</text>
+  <line x1="616" y1="472" x2="656" y2="472" stroke="#e2e8f0" stroke-width="0.8" stroke-dasharray="2 2"/>
+  <text x="664" y="476" class="mod-file">Shared utility (utils/env.ts)</text>
+</svg>

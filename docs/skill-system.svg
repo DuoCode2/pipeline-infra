@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" fill="none">
+  <defs>
+    <style>
+      text { font-family: 'Inter', -apple-system, sans-serif; }
+      .title { font-size: 16px; font-weight: 700; fill: #0f172a; }
+      .label { font-size: 11px; font-weight: 600; }
+      .sub { font-size: 9px; fill: #64748b; }
+      .mono { font-size: 8.5px; font-family: 'SF Mono', monospace; fill: #94a3b8; }
+      .layer { font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+    </style>
+    <filter id="ds" x="-3%" y="-5%" width="106%" height="115%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.06"/>
+    </filter>
+    <marker id="a" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+      <polygon points="0 0, 6 2, 0 4" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="560" rx="10" fill="#fafbfc"/>
+  <text x="32" y="36" class="title">Two-Layer Skill System</text>
+  <text x="32" y="52" class="sub" style="font-size:10px;">Skills are loaded in order: Layer 1 (process) → Layer 2 (design) → per-industry overlay</text>
+
+  <!-- ═══ LAYER 1 ═══ -->
+  <rect x="20" y="72" width="430" height="476" rx="10" fill="#f0f9ff" stroke="#bae6fd" stroke-width="1.5"/>
+  <text x="36" y="96" class="layer" fill="#0369a1">LAYER 1 — PIPELINE (HOW)</text>
+  <text x="36" y="112" class="sub">.claude/skills/layer1-pipeline/</text>
+
+  <!-- Discovery -->
+  <rect x="36" y="126" width="190" height="52" rx="6" fill="#ffffff" stroke="#e2e8f0" filter="url(#ds)"/>
+  <text x="48" y="146" class="label" fill="#0369a1">🔍 Discovery</text>
+  <text x="48" y="160" class="mono">discovery/gmaps-leads/SKILL.md</text>
+  <text x="48" y="172" class="sub">Lead search workflow</text>
+
+  <!-- Generate -->
+  <rect x="240" y="126" width="196" height="52" rx="6" fill="#ffffff" stroke="#d1fae5" filter="url(#ds)"/>
+  <text x="252" y="146" class="label" fill="#059669">⚙️ Generate</text>
+  <text x="252" y="160" class="mono">generate/SKILL.md</text>
+  <text x="252" y="172" class="sub">Master generation workflow</text>
+
+  <!-- Prepare Assets -->
+  <rect x="36" y="190" width="190" height="52" rx="6" fill="#ffffff" stroke="#e2e8f0" filter="url(#ds)"/>
+  <text x="48" y="210" class="label" fill="#a16207">📸 Prepare Assets</text>
+  <text x="48" y="224" class="mono">prepare-assets/SKILL.md</text>
+  <text x="48" y="236" class="sub">Photo + color + optimize</text>
+
+  <!-- Batch Orchestrator -->
+  <rect x="240" y="190" width="196" height="52" rx="6" fill="#ffffff" stroke="#e2e8f0" filter="url(#ds)"/>
+  <text x="252" y="210" class="label" fill="#7e22ce">🔄 Batch Orchestrator</text>
+  <text x="252" y="224" class="mono">batch-orchestrator/SKILL.md</text>
+  <text x="252" y="236" class="sub">Multi-lead coordination</text>
+
+  <!-- Quality section -->
+  <rect x="36" y="256" width="400" height="130" rx="6" fill="#ecfdf5" stroke="#86efac"/>
+  <text x="50" y="276" class="label" fill="#059669">🛡️ Quality Gate Skills</text>
+
+  <rect x="48" y="286" width="118" height="36" rx="4" fill="#ffffff" stroke="#d1fae5"/>
+  <text x="56" y="301" class="sub" style="font-weight:600; fill:#1e293b;">Performance</text>
+  <text x="56" y="313" class="mono">quality/performance/</text>
+
+  <rect x="176" y="286" width="118" height="36" rx="4" fill="#ffffff" stroke="#d1fae5"/>
+  <text x="184" y="301" class="sub" style="font-weight:600; fill:#1e293b;">Accessibility</text>
+  <text x="184" y="313" class="mono">quality/accessibility/</text>
+
+  <rect x="304" y="286" width="118" height="36" rx="4" fill="#ffffff" stroke="#d1fae5"/>
+  <text x="312" y="301" class="sub" style="font-weight:600; fill:#1e293b;">SEO</text>
+  <text x="312" y="313" class="mono">quality/seo/</text>
+
+  <rect x="48" y="328" width="118" height="36" rx="4" fill="#ffffff" stroke="#d1fae5"/>
+  <text x="56" y="343" class="sub" style="font-weight:600; fill:#1e293b;">Core Web Vitals</text>
+  <text x="56" y="355" class="mono">quality/core-web.../</text>
+
+  <rect x="176" y="328" width="118" height="36" rx="4" fill="#ffffff" stroke="#d1fae5"/>
+  <text x="184" y="343" class="sub" style="font-weight:600; fill:#1e293b;">Visual QA</text>
+  <text x="184" y="355" class="mono">quality/ui-visual.../</text>
+
+  <rect x="304" y="328" width="118" height="36" rx="4" fill="#ffffff" stroke="#d1fae5"/>
+  <text x="312" y="343" class="sub" style="font-weight:600; fill:#1e293b;">Schema Markup</text>
+  <text x="312" y="355" class="mono">quality/schema.../</text>
+
+  <!-- Toolchain -->
+  <rect x="36" y="400" width="400" height="68" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="50" y="420" class="label" fill="#475569">🔧 Toolchain Skills</text>
+  <text x="50" y="438" class="sub">browser-use · lighthouse-ci · github · n8n · sheets-automation</text>
+  <text x="50" y="452" class="sub">svg-icon-maker · tailwind-css · favicon-generator</text>
+  <text x="50" y="462" class="mono">toolchain/*/SKILL.md</text>
+
+  <!-- Deploy + Outreach -->
+  <rect x="36" y="480" width="190" height="52" rx="6" fill="#ffffff" stroke="#c4b5fd" filter="url(#ds)"/>
+  <text x="48" y="500" class="label" fill="#5b21b6">🚀 Deploy to Vercel</text>
+  <text x="48" y="514" class="mono">deploy/deploy-to-vercel/SKILL.md</text>
+  <text x="48" y="526" class="sub">Vercel deployment integration</text>
+
+  <rect x="240" y="480" width="196" height="52" rx="6" fill="#fff1f2" stroke="#fecdd3" stroke-dasharray="3 2"/>
+  <text x="252" y="500" class="label" fill="#e11d48">💬 WhatsApp Outreach</text>
+  <text x="252" y="514" class="mono">outreach/whatsapp-automation/</text>
+  <text x="252" y="526" class="sub">Phase 5 — planned</text>
+
+  <!-- ═══ LAYER 2 ═══ -->
+  <rect x="464" y="72" width="420" height="476" rx="10" fill="#fefce8" stroke="#fde68a" stroke-width="1.5"/>
+  <text x="480" y="96" class="layer" fill="#a16207">LAYER 2 — DESIGN (WHAT)</text>
+  <text x="480" y="112" class="sub">.claude/skills/layer2-design/</text>
+
+  <!-- Core design skill -->
+  <rect x="480" y="126" width="390" height="80" rx="8" fill="#ffffff" stroke="#fde68a" filter="url(#ds)"/>
+  <text x="492" y="148" class="label" fill="#a16207">🎨 duocode-design (Core Design System)</text>
+  <text x="492" y="164" class="sub">Always loaded. Shared design principles, component usage, multi-language patterns.</text>
+  <text x="492" y="178" class="mono">duocode-design/SKILL.md · ~150 lines</text>
+  <text x="492" y="192" class="mono">references/_foundations.md · _copy-foundations.md</text>
+
+  <!-- Industry references -->
+  <rect x="480" y="218" width="390" height="150" rx="8" fill="#ffffff" stroke="#fed7aa" filter="url(#ds)"/>
+  <text x="492" y="240" class="label" fill="#c2410c">📋 Industry Design References (on demand)</text>
+
+  <rect x="494" y="252" width="110" height="44" rx="4" fill="#fff7ed" stroke="#fed7aa"/>
+  <text x="506" y="268" class="sub" style="font-weight:600;">🍜 Restaurant</text>
+  <text x="506" y="282" class="mono">Playfair · organic</text>
+  <text x="506" y="292" class="mono">warm · full-bleed</text>
+
+  <rect x="614" y="252" width="110" height="44" rx="4" fill="#fdf4ff" stroke="#e9d5ff"/>
+  <text x="626" y="268" class="sub" style="font-weight:600;">💄 Beauty</text>
+  <text x="626" y="282" class="mono">Cormorant · elegant</text>
+  <text x="626" y="292" class="mono">soft · split</text>
+
+  <rect x="734" y="252" width="122" height="44" rx="4" fill="#f0f9ff" stroke="#bae6fd"/>
+  <text x="746" y="268" class="sub" style="font-weight:600;">🏥 Clinic</text>
+  <text x="746" y="282" class="mono">Inter · geometric</text>
+  <text x="746" y="292" class="mono">cool · split</text>
+
+  <rect x="494" y="304" width="110" height="44" rx="4" fill="#fef2f2" stroke="#fecaca"/>
+  <text x="506" y="320" class="sub" style="font-weight:600;">🏋️ Fitness</text>
+  <text x="506" y="334" class="mono">Oswald · geometric</text>
+  <text x="506" y="344" class="mono">bold · full-bleed</text>
+
+  <rect x="614" y="304" width="110" height="44" rx="4" fill="#f0fdf4" stroke="#bbf7d0"/>
+  <text x="626" y="320" class="sub" style="font-weight:600;">🛒 Retail</text>
+  <text x="626" y="334" class="mono">Poppins · modern</text>
+  <text x="626" y="344" class="mono">vibrant · full-bleed</text>
+
+  <rect x="734" y="304" width="122" height="44" rx="4" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="746" y="320" class="sub" style="font-weight:600;">🔧 Service</text>
+  <text x="746" y="334" class="mono">Lato · modern</text>
+  <text x="746" y="344" class="mono">neutral · overlay</text>
+
+  <!-- Schemas -->
+  <rect x="480" y="380" width="390" height="72" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#ds)"/>
+  <text x="492" y="402" class="label" fill="#475569">📐 JSON Schemas</text>
+  <text x="492" y="418" class="sub">Data field definitions per industry — what business.ts must contain</text>
+  <text x="492" y="434" class="mono">schemas/_base.schema.json + {industry}.schema.json</text>
+  <text x="492" y="446" class="mono">BusinessData interface → theme, assets, content[locale]</text>
+
+  <!-- Templates -->
+  <rect x="480" y="464" width="390" height="72" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#ds)"/>
+  <text x="492" y="486" class="label" fill="#475569">📁 Next.js Templates</text>
+  <text x="492" y="502" class="sub">_shared/ base + industry overlays (page.tsx, components/)</text>
+  <text x="492" y="518" class="mono">templates/_shared/{src,package.json,tailwind.config.ts}</text>
+  <text x="492" y="530" class="mono">templates/{restaurant,beauty,retail}/page.tsx</text>
+
+  <!-- Load order arrow -->
+  <text x="480" y="552" class="sub" style="font-weight:600; fill:#a16207;">Load order: SKILL.md → _foundations.md → {industry}.md → schema → templates</text>
+</svg>
