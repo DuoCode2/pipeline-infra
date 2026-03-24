@@ -43,6 +43,10 @@ export interface BusinessData {
     surface: string;
     textTitle: string;
     textBody: string;
+    // WCAG-safe text colors for colored backgrounds (auto-generated)
+    onPrimary: string;      // text on primary background (≥4.5:1)
+    onPrimaryDark: string;  // text on primaryDark background (≥4.5:1)
+    accentText: string;     // accent for text on surface (≥4.5:1)
     fontDisplay: string;
     fontBody: string;
   };

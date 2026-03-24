@@ -30,6 +30,7 @@
   "dependencies": {
     "@googlemaps/google-maps-services-js": "^3.4.2",
     "autoprefixer": "^10.4.27",
+    "culori": "^4.0.2",
     "dotenv": "^17.3.1",
     "next": "^14.2.35",
     "node-vibrant": "^4.0.4",
@@ -40,6 +41,7 @@
     "tailwindcss": "^3.4.19"
   },
   "devDependencies": {
+    "@types/culori": "^4.0.1",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "lighthouse": "^13.0.0",

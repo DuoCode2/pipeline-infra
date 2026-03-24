@@ -18,11 +18,16 @@ npm install && npm run build
 - **Fail:** Fix TypeScript/JSX errors, retry (max 3)
 
 ## Gate 2: Lighthouse Audit
+
+### Option A: Local build (recommended for iteration)
 ```bash
-npx serve out -l 3456 &
-sleep 2
-npx lighthouse http://localhost:3456/en/ --output json --output-path lighthouse.json --chrome-flags="--headless"
-kill %1
+npx tsx packages/quality/serve-and-check.ts --dir output/{slug}/out --output output/{slug}
+```
+Auto-finds free port, runs Lighthouse, kills server. No manual port management needed.
+
+### Option B: Live URL (post-deploy verification)
+```bash
+npx tsx packages/quality/lighthouse-check.ts --url https://{slug}.vercel.app/en --output output/{slug}
 ```
 
 | Metric | Threshold |
@@ -52,6 +57,8 @@ browser-use screenshot screenshots/mobile.png
 browser-use close
 kill %1
 ```
+
+**IMPORTANT:** All screenshot file paths MUST be absolute (e.g., `/Users/.../output/{slug}/screenshots/desktop.png`). Relative paths will fail with "No such file or directory".
 
 **Claude reviews the screenshots** — not the user. Read the screenshot files, evaluate them against the checklist, and either pass or fix issues autonomously.
 

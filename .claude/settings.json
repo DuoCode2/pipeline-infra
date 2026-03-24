@@ -15,5 +15,6 @@
       "TaskCreate",
       "TaskUpdate"
     ]
-  }
+  },
+  "showClearContextOnPlanAccept": true
 }

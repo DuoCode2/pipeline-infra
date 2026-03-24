@@ -1,150 +1,19 @@
 {
+  "updatedAt": "2026-03-24T17:15:47.000Z",
+  "createdAt": "2026-03-24T17:03:12.671Z",
   "id": "sheets-rebuild-001",
   "name": "Sheets Rebuild",
-  "nodes": [
-    {
-      "id": "trigger",
-      "name": "Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "position": [
-        200,
-        300
-      ],
-      "parameters": {
-        "path": "sheets-rebuild",
-        "httpMethod": "POST",
-        "responseMode": "lastNode"
-      },
-      "typeVersion": 2,
-      "webhookId": "sheets-rebuild-001"
-    },
-    {
-      "id": "clear-wl",
-      "name": "Clear WorkLog",
-      "type": "n8n-nodes-base.googleSheets",
-      "position": [
-        400,
-        300
-      ],
-      "parameters": {
-        "operation": "clear",
-        "documentId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "16Jr3k5OZD02p7-HMSkda5jyKApPbE_KAureiV4ovYOk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "mode": "name",
-          "value": "WorkLog"
-        },
-        "options": {}
-      },
-      "typeVersion": 4.5,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "Cm08O9cPWBANNWMw",
-          "name": "Google Sheets (DuoCode)"
-        }
-      }
-    },
-    {
-      "id": "clear-leads",
-      "name": "Clear Leads",
-      "type": "n8n-nodes-base.googleSheets",
-      "position": [
-        600,
-        300
-      ],
-      "parameters": {
-        "operation": "clear",
-        "documentId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "16Jr3k5OZD02p7-HMSkda5jyKApPbE_KAureiV4ovYOk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "mode": "name",
-          "value": "Leads"
-        },
-        "options": {}
-      },
-      "typeVersion": 4.5,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "Cm08O9cPWBANNWMw",
-          "name": "Google Sheets (DuoCode)"
-        }
-      }
-    },
-    {
-      "id": "done",
-      "name": "Done",
-      "type": "n8n-nodes-base.set",
-      "position": [
-        800,
-        300
-      ],
-      "parameters": {
-        "mode": "manual",
-        "assignments": {
-          "assignments": [
-            {
-              "id": "1",
-              "name": "rebuilt",
-              "value": true,
-              "type": "boolean"
-            },
-            {
-              "id": "2",
-              "name": "note",
-              "value": "Headers auto-created on first data write",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "typeVersion": 3.4
-    }
-  ],
-  "connections": {
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "Clear WorkLog",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Clear WorkLog": {
-      "main": [
-        [
-          {
-            "node": "Clear Leads",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Clear Leads": {
-      "main": [
-        [
-          {
-            "node": "Done",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
-  },
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "settings": {
     "executionOrder": "v1"
-  }
+  },
+  "homeProject": {
+    "id": "q4dXsuJzhJK6N4X1",
+    "type": "personal",
+    "name": "Liu Wei <duocodetechu@gmail.com>",
+    "icon": null
+  },
+  "sharedWithProjects": []
 }

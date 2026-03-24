@@ -11,6 +11,9 @@ const config: Config = {
         surface: 'var(--color-surface)',
         'text-title': 'var(--color-text-title)',
         'text-body': 'var(--color-text-body)',
+        'on-primary': 'var(--color-on-primary)',
+        'on-primary-dark': 'var(--color-on-primary-dark)',
+        'accent-text': 'var(--color-accent-text)',
       },
       fontFamily: {
         display: ['var(--font-display)', 'serif'],

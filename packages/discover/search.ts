@@ -17,6 +17,7 @@ const FIELD_MASK = [
   'places.photos',
   'places.location',
   'places.googleMapsUri',
+  'places.businessStatus',
 ].join(',');
 
 /**
@@ -40,6 +41,27 @@ export interface PlaceResult {
   photos?: Array<{ name: string; widthPx: number; heightPx: number }>;
   location?: { latitude: number; longitude: number };
   googleMapsUri?: string;
+  businessStatus?: string; // OPERATIONAL | CLOSED_TEMPORARILY | CLOSED_PERMANENTLY
+}
+
+/**
+ * Check if a website URL is actually reachable (not a dead link).
+ * Returns true if the site responds with 2xx/3xx within 5 seconds.
+ */
+async function isWebsiteReachable(url: string): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(url, {
+      method: 'HEAD',
+      signal: controller.signal,
+      redirect: 'follow',
+    });
+    clearTimeout(timeout);
+    return res.ok || (res.status >= 300 && res.status < 400);
+  } catch {
+    return false; // timeout, DNS error, connection refused, etc.
+  }
 }
 
 interface SearchResponse {
@@ -110,11 +132,44 @@ export async function searchPlaces(
     }
   }
 
+  // Always filter out closed businesses
+  const operational = allResults.filter(
+    (p) => !p.businessStatus || p.businessStatus === 'OPERATIONAL'
+  );
+
+  // Quality filter: must have phone, at least 1 photo, and some reviews
+  const quality = operational.filter((p) => {
+    const hasPhone = !!p.nationalPhoneNumber;
+    const hasPhotos = (p.photos?.length || 0) >= 1;
+    const hasReviews = (p.userRatingCount || 0) >= 3;
+    const decentRating = !p.rating || p.rating >= 3.0;
+    return hasPhone && hasPhotos && hasReviews && decentRating;
+  });
+
   if (filterNoWebsite) {
-    return allResults.filter((p) => !p.websiteUri);
+    // Quick filter: no websiteUri at all
+    const noSite = quality.filter((p) => !p.websiteUri);
+
+    // Also check: businesses whose listed website is unreachable (dead sites = good leads)
+    const withSite = quality.filter((p) => !!p.websiteUri);
+    const deadSites: PlaceResult[] = [];
+
+    for (const place of withSite) {
+      const alive = await isWebsiteReachable(place.websiteUri!);
+      if (!alive) {
+        console.error(`  Dead site: ${place.displayName.text} → ${place.websiteUri}`);
+        deadSites.push({ ...place, websiteUri: undefined }); // treat as no website
+      }
+    }
+
+    if (deadSites.length > 0) {
+      console.error(`Found ${deadSites.length} businesses with dead websites — added as leads`);
+    }
+
+    return [...noSite, ...deadSites];
   }
 
-  return allResults;
+  return quality;
 }
 
 // CLI usage: npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "restaurant" --limit 1
@@ -132,12 +187,34 @@ if (require.main === module) {
   const includeAll = args.includes('--include-all');
   const filterNoWebsite = !includeAll;
 
+  const compact = args.includes('--compact') || !args.includes('--full');
+
   searchPlaces(category, city, limit, filterNoWebsite)
     .then((results) => {
-      console.log(JSON.stringify(results, null, 2));
-      console.error(`\nTotal: ${results.length} results`);
-      const withoutWebsite = results.filter((r) => !r.websiteUri).length;
-      console.error(`Without website: ${withoutWebsite}`);
+      if (compact) {
+        const slim = results.map((p) => ({
+          id: p.id,
+          name: p.displayName?.text || '',
+          type: p.primaryType || null,
+          address: p.formattedAddress,
+          phone: p.nationalPhoneNumber || null,
+          rating: p.rating || null,
+          reviews: p.userRatingCount || null,
+          photoCount: p.photos?.length || 0,
+          photos: (p.photos || []).map((ph) => ph.name),
+          hours: p.regularOpeningHours?.weekdayDescriptions || null,
+          mapsUrl: p.googleMapsUri || null,
+          coords: p.location
+            ? { lat: p.location.latitude, lng: p.location.longitude }
+            : null,
+        }));
+        console.log(JSON.stringify(slim, null, 2));
+      } else {
+        console.log(JSON.stringify(results, null, 2));
+      }
+      console.error(`\nQualified leads: ${results.length}`);
+      console.error(`Filters: operational + has phone + has photos + reviews≥3 + rating≥3.0${filterNoWebsite ? ' + no website' : ''}`);
+      console.error(`Output: ${compact ? 'compact (use --full for raw API response)' : 'full'}`);
     })
     .catch((err) => {
       console.error('Error:', err.message);

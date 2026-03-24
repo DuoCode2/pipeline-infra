@@ -7,12 +7,23 @@ user-invocable: true
 
 # Batch Processing
 
+## Quick Start (Recommended)
+Use the orchestrate script for fully automated E2E pipeline:
+```bash
+npx tsx packages/batch/orchestrate.ts \
+  --city "Kuala Lumpur" \
+  --categories "restaurant,beauty" \
+  --batch-size 2
+```
+This handles: discover → photos → colors → fonts → optimize → build → deploy → GitHub → log.
+Falls back to the Agent-based workflow below when you need more control (e.g., custom design per site).
+
+## Agent-Based Workflow
+
 Process multiple leads through: discover → prepare → generate → quality gate → deploy.
 
-## Input
+### Input
 - List of leads (from `/discover` or manual) with place_id, business_name, industry, photos
-
-## Workflow
 
 ### Phase 1: Parallel Asset Preparation
 Use the `Agent` tool to launch one agent per lead for concurrent asset preparation:

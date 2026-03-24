@@ -8,6 +8,7 @@ import { downloadStockPhotos } from '../assets/stock-photos';
 import { extractAndSave } from '../assets/extract-colors';
 import { optimizeImages } from '../assets/optimize-images';
 import { deployToVercel } from '../deploy/deploy';
+import { downloadFonts } from '../assets/download-fonts';
 import { INDUSTRY_CONFIG, classifyIndustry, slugify } from '../generate/industry-config';
 
 interface BatchConfig {
@@ -393,6 +394,9 @@ export const business: BusinessData = {
     surface: "${colors.surface}",
     textTitle: "${colors.textTitle || '#1F2937'}",
     textBody: "${colors.textBody || '#4B5563'}",
+    onPrimary: "${colors.onPrimary || '#FFFFFF'}",
+    onPrimaryDark: "${colors.onPrimaryDark || '#FFFFFF'}",
+    accentText: "${colors.accentText || '#92400E'}",
     fontDisplay: "${config.fontDisplay}",
     fontBody: "${config.fontBody}",
   },
@@ -464,6 +468,14 @@ async function processLead(lead: PlaceResult, industry: string): Promise<BatchRe
     if (firstImg) {
       await extractAndSave(path.join(outputDir, 'public/images', firstImg), outputDir);
     }
+
+    // 2b. Fonts (self-host Latin, CJK stays on CDN async)
+    const industryConfig = INDUSTRY_CONFIG[industry] || INDUSTRY_CONFIG.generic;
+    await downloadFonts(
+      [industryConfig.fontDisplay, industryConfig.fontBody],
+      [300, 400, 500, 600, 700, 800],
+      path.join(outputDir, 'public/fonts')
+    );
 
     // 3. Optimize
     await optimizeImages(path.join(outputDir, 'public/images'));

@@ -13,9 +13,12 @@ services:
     ports: ["5678:5678"]
     restart: unless-stopped
     stop_grace_period: 30s
+    command: ["/bin/sh", "/workflows/init-workflows.sh"]
     volumes:
       - n8n_data:/home/node/.n8n
       - ../output:/output
+      - ./workflows:/workflows:ro
+      - ./init-workflows.sh:/workflows/init-workflows.sh:ro
     tmpfs:
       - /tmp:size=256m
     env_file:

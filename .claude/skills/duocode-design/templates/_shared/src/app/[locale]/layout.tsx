@@ -65,6 +65,9 @@ export default function LocaleLayout({
       --color-surface: ${theme.surface};
       --color-text-title: ${theme.textTitle};
       --color-text-body: ${theme.textBody};
+      --color-on-primary: ${theme.onPrimary};
+      --color-on-primary-dark: ${theme.onPrimaryDark};
+      --color-accent-text: ${theme.accentText};
     }
   `;
 
@@ -76,15 +79,13 @@ export default function LocaleLayout({
           <link key={l} rel="alternate" hrefLang={l} href={business.siteUrl ? `${business.siteUrl}/${l}` : `/${l}`} />
         ))}
         <link rel="alternate" hrefLang="x-default" href={business.siteUrl ? `${business.siteUrl}/en` : '/en'} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href={`https://fonts.googleapis.com/css2?family=${theme.fontDisplay.replace(/ /g, '+')}:wght@400;600;700;800&family=${theme.fontBody.replace(/ /g, '+')}:wght@300;400;500;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap`}
-          rel="stylesheet"
-          media="print"
-          // @ts-ignore
-          onLoad="this.media='all'"
-        />
+        {/* Self-hosted Latin fonts (downloaded during asset prep) */}
+        <link rel="stylesheet" href="/fonts/font-face.css" />
+        {/* Async CJK fonts — non-blocking, loaded via script to survive React hydration */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap';document.head.appendChild(l)})();` }} />
+        <noscript>
+          <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+        </noscript>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(buildJsonLd(params.locale)) }}

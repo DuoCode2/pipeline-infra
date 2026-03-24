@@ -93,7 +93,10 @@ export function classifyIndustry(mapsType: string | undefined): string {
     clothing_store: 'retail', shoe_store: 'retail', jewelry_store: 'retail',
     electronics_store: 'retail', furniture_store: 'retail', book_store: 'retail',
     shopping_mall: 'retail', supermarket: 'retail', convenience_store: 'retail',
-    gym: 'fitness', stadium: 'fitness',
+    gym: 'fitness', stadium: 'fitness', sporting_goods_store: 'retail',
+    sports_complex: 'fitness', athletic_field: 'fitness', swimming_pool: 'fitness',
+    yoga_studio: 'fitness', martial_arts_school: 'fitness', dance_school: 'fitness',
+    bowling_alley: 'fitness', sports_club: 'fitness', recreation_center: 'fitness',
     plumber: 'service', electrician: 'service', painter: 'service',
     locksmith: 'service', moving_company: 'service', car_repair: 'service',
     laundry: 'service', car_wash: 'service',
@@ -113,6 +116,9 @@ export function classifyIndustry(mapsType: string | undefined): string {
     ['_store', 'retail'],
     ['_shop', 'retail'],
     ['_gym', 'fitness'],
+    ['_studio', 'fitness'],
+    ['_center', 'service'],
+    ['_school', 'service'],
   ];
   for (const [suffix, industry] of suffixMap) {
     if (t.endsWith(suffix)) return industry;
@@ -122,6 +128,7 @@ export function classifyIndustry(mapsType: string | undefined): string {
   if (t.includes('restaurant') || t.includes('food') || t.includes('eat')) return 'restaurant';
   if (t.includes('beauty') || t.includes('hair') || t.includes('nail')) return 'beauty';
   if (t.includes('doctor') || t.includes('dent') || t.includes('medical') || t.includes('health')) return 'clinic';
+  if (t.includes('sport') || t.includes('fitness') || t.includes('athletic')) return 'fitness';
 
   return 'generic';
 }
