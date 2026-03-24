@@ -185,59 +185,47 @@ echo "── 4. Skills Structure ──"
 
 SKILLS_DIR=".claude/skills"
 
-# 4.1 Layer 1 structure
-for dir in quality deploy toolchain outreach discovery generate iterate-quality prepare-assets quality-gate batch-orchestrator standards; do
-  if [ -d "$SKILLS_DIR/layer1-pipeline/$dir" ]; then log_pass "4.1 layer1/$dir exists"
-  else log_fail "4.1 layer1/$dir" "directory missing"; fi
+# 4.1 All 12 skills exist (flat structure)
+for skill in generate batch discover prepare-assets quality-gate iterate-quality deploy duocode-design toolchain quality-standards project-standards skill-creator; do
+  if [ -f "$SKILLS_DIR/$skill/SKILL.md" ]; then log_pass "4.1 $skill/SKILL.md exists"
+  else log_fail "4.1 $skill/SKILL.md" "missing"; fi
 done
 
-# 4.2 Layer 2 structure
-for dir in duocode-design brand-designer landing-page-generator; do
-  if [ -d "$SKILLS_DIR/layer2-design/$dir" ]; then log_pass "4.2 layer2/$dir exists"
-  else log_fail "4.2 layer2/$dir" "directory missing"; fi
-done
-
-# 4.3 Key SKILL.md files exist
-KEY_SKILLS=(
-  "layer1-pipeline/quality/web-quality-audit/SKILL.md"
-  "layer1-pipeline/deploy/deploy-to-vercel/SKILL.md"
-  "layer1-pipeline/generate/SKILL.md"
-  "layer2-design/duocode-design/SKILL.md"
-  "layer1-pipeline/prepare-assets/SKILL.md"
-  "layer1-pipeline/quality-gate/SKILL.md"
-  "layer1-pipeline/batch-orchestrator/SKILL.md"
-  "layer1-pipeline/standards/code-conventions/SKILL.md"
-  "layer1-pipeline/standards/data-schema/SKILL.md"
-  "skill-creator/SKILL.md"
-)
-for s in "${KEY_SKILLS[@]}"; do
-  if [ -f "$SKILLS_DIR/$s" ]; then log_pass "4.3 $s"
-  else log_fail "4.3 $s" "file missing"; fi
-done
-
-# 4.4 DuoCode design references
+# 4.2 DuoCode design references
 for ref in _foundations.md _copy-foundations.md restaurant.md beauty.md clinic.md retail.md fitness.md service.md generic.md; do
-  if [ -f "$SKILLS_DIR/layer2-design/duocode-design/references/$ref" ]; then log_pass "4.4 reference/$ref"
-  else log_fail "4.4 reference/$ref" "file missing"; fi
+  if [ -f "$SKILLS_DIR/duocode-design/references/$ref" ]; then log_pass "4.2 reference/$ref"
+  else log_fail "4.2 reference/$ref" "file missing"; fi
 done
 
-# 4.5 DuoCode design schemas
+# 4.3 DuoCode design schemas
 for schema in _base.schema.json restaurant.schema.json beauty.schema.json clinic.schema.json retail.schema.json fitness.schema.json service.schema.json generic.schema.json; do
-  if [ -f "$SKILLS_DIR/layer2-design/duocode-design/schemas/$schema" ]; then log_pass "4.5 schema/$schema"
-  else log_fail "4.5 schema/$schema" "file missing"; fi
+  if [ -f "$SKILLS_DIR/duocode-design/schemas/$schema" ]; then log_pass "4.3 schema/$schema"
+  else log_fail "4.3 schema/$schema" "file missing"; fi
 done
 
-# 4.6 Schemas are valid JSON
-for schema in "$SKILLS_DIR"/layer2-design/duocode-design/schemas/*.json; do
-  if python3 -m json.tool "$schema" >/dev/null 2>&1; then log_pass "4.6 $(basename $schema) valid JSON"
-  else log_fail "4.6 $(basename $schema)" "invalid JSON"; fi
+# 4.4 Schemas are valid JSON
+for schema in "$SKILLS_DIR"/duocode-design/schemas/*.json; do
+  if python3 -m json.tool "$schema" >/dev/null 2>&1; then log_pass "4.4 $(basename $schema) valid JSON"
+  else log_fail "4.4 $(basename $schema)" "invalid JSON"; fi
+done
+
+# 4.5 Toolchain references
+for ref in browser-use lighthouse-ci github n8n; do
+  if [ -f "$SKILLS_DIR/toolchain/references/$ref.md" ]; then log_pass "4.5 toolchain/$ref.md"
+  else log_fail "4.5 toolchain/$ref.md" "missing"; fi
+done
+
+# 4.6 Quality references
+for ref in accessibility seo performance core-web-vitals; do
+  if [ -f "$SKILLS_DIR/quality-standards/references/$ref.md" ]; then log_pass "4.6 quality/$ref.md"
+  else log_fail "4.6 quality/$ref.md" "missing"; fi
 done
 
 # ─── TEST GROUP 5: Template System ──────────────
 echo ""
 echo "── 5. Template System ──"
 
-TPL_DIR="$SKILLS_DIR/layer2-design/duocode-design/templates"
+TPL_DIR="$SKILLS_DIR/duocode-design/templates"
 
 # 5.1 Template directories
 if [ -d "$TPL_DIR/_shared" ]; then log_pass "5.1 _shared template dir"
@@ -258,7 +246,7 @@ if [ -f "$TPL_DIR/_shared/types/business.d.ts" ]; then log_pass "5.3 business.d.
 else log_fail "5.3 business.d.ts" "not created yet (Phase 2 task)"; fi
 
 # 5.4 Example business.ts
-EXAMPLE_DIR="$SKILLS_DIR/layer2-design/duocode-design/examples/restaurant"
+EXAMPLE_DIR="$SKILLS_DIR/duocode-design/examples/restaurant"
 if [ -d "$EXAMPLE_DIR" ] && ls "$EXAMPLE_DIR"/*/business.ts >/dev/null 2>&1; then
   log_pass "5.4 Restaurant example exists"
 else log_fail "5.4 Restaurant example" "not created yet (Phase 2 task)"; fi

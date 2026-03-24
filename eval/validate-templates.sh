@@ -3,7 +3,7 @@ set -euo pipefail
 
 # DuoCode Template Completeness Evaluation
 
-DESIGN_DIR="$(cd "$(dirname "$0")/.." && pwd)/.claude/skills/layer2-design/duocode-design"
+DESIGN_DIR="$(cd "$(dirname "$0")/.." && pwd)/.claude/skills/duocode-design"
 PASSED=0; FAILED=0; WARNED=0
 
 pass() { echo "  ✅ $1"; PASSED=$((PASSED + 1)); }

@@ -26,16 +26,36 @@
     },
     {
       "id": "ls-read-placeholder",
-      "name": "Google Sheets Read (Configure OAuth)",
-      "type": "n8n-nodes-base.code",
+      "name": "Google Sheets Read",
+      "type": "n8n-nodes-base.googleSheets",
       "position": [
         300,
         300
       ],
       "parameters": {
-        "jsCode": "// PLACEHOLDER: Replace this Code node with a Google Sheets node after configuring OAuth.\n// This node reads from local JSON files as fallback.\n// To configure: Delete this node, add a Google Sheets node, set operation to 'read',\n// connect your Google account, select your Leads spreadsheet.\n\nconst fs = require('fs');\nconst path = require('path');\n\nconst leadsDir = '/data/leads';\nlet allLeads = [];\n\ntry {\n  const files = fs.readdirSync(leadsDir).filter(f => f.endsWith('.json')).sort();\n  for (const file of files) {\n    const data = JSON.parse(fs.readFileSync(path.join(leadsDir, file), 'utf8'));\n    if (Array.isArray(data)) {\n      allLeads.push(...data);\n    } else {\n      allLeads.push(data);\n    }\n  }\n} catch (e) {\n  // No leads files found\n}\n\nif (allLeads.length === 0) {\n  return [{ json: { _placeholder: true, message: 'No leads data found. Configure Google Sheets OAuth to read from your spreadsheet.' } }];\n}\n\nreturn allLeads.map(lead => ({ json: lead }));"
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "16Jr3k5OZD02p7-HMSkda5jyKApPbE_KAureiV4ovYOk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData"
+        },
+        "options": {}
       },
-      "typeVersion": 2
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Cm08O9cPWBANNWMw",
+          "name": "Google Sheets (DuoCode)"
+        }
+      }
     },
     {
       "id": "ls-filter-aggregate",
@@ -60,7 +80,7 @@
       ],
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json }}",
+        "responseBody": "={{ JSON.stringify($json) }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -80,18 +100,7 @@
       "main": [
         [
           {
-            "node": "Google Sheets Read (Configure OAuth)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Google Sheets Read (Configure OAuth)": {
-      "main": [
-        [
-          {
-            "node": "Filter and Aggregate",
+            "node": "Google Sheets Read",
             "type": "main",
             "index": 0
           }
@@ -103,6 +112,17 @@
         [
           {
             "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Read": {
+      "main": [
+        [
+          {
+            "node": "Filter and Aggregate",
             "type": "main",
             "index": 0
           }
@@ -200,7 +220,7 @@
         ],
         "parameters": {
           "respondWith": "json",
-          "responseBody": "={{ $json }}",
+          "responseBody": "={{ JSON.stringify($json) }}",
           "options": {
             "responseHeaders": {
               "entries": [

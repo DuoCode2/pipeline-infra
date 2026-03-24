@@ -15,6 +15,7 @@ const FIELD_MASK = [
   'places.userRatingCount',
   'places.regularOpeningHours',
   'places.photos',
+  'places.location',
   'places.googleMapsUri',
 ].join(',');
 
@@ -32,6 +33,7 @@ export interface PlaceResult {
     openNow?: boolean;
   };
   photos?: Array<{ name: string; widthPx: number; heightPx: number }>;
+  location?: { latitude: number; longitude: number };
   googleMapsUri?: string;
 }
 

@@ -27,7 +27,7 @@ interface BatchResult {
 }
 
 function copyTemplates(industry: string, outputDir: string) {
-  const designDir = path.join(__dirname, '../../.claude/skills/layer2-design/duocode-design/templates');
+  const designDir = path.join(__dirname, '../../.claude/skills/duocode-design/templates');
   const sharedDir = path.join(designDir, '_shared');
   const industryDir = path.join(designDir, industry);
 

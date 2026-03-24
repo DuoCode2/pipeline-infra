@@ -4,36 +4,37 @@
     "accessibility": {
       "source": "addyosmani/web-quality-skills",
       "sourceType": "github",
+      "installedAs": "quality-standards/references/accessibility.md",
       "computedHash": "6462f04969f59f771150e6410e6a11fa397f2934be0b51e8650f495feed1e28d"
     },
     "best-practices": {
       "source": "addyosmani/web-quality-skills",
       "sourceType": "github",
+      "installedAs": "quality-standards/references/best-practices.md",
       "computedHash": "98dafea60ec1a7f5f70f6febcdd4b4fa3fe15723ad9c0b991c0818615bff7ba6"
-    },
-    "brand-designer": {
-      "source": "daffy0208/ai-dev-standards",
-      "sourceType": "github",
-      "computedHash": "bc3eec10bbcc4266155e46d38de1256ec4cac7dae5554f67b6180100c7fe41d6"
     },
     "core-web-vitals": {
       "source": "addyosmani/web-quality-skills",
       "sourceType": "github",
+      "installedAs": "quality-standards/references/core-web-vitals.md",
       "computedHash": "fa437acc2249cea2cb28f190ba7faf8fdfac829d1c1aafa9ce938c6dd9338721"
     },
     "deploy-to-vercel": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
+      "installedAs": "deploy/SKILL.md",
       "computedHash": "d2b5bcc7c09fdb649129ffc7dd7b647ec1b155736974b974292675afd588cb39"
     },
     "favicon-generator": {
       "source": "kostja94/marketing-skills",
       "sourceType": "github",
+      "installedAs": "toolchain/references/favicon-generator.md",
       "computedHash": "58aea86476b9c6f3fae19c4e7fee3307ce3a44234e3d9d274cb03dc62df2d352"
     },
     "gmaps-leads": {
       "source": "aiagentwithdhruv/skills",
       "sourceType": "github",
+      "installedAs": "discover/SKILL.md",
       "computedHash": "83c7427b7e92be6c49507148c5fe53c0f46c53f84ff2f929599dedfb32812e11"
     },
     "i18n-localization": {
@@ -44,71 +45,79 @@
     "n8n": {
       "source": "vladm3105/aidoc-flow-framework",
       "sourceType": "github",
+      "installedAs": "toolchain/references/n8n.md",
       "computedHash": "05cb51e01217899a2e471f1b06ee21ab29c612449d6cc14f71d4b849e763ec05"
     },
     "performance": {
       "source": "addyosmani/web-quality-skills",
       "sourceType": "github",
+      "installedAs": "quality-standards/references/performance.md",
       "computedHash": "acbafe2fcbfc3a1a67db47c2f6299d5c0e16f543c4e683e38e74a8ccb54888fb"
     },
     "playwright-screenshot-inspector": {
       "source": "erichowens/some_claude_skills",
       "sourceType": "github",
+      "installedAs": "quality-standards/references/visual-testing.md",
       "computedHash": "c3a427b94cb63c92fc492b11689f8fd54bc8b2ca999f8b77060e3d0ee7d623c5"
     },
     "schema-markup-generator": {
       "source": "aaron-he-zhu/seo-geo-claude-skills",
       "sourceType": "github",
+      "installedAs": "quality-standards/references/schema-markup.md",
       "computedHash": "7015573c3e6a01eac8143ef9c54c6b8b3009362ec8de4b0834f265acadf8dfa0"
     },
     "seo": {
       "source": "addyosmani/web-quality-skills",
       "sourceType": "github",
+      "installedAs": "quality-standards/references/seo.md",
       "computedHash": "f1fed683b76913d26fbf1aa1e008e6932f7771701fc3a79925b042236aa4681a"
     },
     "sheets-automation": {
       "source": "claude-office-skills/skills",
       "sourceType": "github",
+      "installedAs": "toolchain/references/sheets-automation.md",
       "computedHash": "59bbe5beab5cad9db924e4ab521c72ca151499c18e3aa20768587191ecd5f15e"
     },
     "svg-icon-maker": {
       "source": "heroygt/skills",
       "sourceType": "github",
+      "installedAs": "toolchain/references/svg-icon-maker.md",
       "computedHash": "d96acc3a48832160dd7899f32a2ba1d6f4a565058c560fa09ad75de904f039d9"
     },
     "tailwind-css": {
       "source": "bobmatnyc/claude-mpm-skills",
       "sourceType": "github",
+      "installedAs": "toolchain/references/tailwind-css.md",
       "computedHash": "d4d19f6b1d60306895b5c0f5bb57a4640b54ed2b6ef74121781413fc16c1bf3f"
     },
     "visual-testing-advanced": {
       "source": "proffesor-for-testing/agentic-qe",
       "sourceType": "github",
+      "installedAs": "quality-standards/references/visual-testing.md",
       "computedHash": "024fb61dee7b69a5ea406c0e62e2b5815b86716659c71d594feb88e8ad078700"
     },
     "web-quality-audit": {
       "source": "addyosmani/web-quality-skills",
       "sourceType": "github",
+      "installedAs": "quality-standards/references/web-quality-audit.md",
       "computedHash": "1168be21aa9fe7bdc6e6e053ca05b6ca5a45675a527c103cdf77bc56ce8159af"
-    },
-    "whatsapp-automation": {
-      "source": "claude-office-skills/skills",
-      "sourceType": "github",
-      "computedHash": "e2d1e6e888803e24a5ac4bde08a9cac434d9911f0d3c2ba4e9cc7edf11dc5f08"
     },
     "browser-use": {
       "source": "browser-use/browser-use",
       "sourceType": "github",
+      "installedAs": "toolchain/references/browser-use.md",
       "computedHash": "67ead9e22037eca2f2cd39d1f9984ece7f1d3f98eaaec894adb35fc72f3e1626"
     },
     "lighthouse-ci-integrator": {
       "source": "nicholasgriffintn/claude-skills",
       "sourceType": "github",
+      "installedAs": "toolchain/references/lighthouse-ci.md",
       "computedHash": "db683af32e23405a384787e69cdbe1b79d37d80522cb26e20b05a01e1b251e37"
     },
     "github": {
       "source": "nicholasgriffintn/claude-skills",
       "sourceType": "github",
+      "installedAs": "toolchain/references/github.md",
       "computedHash": "701835c7dac54d59b22022809f57e1917e87c61de9bc4efaf4bdb65cdb004819"
     }
   }

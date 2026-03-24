@@ -11,7 +11,7 @@ These are the tools YOU use to execute the pipeline. Know them well.
 |------|---------|---------|
 | Next.js | `npm run build` | Static site generation from templates |
 | TypeScript | `npx tsx packages/*.ts` | Run pipeline scripts |
-| SVGO | `npx svgo output/{place_id}/public/svgs/*.svg` | Optimize generated SVGs |
+| SVGO | `npx svgo output/{slug}/public/svgs/*.svg` | Optimize generated SVGs |
 | Sharp | via `packages/assets/optimize-images.ts` | Image resize → WebP (320/640/960/1280) |
 | node-vibrant | via `packages/assets/extract-colors.ts` | Extract brand colors from photos |
 
@@ -37,7 +37,7 @@ These are the tools YOU use to execute the pipeline. Know them well.
 
 **Post-generation push workflow:**
 ```bash
-cd output/{place_id}
+cd output/{slug}
 git init && git add -A && git commit -m "feat: generated site for {business_name}"
 gh repo create DuoCode2/{slug} --private --source=. --push
 # Then deploy via Vercel SDK or link to Vercel for auto-deploy
@@ -59,6 +59,21 @@ gh repo create DuoCode2/{slug} --private --source=. --push
 | Google Sheets | via n8n OAuth | Lead storage + WorkLog |
 | xh | `xh POST http://localhost:5678/webhook/... key=value` | Quick webhook testing |
 
+### Credentials (from .env)
+
+All service credentials are stored in `.env`. When automating GUI tasks (n8n login, Google OAuth, etc.), read credentials from `.env` first:
+
+| Variable | Purpose |
+|----------|---------|
+| `N8N_OWNER_EMAIL` / `N8N_OWNER_PASSWORD` | n8n UI login at localhost:5678 |
+| `N8N_LICENSE_KEY` | n8n community license (activate in Settings → Usage) |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | Pipeline notifications via @duocode0324bot |
+| `GOOGLE_API_KEY` | Google Maps Places API + Gemini |
+| `UNSPLASH_ACCESS_KEY` | Stock photo fallback |
+| `VERCEL_TOKEN` | Deployment |
+
+**browser-use for GUI automation:** Always use `--browser real --headed --profile liu` for any Google-authenticated flows (OAuth, Sheets, etc.). The `liu` profile has `weiliudev0607@gmail.com` logged in.
+
 ### Docker
 ```bash
 cd n8n && docker compose up -d     # Start n8n (builds custom image with pre-installed packages)
@@ -66,6 +81,36 @@ docker compose logs -f n8n         # Watch logs
 curl http://localhost:5678/healthz  # Health check
 # Uncomment evolution-api in docker-compose.yml for Phase 5 WhatsApp
 ```
+
+## MANDATORY: Skill Loading Protocol
+
+**EVERY site generation MUST begin by reading these skills in order:**
+
+1. `Read .claude/skills/generate/SKILL.md` — follow ALL 10 steps, do NOT improvise
+2. `Read .claude/skills/duocode-design/SKILL.md` — shared design principles
+3. `Read .claude/skills/duocode-design/references/{industry}.md` — industry-specific design
+4. `Read .claude/skills/duocode-design/schemas/{industry}.schema.json` — data field definitions
+
+**NEVER skip step 1.** The generate SKILL.md IS the process.
+
+### SVG Generation Rules
+- Read the industry reference's "SVG Element Vocabulary" table
+- Generate ALL SVG types listed (7–8 for beauty, not just 5)
+- Use brand colors from `brand-colors.json` — NEVER use `currentColor` at opacity 0.1
+- Stroke width ≥ 2px, fill opacity ≥ 0.5
+- Run `npx svgo` after generating
+
+### Hero Image Selection
+- `maps-1` is ALWAYS the Google Maps cover photo (usually exterior/street view) — **NEVER use it as hero**
+- Visually inspect `maps-2` through `maps-5` and stock photos
+- Pick the best **interior** shot for `heroImage`
+
+### Favicon Rule
+- NEVER use a letter on a colored square
+- Generate an industry-appropriate **symbolic icon** SVG (beauty: lotus/petal, restaurant: plate/steam, clinic: cross/tooth)
+
+### Quality Gate Tool
+- Gate 3 visual QA: use `browser-use` CLI, NOT Playwright MCP
 
 ## Architecture
 
@@ -96,16 +141,27 @@ YOU (Claude Code) ← central brain
      └── Evolution API → WhatsApp message with screenshot + link
 ```
 
-## Two-Layer Skill System
+## Skill Architecture
 
-**Layer 1** (`layer1-pipeline/`) — HOW to build. Tools, process, quality.
-**Layer 2** (`layer2-design/`) — WHAT to build. Design decisions per industry.
+12 skills organized in a flat structure under `.claude/skills/`:
 
-When generating a site, load skills in this order:
-1. `generate/SKILL.md` — orchestration steps
-2. `duocode-design/SKILL.md` — shared design principles (always loaded, ~150 lines)
-3. `duocode-design/references/{industry}.md` — industry-specific design (on demand)
-4. `duocode-design/schemas/{industry}.schema.json` — data field definitions (on demand)
+**Pipeline Skills** (user-invoked via `/slash-commands`, `disable-model-invocation: true`):
+- `/generate` — E2E site generation (10-step process)
+- `/batch` — batch orchestration for multiple leads
+- `/discover` — Google Maps lead discovery
+- `/prepare-assets` — photo download, color extraction, optimization
+- `/quality-gate` — 3-gate quality pipeline (build, Lighthouse, visual QA)
+- `/iterate-quality` — observe-modify-evaluate loop for design improvement
+- `/deploy` — Vercel deployment
+
+**Reference Skills** (Claude auto-loads when relevant, `user-invocable: false`):
+- `duocode-design` — design system + industry references + schemas + templates
+- `toolchain` — hub routing to browser-use, Lighthouse, n8n, GitHub, etc.
+- `quality-standards` — hub routing to a11y, SEO, performance, CWV, etc.
+- `project-standards` — TypeScript conventions + data schema standards
+
+**Utility Skill** (both user and Claude):
+- `/skill-creator` — create, test, and optimize skills
 
 ## Commands
 
@@ -127,16 +183,14 @@ npx tsx packages/assets/extract-colors.ts --image path/to/image.jpg
 npx tsx packages/deploy/deploy.ts --build-dir out --slug business-name
 ```
 
-## Installed Skills (from verified sources)
+## External Tools
 
-| Skill | Source | Path |
-|-------|--------|------|
-| browser-use | Official (browser-use repo) | `toolchain/browser-use/` |
-| lighthouse-ci | Community (claude-skill-registry) | `toolchain/lighthouse-ci/` |
-| github | Community (claude-skill-registry) | `toolchain/github/` |
-| webapp-testing | Official (Anthropic) | `quality/webapp-testing/` |
-| deploy-to-vercel | Official (Vercel) | `deploy/deploy-to-vercel/` |
-| Playwright MCP | MCP Server (configured) | via `mcp__playwright__*` tools |
+| Tool | Access | Notes |
+|------|--------|-------|
+| browser-use CLI | `toolchain/references/browser-use.md` | Visual QA, GUI automation |
+| Lighthouse CI | `toolchain/references/lighthouse-ci.md` | Gate 2 auditing |
+| n8n | `toolchain/references/n8n.md` | Webhook workflows |
+| Playwright MCP | via `mcp__playwright__*` tools | Alternative visual testing |
 
 ## GitHub Organization
 
@@ -148,7 +202,7 @@ gh org list                    # Should show DuoCode2
 gh repo list DuoCode2          # List existing repos
 
 # Create + push a generated site
-gh repo create DuoCode2/{slug} --private --source=output/{place_id} --push
+gh repo create DuoCode2/{slug} --private --source=output/{slug} --push
 
 # Git config for this project
 git config user.name "LiuWei"
@@ -158,8 +212,7 @@ git config user.email "sunflowers0607@outlook.com"
 ## Conventions
 
 - **TypeScript strict** — no `any`, use `requireEnv()` from `packages/utils/env.ts`
-- **SKILL.md frontmatter** — must have: name, description, license, metadata.author, metadata.version
-- **License** — AGPL-3.0 for DuoCode-authored skills, keep original for third-party
+- **SKILL.md frontmatter** — must have: name, description, allowed-tools. Optional: disable-model-invocation, user-invocable
 - **Env vars** — `.env` is gitignored, `.env.template` has placeholders only
 - **Branch naming** — never include `claude` in branch names
 - **Git identity** — LiuWei / sunflowers0607@outlook.com

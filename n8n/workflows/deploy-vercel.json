@@ -47,7 +47,7 @@
       ],
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json }}",
+        "responseBody": "={{ JSON.stringify($json) }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -163,7 +163,7 @@
         ],
         "parameters": {
           "respondWith": "json",
-          "responseBody": "={{ $json }}",
+          "responseBody": "={{ JSON.stringify($json) }}",
           "options": {
             "responseHeaders": {
               "entries": [

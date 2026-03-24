@@ -39,16 +39,36 @@
     },
     {
       "id": "lw-sheets-placeholder",
-      "name": "Google Sheets WorkLog (Configure OAuth)",
-      "type": "n8n-nodes-base.code",
+      "name": "Append to WorkLog",
+      "type": "n8n-nodes-base.googleSheets",
       "position": [
         600,
         300
       ],
       "parameters": {
-        "jsCode": "// PLACEHOLDER: Replace this Code node with a Google Sheets node after configuring OAuth.\n// This node passes data through and saves to local file as fallback.\n// To configure: Delete this node, add a Google Sheets node, set operation to 'append',\n// connect your Google account, select your WorkLog spreadsheet.\n\nconst items = $input.all();\nconst fs = require('fs');\nconst path = require('path');\n\nconst outputDir = '/data/worklog';\ntry {\n  fs.mkdirSync(outputDir, { recursive: true });\n  const filename = `worklog_${Date.now()}.json`;\n  const data = items.map(i => i.json);\n  fs.writeFileSync(path.join(outputDir, filename), JSON.stringify(data, null, 2));\n} catch (e) {\n  // Continue even if file write fails\n}\n\nreturn items;"
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "16Jr3k5OZD02p7-HMSkda5jyKApPbE_KAureiV4ovYOk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "WorkLog"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData"
+        },
+        "options": {}
       },
-      "typeVersion": 2
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Cm08O9cPWBANNWMw",
+          "name": "Google Sheets (DuoCode)"
+        }
+      }
     },
     {
       "id": "lw-respond",
@@ -91,14 +111,14 @@
       "main": [
         [
           {
-            "node": "Google Sheets WorkLog (Configure OAuth)",
+            "node": "Append to WorkLog",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Google Sheets WorkLog (Configure OAuth)": {
+    "Append to WorkLog": {
       "main": [
         [
           {

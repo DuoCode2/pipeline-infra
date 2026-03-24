@@ -123,3 +123,13 @@ export function slugify(name: string): string {
     .replace(/^-|-$/g, '')
     .substring(0, 50);
 }
+
+/**
+ * Get the output directory path for a business.
+ * Uses slugified business name as directory name (not place_id).
+ * place_id is stored inside lead.json for reference.
+ */
+export function getOutputDir(businessName: string): string {
+  const path = require('path');
+  return path.resolve(__dirname, '../../output', slugify(businessName));
+}

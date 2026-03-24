@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# DuoCode Skill 验证评测
-# 评测维度: Frontmatter 完整性 | 结构一致性 | 引用完整性 | Schema 验证
+# DuoCode Skill Validation
+# Dimensions: Frontmatter completeness | Structure consistency | Reference integrity | Schema validation
 
 SKILLS_DIR="$(cd "$(dirname "$0")/.." && pwd)/.claude/skills"
 PASSED=0; FAILED=0; WARNED=0
@@ -16,73 +16,65 @@ echo "  DuoCode Skill Validation Report"
 echo "═══════════════════════════════════════"
 echo ""
 
-# ── 1. Frontmatter 完整性 ──
+# ── 1. Frontmatter Completeness ──
 echo "── 1. Frontmatter Completeness ──"
-for skill_file in $(find "$SKILLS_DIR" -name "SKILL.md" -not -path "*/.git/*"); do
+for skill_file in $(find "$SKILLS_DIR" -maxdepth 2 -name "SKILL.md" -not -path "*/.git/*" | sort); do
   rel_path="${skill_file#$SKILLS_DIR/}"
 
   # Extract frontmatter (between --- markers)
   frontmatter=$(sed -n '/^---$/,/^---$/p' "$skill_file" | sed '1d;$d')
 
-  # Check required fields
+  # Check required fields (Claude Code spec: name, description, allowed-tools)
   has_name=$(echo "$frontmatter" | grep -c "^name:" || true)
   has_desc=$(echo "$frontmatter" | grep -c "^description:" || true)
-  has_license=$(echo "$frontmatter" | grep -c "^license:" || true)
-  has_author=$(echo "$frontmatter" | grep -c "author:" || true)
-  has_version=$(echo "$frontmatter" | grep -c "version:" || true)
+  has_tools=$(echo "$frontmatter" | grep -c "^allowed-tools:" || true)
 
-  if [ "$has_name" -gt 0 ] && [ "$has_desc" -gt 0 ] && [ "$has_license" -gt 0 ] && [ "$has_author" -gt 0 ] && [ "$has_version" -gt 0 ]; then
-    pass "1.1 $rel_path — all fields present"
-  elif [ "$has_name" -gt 0 ] && [ "$has_desc" -gt 0 ]; then
-    # Third-party skills: name+description is sufficient
-    warn "1.1 $rel_path — third-party (name+desc only)"
+  # Check invocation control (should have one of these)
+  has_disable=$(echo "$frontmatter" | grep -c "^disable-model-invocation:" || true)
+  has_user_inv=$(echo "$frontmatter" | grep -c "^user-invocable:" || true)
+
+  if [ "$has_name" -gt 0 ] && [ "$has_desc" -gt 0 ]; then
+    pass "1.1 $rel_path — name+description present"
   else
     missing=""
     [ "$has_name" -eq 0 ] && missing="${missing}name "
     [ "$has_desc" -eq 0 ] && missing="${missing}description "
     fail "1.1 $rel_path" "missing: $missing"
   fi
+
+  # Warn about non-standard fields
+  has_license=$(echo "$frontmatter" | grep -c "^license:" || true)
+  has_metadata=$(echo "$frontmatter" | grep -c "^metadata:" || true)
+  if [ "$has_license" -gt 0 ] || [ "$has_metadata" -gt 0 ]; then
+    warn "1.2 $rel_path — has non-standard fields (license/metadata)"
+  fi
 done
 echo ""
 
-# ── 2. 结构一致性 ──
+# ── 2. Structure Consistency ──
 echo "── 2. Structure Consistency ──"
 
-# Layer 1 required directories
-L1_REQUIRED="quality deploy toolchain outreach discovery generate iterate-quality prepare-assets quality-gate batch-orchestrator standards"
-for dir in $L1_REQUIRED; do
-  if [ -d "$SKILLS_DIR/layer1-pipeline/$dir" ]; then
-    pass "2.1 layer1-pipeline/$dir exists"
+# All 12 skills should exist as flat directories
+EXPECTED_SKILLS="generate batch discover prepare-assets quality-gate iterate-quality deploy duocode-design toolchain quality-standards project-standards skill-creator"
+for skill in $EXPECTED_SKILLS; do
+  if [ -f "$SKILLS_DIR/$skill/SKILL.md" ]; then
+    pass "2.1 $skill/SKILL.md exists"
   else
-    fail "2.1 layer1-pipeline/$dir" "directory missing"
+    fail "2.1 $skill/SKILL.md" "missing"
   fi
 done
 
-# Layer 2 required directories
-L2_REQUIRED="duocode-design brand-designer landing-page-generator"
-for dir in $L2_REQUIRED; do
-  if [ -d "$SKILLS_DIR/layer2-design/$dir" ]; then
-    pass "2.2 layer2-design/$dir exists"
-  else
-    fail "2.2 layer2-design/$dir" "directory missing"
-  fi
-done
-
-# Verify no unexpected Layer 2 skills (should only be 3)
-L2_COUNT=$(ls -d "$SKILLS_DIR/layer2-design/"*/ 2>/dev/null | wc -l | tr -d ' ')
-if [ "$L2_COUNT" -eq 3 ]; then
-  pass "2.3 Layer 2 has exactly 3 skills (consolidated)"
-else
-  warn "2.3 Layer 2 skill count" "expected 3, got $L2_COUNT"
-fi
+# Count total skills
+SKILL_COUNT=$(find "$SKILLS_DIR" -maxdepth 2 -name "SKILL.md" | wc -l | tr -d ' ')
+echo "  Total skills: $SKILL_COUNT (target: 12)"
 echo ""
 
-# ── 3. 引用完整性 ──
+# ── 3. Reference Integrity ──
 echo "── 3. Reference Integrity ──"
 
-DESIGN_DIR="$SKILLS_DIR/layer2-design/duocode-design"
+DESIGN_DIR="$SKILLS_DIR/duocode-design"
 
-# References
+# Industry references
 INDUSTRIES="restaurant beauty clinic retail fitness service generic"
 for ind in $INDUSTRIES; do
   if [ -f "$DESIGN_DIR/references/$ind.md" ]; then
@@ -100,9 +92,29 @@ for f in _foundations.md _copy-foundations.md; do
     fail "3.2 reference/$f" "missing foundation file"
   fi
 done
+
+# Toolchain references
+TOOLCHAIN_REFS="browser-use lighthouse-ci github n8n favicon-generator svg-icon-maker sheets-automation tailwind-css"
+for ref in $TOOLCHAIN_REFS; do
+  if [ -f "$SKILLS_DIR/toolchain/references/$ref.md" ]; then
+    pass "3.3 toolchain/$ref.md exists"
+  else
+    fail "3.3 toolchain/$ref.md" "missing toolchain reference"
+  fi
+done
+
+# Quality references
+QUALITY_REFS="accessibility best-practices core-web-vitals performance seo schema-markup visual-testing webapp-testing"
+for ref in $QUALITY_REFS; do
+  if [ -f "$SKILLS_DIR/quality-standards/references/$ref.md" ]; then
+    pass "3.4 quality/$ref.md exists"
+  else
+    fail "3.4 quality/$ref.md" "missing quality reference"
+  fi
+done
 echo ""
 
-# ── 4. Schema 验证 ──
+# ── 4. Schema Validation ──
 echo "── 4. Schema Validation ──"
 
 # Base schema
@@ -139,11 +151,11 @@ for ind in $INDUSTRIES; do
 done
 echo ""
 
-# ── 5. 安全检查 ──
+# ── 5. Security Checks ──
 echo "── 5. Security Checks ──"
 
 # Check .env.template has no real keys
-TEMPLATE="$(cd "$(dirname "$0")/../.." && pwd)/.env.template"
+TEMPLATE="$(cd "$(dirname "$0")/.." && pwd)/.env.template"
 if [ -f "$TEMPLATE" ]; then
   if grep -qE "AIzaSy|g5r7w|mIN2V|vcp_6aj|duocode2026" "$TEMPLATE"; then
     fail "5.1 .env.template" "contains real API keys"

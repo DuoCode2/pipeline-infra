@@ -58,24 +58,25 @@ infra/src/
 │   ├── deploy/deploy.ts             # Vercel REST API v13 deployment
 │   └── utils/env.ts                 # requireEnv() helper
 │
-├── .claude/skills/                  # Two-layer skill system
-│   ├── layer1-pipeline/             # HOW to build (process skills)
-│   │   ├── generate/SKILL.md        #   Master generation workflow
-│   │   ├── discovery/               #   Lead discovery
-│   │   ├── prepare-assets/          #   Asset preparation
-│   │   ├── quality-gate/            #   Quality orchestration
-│   │   ├── quality/                 #   9 quality skills (a11y, perf, seo...)
-│   │   ├── deploy/                  #   Vercel deployment
-│   │   ├── toolchain/               #   8 tool skills (browser-use, lighthouse...)
-│   │   └── standards/               #   Code conventions, data schemas
-│   └── layer2-design/               # WHAT to build (design skills)
-│       └── duocode-design/
-│           ├── SKILL.md             #   Core design principles
-│           ├── references/          #   7 industry design guides
-│           ├── schemas/             #   JSON Schema per industry
-│           └── templates/           #   Next.js templates
-│               ├── _shared/         #     Base: 12 components, i18n, Tailwind
-│               └── {industry}/      #     Industry overlays (page.tsx, components)
+├── .claude/skills/                  # 12 Claude Code skills (flat structure)
+│   ├── generate/SKILL.md           #   /generate — E2E site generation
+│   ├── batch/SKILL.md              #   /batch — multi-lead orchestration
+│   ├── discover/SKILL.md           #   /discover — Google Maps lead discovery
+│   ├── prepare-assets/SKILL.md     #   /prepare-assets — photos + colors
+│   ├── quality-gate/SKILL.md       #   /quality-gate — 3-gate QA pipeline
+│   ├── iterate-quality/SKILL.md    #   /iterate-quality — design improvement loop
+│   ├── deploy/SKILL.md             #   /deploy — Vercel deployment
+│   ├── duocode-design/             #   Auto-load: design system
+│   │   ├── SKILL.md                #     Core design principles
+│   │   ├── references/             #     7 industry guides + brand + landing page
+│   │   ├── schemas/                #     JSON Schema per industry
+│   │   └── templates/              #     Next.js templates (_shared + industry)
+│   ├── toolchain/                  #   Auto-load: tool documentation hub
+│   │   └── references/             #     browser-use, lighthouse, n8n, github...
+│   ├── quality-standards/          #   Auto-load: quality standards hub
+│   │   └── references/             #     a11y, seo, performance, CWV...
+│   ├── project-standards/SKILL.md  #   Auto-load: code conventions + data schema
+│   └── skill-creator/SKILL.md      #   Skill creation and testing
 │
 ├── n8n/                             # Workflow engine (Docker)
 │   ├── docker-compose.yml           # n8n + Evolution API (Phase 5)
@@ -165,23 +166,27 @@ interface IndustryDesign {
 
 ---
 
-## Two-Layer Skill System
+## Skill Architecture
 
 <picture>
-  <img src="docs/skill-system.svg" alt="Two-layer skill architecture — Layer 1 (pipeline/process) and Layer 2 (design/content)">
+  <img src="docs/skill-system.svg" alt="Flat skill architecture — 12 skills: 7 pipeline commands + 4 auto-load references + 1 utility">
 </picture>
 
-Skills are Claude Code instructions (SKILL.md files) loaded at generation time:
+12 Claude Code skills in a flat structure under `.claude/skills/`:
 
-**Layer 1** (`layer1-pipeline/`) answers **HOW** — tools, process, quality gates, deployment steps.
+**Pipeline Skills** (user-invoked via `/slash-commands`):
+`/generate`, `/batch`, `/discover`, `/prepare-assets`, `/quality-gate`, `/iterate-quality`, `/deploy`
 
-**Layer 2** (`layer2-design/`) answers **WHAT** — design decisions, typography, color theory, layout per industry.
+**Reference Skills** (Claude auto-loads when relevant):
+`duocode-design` (design system), `toolchain` (tool docs hub), `quality-standards` (quality docs hub), `project-standards` (code conventions)
+
+**Utility Skill**: `/skill-creator`
 
 ### Load Order (per site generation)
 
 ```
-1. generate/SKILL.md              → orchestration steps
-2. duocode-design/SKILL.md        → shared design principles (always loaded)
+1. generate/SKILL.md              → orchestration steps (10-step process)
+2. duocode-design/SKILL.md        → shared design principles (auto-loaded)
 3. duocode-design/references/{industry}.md  → industry-specific design
 4. duocode-design/schemas/{industry}.schema.json → data field requirements
 ```

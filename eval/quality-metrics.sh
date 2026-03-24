@@ -5,7 +5,7 @@ set -euo pipefail
 # 检查: 性能预算 | Lighthouse 配置 | 可访问性 | SEO
 
 SRC_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-TPL_DIR="$SRC_DIR/.claude/skills/layer2-design/duocode-design/templates"
+TPL_DIR="$SRC_DIR/.claude/skills/duocode-design/templates"
 PASSED=0; FAILED=0; WARNED=0
 
 pass() { echo "  ✅ $1"; PASSED=$((PASSED + 1)); }
@@ -139,14 +139,14 @@ else
 fi
 
 # Check schema-markup skill available
-if [ -f "$SRC_DIR/.claude/skills/layer1-pipeline/quality/schema-markup/SKILL.md" ]; then
+if [ -f "$SRC_DIR/.claude/skills/quality-standards/references/schema-markup.md" ]; then
   pass "4.2 schema-markup skill available for structured data"
 else
   warn "4.2 schema-markup skill" "not found"
 fi
 
 # Check SEO skill available
-if [ -f "$SRC_DIR/.claude/skills/layer1-pipeline/quality/seo/SKILL.md" ]; then
+if [ -f "$SRC_DIR/.claude/skills/quality-standards/references/seo.md" ]; then
   pass "4.3 SEO skill available"
 else
   fail "4.3 SEO skill" "missing"

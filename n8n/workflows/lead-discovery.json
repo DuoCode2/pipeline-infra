@@ -149,16 +149,36 @@
     },
     {
       "id": "sheets-append-placeholder",
-      "name": "Google Sheets Append (Configure OAuth)",
-      "type": "n8n-nodes-base.code",
+      "name": "Google Sheets Append",
+      "type": "n8n-nodes-base.googleSheets",
       "position": [
         1800,
         200
       ],
       "parameters": {
-        "jsCode": "// PLACEHOLDER: Replace this Code node with a Google Sheets node after configuring OAuth.\n// Saves to local JSON file as fallback storage.\nconst fs = require('fs');\nconst path = require('path');\n\nconst leads = $input.all();\nconst outputDir = '/data/leads';\ntry {\n  fs.mkdirSync(outputDir, { recursive: true });\n  const filename = `leads_${Date.now()}.json`;\n  const data = leads.map(l => l.json);\n  fs.writeFileSync(path.join(outputDir, filename), JSON.stringify(data, null, 2));\n} catch (e) {\n  // Continue even if file write fails\n}\n\nreturn leads;"
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "16Jr3k5OZD02p7-HMSkda5jyKApPbE_KAureiV4ovYOk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData"
+        },
+        "options": {}
       },
-      "typeVersion": 2
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Cm08O9cPWBANNWMw",
+          "name": "Google Sheets (DuoCode)"
+        }
+      }
     },
     {
       "id": "build-response",
@@ -183,7 +203,7 @@
       ],
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json }}",
+        "responseBody": "={{ JSON.stringify($json) }}",
         "options": {
           "responseHeaders": {
             "entries": [
@@ -259,18 +279,7 @@
       "main": [
         [
           {
-            "node": "Google Sheets Append (Configure OAuth)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Google Sheets Append (Configure OAuth)": {
-      "main": [
-        [
-          {
-            "node": "Build Response",
+            "node": "Google Sheets Append",
             "type": "main",
             "index": 0
           }
@@ -282,6 +291,17 @@
         [
           {
             "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets Append": {
+      "main": [
+        [
+          {
+            "node": "Build Response",
             "type": "main",
             "index": 0
           }
@@ -502,7 +522,7 @@
         ],
         "parameters": {
           "respondWith": "json",
-          "responseBody": "={{ $json }}",
+          "responseBody": "={{ JSON.stringify($json) }}",
           "options": {
             "responseHeaders": {
               "entries": [

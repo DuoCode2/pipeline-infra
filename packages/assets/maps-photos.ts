@@ -7,7 +7,7 @@ const API_KEY = requireEnv('GOOGLE_API_KEY');
 /**
  * Download photos from Google Maps Places API (New).
  * @param photoNames - array of photo resource names from search results (e.g., "places/xxx/photos/yyy")
- * @param outputDir - directory to save photos (e.g., "output/{place_id}/public/images")
+ * @param outputDir - directory to save photos (e.g., "output/{slug}/public/images")
  * @param maxPhotos - max number of photos to download (default 5)
  */
 export async function downloadMapsPhotos(
