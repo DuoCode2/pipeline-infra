@@ -67,19 +67,53 @@ export const INDUSTRY_CONFIG: Record<string, IndustryDesign> = {
 };
 
 export function classifyIndustry(mapsType: string | undefined): string {
+  const t = mapsType || '';
+
+  // Exact matches first
   const typeMap: Record<string, string> = {
     restaurant: 'restaurant', cafe: 'restaurant', bakery: 'restaurant',
     bar: 'restaurant', meal_delivery: 'restaurant', meal_takeaway: 'restaurant',
+    coffee_shop: 'restaurant', food_court: 'restaurant', ice_cream_shop: 'restaurant',
+    pizza_restaurant: 'restaurant', steak_house: 'restaurant', sushi_restaurant: 'restaurant',
     beauty_salon: 'beauty', hair_care: 'beauty', spa: 'beauty',
+    hair_salon: 'beauty', nail_salon: 'beauty',
     dentist: 'clinic', doctor: 'clinic', hospital: 'clinic',
     pharmacy: 'clinic', physiotherapist: 'clinic', veterinary_care: 'clinic',
+    dental_clinic: 'clinic', medical_lab: 'clinic',
     clothing_store: 'retail', shoe_store: 'retail', jewelry_store: 'retail',
     electronics_store: 'retail', furniture_store: 'retail', book_store: 'retail',
+    shopping_mall: 'retail', supermarket: 'retail', convenience_store: 'retail',
     gym: 'fitness', stadium: 'fitness',
     plumber: 'service', electrician: 'service', painter: 'service',
     locksmith: 'service', moving_company: 'service', car_repair: 'service',
+    laundry: 'service', car_wash: 'service',
   };
-  return typeMap[mapsType || ''] || 'generic';
+  if (typeMap[t]) return typeMap[t];
+
+  // Suffix matching: Google Maps returns compound types like "latin_american_restaurant"
+  const suffixMap: [string, string][] = [
+    ['_restaurant', 'restaurant'],
+    ['_cafe', 'restaurant'],
+    ['_bakery', 'restaurant'],
+    ['_bar', 'restaurant'],
+    ['_salon', 'beauty'],
+    ['_spa', 'beauty'],
+    ['_clinic', 'clinic'],
+    ['_hospital', 'clinic'],
+    ['_store', 'retail'],
+    ['_shop', 'retail'],
+    ['_gym', 'fitness'],
+  ];
+  for (const [suffix, industry] of suffixMap) {
+    if (t.endsWith(suffix)) return industry;
+  }
+
+  // Substring matching for remaining edge cases
+  if (t.includes('restaurant') || t.includes('food') || t.includes('eat')) return 'restaurant';
+  if (t.includes('beauty') || t.includes('hair') || t.includes('nail')) return 'beauty';
+  if (t.includes('doctor') || t.includes('dent') || t.includes('medical') || t.includes('health')) return 'clinic';
+
+  return 'generic';
 }
 
 export function slugify(name: string): string {

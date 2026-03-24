@@ -38,14 +38,14 @@ export default function LocaleLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href={`https://fonts.googleapis.com/css2?family=${theme.fontDisplay.replace(/ /g, '+')}:wght@400;600;700;800&family=${theme.fontBody.replace(/ /g, '+')}:wght@300;400;500;600&display=swap`}
+          href={`https://fonts.googleapis.com/css2?family=${theme.fontDisplay.replace(/ /g, '+')}:wght@400;600;700;800&family=${theme.fontBody.replace(/ /g, '+')}:wght@300;400;500;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap`}
           rel="stylesheet"
         />
       </head>
       <body
         style={{
-          '--font-display': `'${theme.fontDisplay}', serif`,
-          '--font-body': `'${theme.fontBody}', sans-serif`,
+          '--font-display': `'${theme.fontDisplay}', 'Noto Sans SC', 'Noto Sans TC', serif`,
+          '--font-body': `'${theme.fontBody}', 'Noto Sans SC', 'Noto Sans TC', sans-serif`,
           '--color-primary': theme.primary,
           '--color-primary-dark': theme.primaryDark,
           '--color-accent': theme.accent,

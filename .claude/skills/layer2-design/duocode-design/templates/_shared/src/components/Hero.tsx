@@ -11,10 +11,18 @@ export function Hero({ locale }: { locale: Locale }) {
       style={{ backgroundColor: theme.primaryDark }}
     >
       {assets.heroImage && (
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-40"
-          style={{ backgroundImage: `url(${assets.heroImage})` }}
-        />
+        <>
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${assets.heroImage})` }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to bottom, transparent 0%, transparent 30%, ${theme.primaryDark}B3 70%, ${theme.primaryDark}E6 100%)`,
+            }}
+          />
+        </>
       )}
       <div className="relative z-10 mx-auto max-w-4xl px-4 py-20 text-center sm:px-6">
         {hero.badge && (

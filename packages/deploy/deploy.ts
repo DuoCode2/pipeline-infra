@@ -45,6 +45,13 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
       files: files.map(f => ({ file: f.file, data: f.data, encoding: 'base64' })),
       projectSettings: { framework: null },
       target: 'production',
+      routes: [
+        // Root redirect to /en
+        { src: "^/$", status: 302, headers: { Location: "/en" } },
+        // Clean URLs: strip .html extensions
+        { handle: "filesystem" },
+        { src: "/(.*)", dest: "/$1.html", check: true },
+      ],
     }),
   });
 
@@ -64,7 +71,9 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
     });
     const status = await check.json() as { readyState: string; alias?: string[] };
     if (status.readyState === 'READY') {
-      const prodUrl = `https://${slug}.vercel.app`;
+      // Use actual alias from Vercel (may differ from slug if name conflicts)
+      const alias = status.alias?.[0];
+      const prodUrl = alias ? `https://${alias}` : `https://${slug}.vercel.app`;
       console.log(`Deployed: ${prodUrl}`);
       return { url: prodUrl, projectId: slug, deploymentId: deployment.id };
     }
