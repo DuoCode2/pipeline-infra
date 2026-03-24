@@ -128,9 +128,11 @@ if (require.main === module) {
   const city = getArg('city', 'Kuala Lumpur');
   const category = getArg('category', 'restaurant');
   const limit = parseInt(getArg('limit', '1'), 10);
-  const noWebsite = args.includes('--no-website');
+  // Default: filter out businesses WITH websites (we only want leads without sites)
+  const includeAll = args.includes('--include-all');
+  const filterNoWebsite = !includeAll;
 
-  searchPlaces(category, city, limit, noWebsite)
+  searchPlaces(category, city, limit, filterNoWebsite)
     .then((results) => {
       console.log(JSON.stringify(results, null, 2));
       console.error(`\nTotal: ${results.length} results`);

@@ -1,45 +1,38 @@
 {
-  "updatedAt": "2026-03-23T20:57:56.337Z",
-  "createdAt": "2026-03-23T13:14:41.420Z",
-  "id": "yD8cDvunppZ8PAeC",
   "name": "log-work",
-  "description": null,
-  "active": true,
-  "isArchived": false,
   "nodes": [
     {
-      "id": "lw-webhook",
-      "name": "Webhook Trigger",
+      "id": "w1",
+      "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "position": [
-        0,
+        200,
         300
       ],
       "parameters": {
         "path": "log-work",
         "httpMethod": "POST",
-        "responseMode": "responseNode",
-        "options": {}
+        "responseMode": "lastNode"
       },
       "typeVersion": 2,
-      "webhookId": "log-work-id"
+      "webhookId": "log-work-new"
     },
     {
-      "id": "lw-prepare",
-      "name": "Prepare Log Entry",
+      "id": "c1",
+      "name": "Prepare",
       "type": "n8n-nodes-base.code",
       "position": [
-        300,
+        400,
         300
       ],
       "parameters": {
-        "jsCode": "const body = $input.first().json.body || {};\nconst { place_id, action, result, qa_score, details } = body;\n\nreturn [{\n  json: {\n    place_id: place_id || '',\n    action: action || '',\n    result: typeof result === 'object' ? JSON.stringify(result) : (result || ''),\n    qa_score: qa_score || '',\n    details: typeof details === 'object' ? JSON.stringify(details) : (details || ''),\n    timestamp: new Date().toISOString()\n  }\n}];"
+        "jsCode": "const body = $input.first().json.body || {};\nreturn [{\n  json: {\n    timestamp: new Date().toISOString(),\n    place_id: body.place_id || '',\n    slug: body.slug || '',\n    action: body.action || '',\n    result: typeof body.result === 'object' ? JSON.stringify(body.result) : (body.result || ''),\n    qa_score: body.qa_score ?? '',\n    url: body.url || '',\n    details: typeof body.details === 'object' ? JSON.stringify(body.details) : (body.details || '')\n  }\n}];"
       },
       "typeVersion": 2
     },
     {
-      "id": "lw-sheets-placeholder",
-      "name": "Append to WorkLog",
+      "id": "s1",
+      "name": "Write to WorkLog",
       "type": "n8n-nodes-base.googleSheets",
       "position": [
         600,
@@ -69,60 +62,25 @@
           "name": "Google Sheets (DuoCode)"
         }
       }
-    },
-    {
-      "id": "lw-respond",
-      "name": "Respond to Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "position": [
-        900,
-        300
-      ],
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ logged: true, timestamp: $json.timestamp || new Date().toISOString() }) }}",
-        "options": {
-          "responseHeaders": {
-            "entries": [
-              {
-                "name": "Content-Type",
-                "value": "application/json"
-              }
-            ]
-          }
-        }
-      },
-      "typeVersion": 1.1
     }
   ],
   "connections": {
-    "Webhook Trigger": {
+    "Webhook": {
       "main": [
         [
           {
-            "node": "Prepare Log Entry",
+            "node": "Prepare",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Prepare Log Entry": {
+    "Prepare": {
       "main": [
         [
           {
-            "node": "Append to WorkLog",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Append to WorkLog": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
+            "node": "Write to WorkLog",
             "type": "main",
             "index": 0
           }
@@ -133,172 +91,5 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "staticData": null,
-  "meta": null,
-  "pinData": null,
-  "versionId": "6caf6573-e9b9-4093-9040-5c7f4097051a",
-  "activeVersionId": "6caf6573-e9b9-4093-9040-5c7f4097051a",
-  "versionCounter": 9,
-  "triggerCount": 1,
-  "shared": [
-    {
-      "updatedAt": "2026-03-23T13:14:41.421Z",
-      "createdAt": "2026-03-23T13:14:41.421Z",
-      "role": "workflow:owner",
-      "workflowId": "yD8cDvunppZ8PAeC",
-      "projectId": "q4dXsuJzhJK6N4X1",
-      "project": {
-        "updatedAt": "2026-03-23T13:04:58.636Z",
-        "createdAt": "2026-03-23T13:02:32.255Z",
-        "id": "q4dXsuJzhJK6N4X1",
-        "name": "Code Duo <duocodetechu@gmail.com>",
-        "type": "personal",
-        "icon": null,
-        "description": null,
-        "creatorId": "99904267-68ab-430e-abde-6e2cc0eadac9"
-      }
-    }
-  ],
-  "tags": [],
-  "parentFolder": null,
-  "activeVersion": {
-    "updatedAt": "2026-03-23T13:18:26.416Z",
-    "createdAt": "2026-03-23T13:18:26.416Z",
-    "versionId": "6caf6573-e9b9-4093-9040-5c7f4097051a",
-    "workflowId": "yD8cDvunppZ8PAeC",
-    "nodes": [
-      {
-        "id": "lw-webhook",
-        "name": "Webhook Trigger",
-        "type": "n8n-nodes-base.webhook",
-        "position": [
-          0,
-          300
-        ],
-        "parameters": {
-          "path": "log-work",
-          "httpMethod": "POST",
-          "responseMode": "responseNode",
-          "options": {}
-        },
-        "typeVersion": 2,
-        "webhookId": "log-work-id"
-      },
-      {
-        "id": "lw-prepare",
-        "name": "Prepare Log Entry",
-        "type": "n8n-nodes-base.code",
-        "position": [
-          300,
-          300
-        ],
-        "parameters": {
-          "jsCode": "const body = $input.first().json.body || {};\nconst { place_id, action, result, qa_score, details } = body;\n\nreturn [{\n  json: {\n    place_id: place_id || '',\n    action: action || '',\n    result: typeof result === 'object' ? JSON.stringify(result) : (result || ''),\n    qa_score: qa_score || '',\n    details: typeof details === 'object' ? JSON.stringify(details) : (details || ''),\n    timestamp: new Date().toISOString()\n  }\n}];"
-        },
-        "typeVersion": 2
-      },
-      {
-        "id": "lw-sheets-placeholder",
-        "name": "Google Sheets WorkLog (Configure OAuth)",
-        "type": "n8n-nodes-base.code",
-        "position": [
-          600,
-          300
-        ],
-        "parameters": {
-          "jsCode": "// PLACEHOLDER: Replace this Code node with a Google Sheets node after configuring OAuth.\n// This node passes data through and saves to local file as fallback.\n// To configure: Delete this node, add a Google Sheets node, set operation to 'append',\n// connect your Google account, select your WorkLog spreadsheet.\n\nconst items = $input.all();\nconst fs = require('fs');\nconst path = require('path');\n\nconst outputDir = '/data/worklog';\ntry {\n  fs.mkdirSync(outputDir, { recursive: true });\n  const filename = `worklog_${Date.now()}.json`;\n  const data = items.map(i => i.json);\n  fs.writeFileSync(path.join(outputDir, filename), JSON.stringify(data, null, 2));\n} catch (e) {\n  // Continue even if file write fails\n}\n\nreturn items;"
-        },
-        "typeVersion": 2
-      },
-      {
-        "id": "lw-respond",
-        "name": "Respond to Webhook",
-        "type": "n8n-nodes-base.respondToWebhook",
-        "position": [
-          900,
-          300
-        ],
-        "parameters": {
-          "respondWith": "json",
-          "responseBody": "={{ JSON.stringify({ logged: true, timestamp: $json.timestamp || new Date().toISOString() }) }}",
-          "options": {
-            "responseHeaders": {
-              "entries": [
-                {
-                  "name": "Content-Type",
-                  "value": "application/json"
-                }
-              ]
-            }
-          }
-        },
-        "typeVersion": 1.1
-      }
-    ],
-    "connections": {
-      "Webhook Trigger": {
-        "main": [
-          [
-            {
-              "node": "Prepare Log Entry",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Prepare Log Entry": {
-        "main": [
-          [
-            {
-              "node": "Google Sheets WorkLog (Configure OAuth)",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Google Sheets WorkLog (Configure OAuth)": {
-        "main": [
-          [
-            {
-              "node": "Respond to Webhook",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      }
-    },
-    "authors": "Code Duo",
-    "name": null,
-    "description": null,
-    "autosaved": false,
-    "workflowPublishHistory": [
-      {
-        "createdAt": "2026-03-23T13:18:35.882Z",
-        "id": 6,
-        "workflowId": "yD8cDvunppZ8PAeC",
-        "versionId": "6caf6573-e9b9-4093-9040-5c7f4097051a",
-        "event": "activated",
-        "userId": "99904267-68ab-430e-abde-6e2cc0eadac9"
-      }
-    ]
-  },
-  "scopes": [
-    "workflow:create",
-    "workflow:delete",
-    "workflow:execute",
-    "workflow:execute-chat",
-    "workflow:list",
-    "workflow:move",
-    "workflow:publish",
-    "workflow:read",
-    "workflow:share",
-    "workflow:unpublish",
-    "workflow:unshare",
-    "workflow:update",
-    "workflow:updateRedactionSetting"
-  ],
-  "checksum": "8bf2bcb533a53a035bd291ec4e429356695703198397c32ecfae4c83fe9558b2"
+  "id": "log-work-v2"
 }

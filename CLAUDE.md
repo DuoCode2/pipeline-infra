@@ -5,6 +5,7 @@ Claude Code drives the full pipeline. Use `frontend-design` skill for all design
 ## Rules
 - Use **AskUserQuestion tool** for user input — never plain text questions
 - Pipeline runs **end-to-end without pausing** — only stop if a gate fails after max retries
+- **ONLY generate sites for businesses WITHOUT a website** — always use `--no-website` filter in discover
 - All sites need **4 languages**: en, ms, zh-CN, zh-TW
 - Malaysia market rules: see `.claude/skills/duocode-design/references/malaysia-market.md`
 
