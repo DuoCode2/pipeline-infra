@@ -1,150 +1,106 @@
 ---
 name: generate
-description: "End-to-end website generation for a business lead. Takes a place_id + industry, runs 10 steps: prepare assets, load design skill, generate business.ts (4 languages) + SVGs, Gate 1 build, Gate 2 Lighthouse, Gate 3 visual QA. Use when user says 'generate site', 'build site', 'create prototype', or 'run lead'."
-allowed-tools: Bash, Read, Write
+description: End-to-end website generation for a business lead. Takes place_id + industry, prepares assets, designs with frontend-design skill, runs quality gates, and deploys.
+allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion]
+user-invocable: true
 ---
 
-# Generate Business Website
-
-Produce a deployable 4-language website from a lead's Google Maps data.
+# Site Generation (5 Steps)
 
 ## Input
-A lead with: place_id, name, industry, address, phone, hours, photos, rating, reviews
+- `place_id` — Google Maps place ID
+- `industry` — restaurant | beauty | clinic | retail | fitness | service | generic
+- `business_name` — for slug generation
+- Business data: name, address, phone, hours, photos, rating, reviews count
 
-**If any required input is missing, use AskUserQuestion to collect it.** Never guess or output a plain-text question — always use the AskUserQuestion tool so the user gets a proper prompt. At minimum you need: a business identity (place_id or name+city) and an industry category.
+## Step 1: Prepare Assets
 
-## Output
-A deployable site in `output/{place_id}/` passing all 3 quality gates.
-
-## Workflow
-
-### Step 1: Trigger Asset Preparation
 ```bash
-xh POST http://localhost:5678/webhook/prepare-assets \
-  place_id:='"{{place_id}}"' industry:='"{{industry}}"' \
-  photos:='{{photos_json}}' output_dir:='"output/{{place_id}}"'
-```
-Verify: `brand-colors.json` and `image-manifest.json` exist in output dir.
+# Resolve slug
+SLUG=$(npx tsx -e "const {slugify} = require('./packages/generate/industry-config'); console.log(slugify('{{business_name}}'))")
+mkdir -p output/$SLUG/public/images
 
-### Step 2: Load Design Context
-**CRITICAL**: Before generating anything:
-```
-Read .claude/skills/duocode-design/SKILL.md
-Read .claude/skills/duocode-design/references/{{industry}}.md
-Read .claude/skills/duocode-design/schemas/{{industry}}.schema.json
+# Download Maps photos
+npx tsx packages/assets/maps-photos.ts --photos '{{photos_json}}' --output output/$SLUG/public/images
+
+# Extract brand colors (use maps-2 or best interior photo, NOT maps-1)
+npx tsx packages/assets/extract-colors.ts --image output/$SLUG/public/images/maps-2.jpg --output output/$SLUG
+
+# Optimize images → WebP variants + manifest
+npx tsx packages/assets/optimize-images.ts --input output/$SLUG/public/images
+
+# Optional: stock photos if <3 maps photos available
+npx tsx packages/assets/stock-photos.ts --industry {{industry}} --output output/$SLUG/public/images
 ```
 
-### Step 3: Copy & Layer Templates
+**Verify:** `brand-colors.json` at site root, `image-manifest.json` in `public/`, ≥3 images in `public/images/`
+
+## Step 2: Set Up Scaffolding
+
 ```bash
-DESIGN=".claude/skills/duocode-design"
-OUT="output/{{place_id}}"
-
-# Base structure (config files at root level)
-cp $DESIGN/templates/_shared/package.json $OUT/
-cp $DESIGN/templates/_shared/next.config.js $OUT/
-cp $DESIGN/templates/_shared/tailwind.config.ts $OUT/
-cp $DESIGN/templates/_shared/tsconfig.json $OUT/
-cp $DESIGN/templates/_shared/postcss.config.js $OUT/
-
-# Source code
-cp -r $DESIGN/templates/_shared/src/* $OUT/src/
-
-# Industry-specific overrides (page.tsx + components)
-if [ -d "$DESIGN/templates/{{industry}}" ]; then
-  # Override page.tsx with industry version
-  cp $DESIGN/templates/{{industry}}/page.tsx $OUT/src/app/[locale]/page.tsx 2>/dev/null || true
-  # Merge industry components into components dir
-  cp $DESIGN/templates/{{industry}}/components/*.tsx $OUT/src/components/ 2>/dev/null || true
-fi
+# Copy template scaffolding
+cp -r .claude/skills/duocode-design/templates/_shared/* output/$SLUG/
+cp .claude/skills/duocode-design/templates/_shared/.gitignore output/$SLUG/
 ```
 
-### Step 4: Study Examples
-```
-Read .claude/skills/duocode-design/examples/{{industry}}/*/business.ts
-```
+- Read `brand-colors.json` → inject into business.ts theme
+- Read `.claude/skills/duocode-design/references/malaysia-market.md` for locale rules
+- Set `schemaOrgType` from `SCHEMA_ORG_TYPE[industry]` in `packages/generate/industry-config.ts`
 
-### Step 5: Generate business.ts
-Create `output/{{place_id}}/src/data/business.ts` with ALL 4 languages (en, ms, zh-CN, zh-TW).
-- Fill every field from schema
-- Use brand-colors.json for theme
-- Use image-manifest.json for photos
-- Write compelling, non-generic copy per industry tone
-- Bilingual content: menu item names in original language, descriptions in target language
+## Step 3: Design & Build (Creative Phase)
 
-### Step 6: Generate SVG Assets
-Create `output/{{place_id}}/public/svgs/*.svg`:
-- Section dividers (per industry SVG vocabulary from design reference)
-- Category icons
-- Decorative textures (optional)
-- Rules: viewBox defined, max 20 paths, currentColor for mono icons
-- Run: `npx svgo output/{{place_id}}/public/svgs/*.svg`
+Use the `frontend-design` skill. Provide it with:
+- Business name, industry, location, hours, contact info
+- Brand colors from `brand-colors.json`
+- Photos from `public/images/` (visually inspect to choose best hero — NEVER use maps-1)
+- Industry context for content sections
 
-### Step 7: Gate 1 -- Build
+**Claude generates ALL of:**
+- `src/app/[locale]/page.tsx` — completely free layout, unique to this business
+- All components in `src/components/`
+- `src/data/business.ts` — 4 languages (en, ms, zh-CN, zh-TW)
+- SVGs in `public/svgs/` as needed (no fixed quota)
+- Any CSS customizations in `globals.css`
+
+**NO fixed template. Design should be unique to this business.**
+
+## Step 4: Quality Gates
+
+**Gate 1 — Build:**
 ```bash
-cd output/{{place_id}} && npm install && npm run build
+cd output/$SLUG && npm install && npm run build
 ```
-Fail -> read error -> fix business.ts -> retry (max 3)
+Zero errors required. Max 3 fix-and-retry cycles.
 
-### Step 8: Gate 2 -- Lighthouse
+**Gate 2 — Lighthouse:**
 ```bash
-cd output/{{place_id}} && npx serve out -l 3456 &
-sleep 3
-npx lighthouse http://localhost:3456 --output json --output-path lighthouse.json --chrome-flags="--headless"
+npx serve out -l 3456 &
+npx lighthouse http://localhost:3456/en/ --output json --output-path lighthouse.json --chrome-flags="--headless"
 kill %1
 ```
-Check: Performance >= 90, Accessibility = 100, SEO >= 95. Fail -> fix -> retry.
+Thresholds: Performance ≥ 90, Accessibility = 100, SEO ≥ 95
 
-### Step 9: Visual QA (Gate 3)
+**Gate 3 — Visual QA (browser-use CLI):**
 ```bash
-cd output/{{place_id}}
-npx serve out -l 3456 &
-sleep 3
-
-# Desktop screenshot
 browser-use open http://localhost:3456/en/
-sleep 2
 browser-use screenshot screenshots/desktop.png
-
-# Mobile screenshot (resize viewport first)
 browser-use eval "await page.setViewportSize({width: 375, height: 812})"
 browser-use screenshot screenshots/mobile.png
-
-kill %1
 ```
-I analyze both screenshots. Rubric (100 pts):
-| Dimension | Pts |
-|---|---|
-| Hero Impact | 20 |
-| Layout & Spacing | 20 |
-| Typography | 15 |
-| Color Cohesion | 15 |
-| Image Quality | 10 |
-| Mobile | 10 |
-| Above-fold | 10 |
+Evaluate with design judgment — does it look professional and match the business identity?
+If not satisfied, iterate (max 3 rounds).
 
->= 75 -> PASS. < 75 -> fix -> rebuild -> re-screenshot. Max 3 rounds.
-
-### Step 10: Deploy & Log
-
-**Do NOT pause here — deploy immediately after Gate 3 passes.**
+## Step 5: Deploy
 
 ```bash
-# Push to GitHub
-cd output/{{place_id}}
+cd output/$SLUG
 git init && git add -A && git commit -m "feat: generated site for {{business_name}}"
-gh repo create DuoCode2/{{slug}} --private --source=. --push
+gh repo create DuoCode2/$SLUG --private --source=. --push
+gh repo edit DuoCode2/$SLUG --homepage "https://$SLUG.vercel.app"
+npx tsx ../../packages/deploy/deploy.ts --build-dir out --slug $SLUG
 ```
 
+Log result:
 ```bash
-# Deploy to Vercel
-npx tsx packages/deploy/deploy.ts --build-dir output/{{place_id}}/out --slug {{slug}}
+echo '{"slug":"'$SLUG'","url":"https://'$SLUG'.vercel.app","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' >> ../generation-log.jsonl
 ```
-
-```bash
-# Log results
-xh POST http://localhost:5678/webhook/log-work \
-  place_id:='"{{place_id}}"' action:='"deployed"' \
-  details:='{"qa_score":{{score}},"rounds":{{rounds}},"url":"{{vercel_url}}"}'
-```
-
-**Report at the very end only** — one summary with: Vercel URL, QA score, Lighthouse scores.

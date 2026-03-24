@@ -66,6 +66,16 @@ export const INDUSTRY_CONFIG: Record<string, IndustryDesign> = {
   },
 };
 
+export const SCHEMA_ORG_TYPE: Record<string, string> = {
+  restaurant: 'Restaurant',
+  beauty: 'BeautySalon',
+  clinic: 'Dentist',
+  retail: 'Store',
+  fitness: 'SportsActivityLocation',
+  service: 'LocalBusiness',
+  generic: 'LocalBusiness',
+};
+
 export function classifyIndustry(mapsType: string | undefined): string {
   const t = mapsType || '';
 

@@ -56,9 +56,10 @@ export async function optimizeImages(
     console.log(`Optimized: ${file} → ${Object.keys(manifest[baseName]).length - 1} WebP variants`);
   }
 
-  // Write manifest
+  // Write manifest to public/ (one level up from images/)
+  const normalizedInput = inputDir.replace(/\/+$/, '');
   const manifestPath = path.join(
-    path.dirname(inputDir),
+    path.dirname(normalizedInput),
     'image-manifest.json'
   );
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));

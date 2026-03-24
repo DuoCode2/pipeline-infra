@@ -6,6 +6,11 @@ export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
 }
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export function generateMetadata({ params }: { params: { locale: Locale } }) {
   const content = business.content[params.locale];
   return {
@@ -16,7 +21,6 @@ export function generateMetadata({ params }: { params: { locale: Locale } }) {
       description: content.meta.description,
       type: 'website',
     },
-    viewport: 'width=device-width, initial-scale=1',
     icons: { icon: '/favicon.svg' },
   };
 }
@@ -25,7 +29,7 @@ function buildJsonLd(locale: Locale) {
   const c = business.content[locale];
   return {
     '@context': 'https://schema.org',
-    '@type': 'BeautySalon',
+    '@type': business.schemaOrgType || 'LocalBusiness',
     name: c.meta.title,
     description: c.meta.description,
     telephone: c.contact.phone,
@@ -69,14 +73,17 @@ export default function LocaleLayout({
       <head>
         <style dangerouslySetInnerHTML={{ __html: cssVars }} />
         {locales.map((l) => (
-          <link key={l} rel="alternate" hrefLang={l} href={`/${l}`} />
+          <link key={l} rel="alternate" hrefLang={l} href={business.siteUrl ? `${business.siteUrl}/${l}` : `/${l}`} />
         ))}
-        <link rel="alternate" hrefLang="x-default" href="/en" />
+        <link rel="alternate" hrefLang="x-default" href={business.siteUrl ? `${business.siteUrl}/en` : '/en'} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
           href={`https://fonts.googleapis.com/css2?family=${theme.fontDisplay.replace(/ /g, '+')}:wght@400;600;700;800&family=${theme.fontBody.replace(/ /g, '+')}:wght@300;400;500;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap`}
           rel="stylesheet"
+          media="print"
+          // @ts-ignore
+          onLoad="this.media='all'"
         />
         <script
           type="application/ld+json"

@@ -22,14 +22,14 @@ The pipeline is orchestrated by Claude Code as a central brain. Every phase — 
 
 1. **Discover** — Search Google Maps Places API for businesses without websites in a target city
 2. **Classify** — Map the business's Google `primaryType` to one of 7 industry categories
-3. **Generate** — Download photos, extract brand colors, copy templates, generate multilingual content, build with Next.js, run quality gates
+3. **Generate** — Download photos, extract brand colors, scaffold from shared template, design unique pages using the `frontend-design` skill, build with Next.js, run quality gates
 4. **Deploy** — Push to GitHub (DuoCode2 org) and deploy via Vercel REST API
 
 Each generated site ships with:
 - 4 language versions (English, Malay, Simplified Chinese, Traditional Chinese)
 - Brand colors extracted from the business's own photos
 - Responsive images in 4 WebP sizes (320/640/960/1280)
-- Industry-specific design (fonts, layout, SVG decorations)
+- Unique design per business (driven by `frontend-design` skill, not fixed templates)
 - Perfect accessibility score (Lighthouse a11y = 100)
 
 ---
@@ -58,24 +58,19 @@ infra/src/
 │   ├── deploy/deploy.ts             # Vercel REST API v13 deployment
 │   └── utils/env.ts                 # requireEnv() helper
 │
-├── .claude/skills/                  # 12 Claude Code skills (flat structure)
-│   ├── generate/SKILL.md           #   /generate — E2E site generation
+├── .claude/skills/                  # 9 Claude Code skills (flat structure)
+│   ├── generate/SKILL.md           #   /generate — E2E site generation (5-step)
 │   ├── batch/SKILL.md              #   /batch — multi-lead orchestration
 │   ├── discover/SKILL.md           #   /discover — Google Maps lead discovery
 │   ├── prepare-assets/SKILL.md     #   /prepare-assets — photos + colors
 │   ├── quality-gate/SKILL.md       #   /quality-gate — 3-gate QA pipeline
-│   ├── iterate-quality/SKILL.md    #   /iterate-quality — design improvement loop
 │   ├── deploy/SKILL.md             #   /deploy — Vercel deployment
 │   ├── duocode-design/             #   Auto-load: design system
 │   │   ├── SKILL.md                #     Core design principles
-│   │   ├── references/             #     7 industry guides + brand + landing page
-│   │   ├── schemas/                #     JSON Schema per industry
-│   │   └── templates/              #     Next.js templates (_shared + industry)
+│   │   ├── references/             #     Malaysia market locale rules
+│   │   └── templates/              #     Next.js shared template scaffolding
 │   ├── toolchain/                  #   Auto-load: tool documentation hub
-│   │   └── references/             #     browser-use, lighthouse, n8n, github...
-│   ├── quality-standards/          #   Auto-load: quality standards hub
-│   │   └── references/             #     a11y, seo, performance, CWV...
-│   ├── project-standards/SKILL.md  #   Auto-load: code conventions + data schema
+│   │   └── references/             #     browser-use, lighthouse-ci
 │   └── skill-creator/SKILL.md      #   Skill creation and testing
 │
 ├── n8n/                             # Workflow engine (Docker)
@@ -169,39 +164,28 @@ interface IndustryDesign {
 ## Skill Architecture
 
 <picture>
-  <img src="docs/skill-system.svg" alt="Flat skill architecture — 12 skills: 7 pipeline commands + 4 auto-load references + 1 utility">
+  <img src="docs/skill-system.svg" alt="Flat skill architecture — 9 skills: 6 pipeline commands + 2 auto-load references + 1 utility">
 </picture>
 
-12 Claude Code skills in a flat structure under `.claude/skills/`:
+9 Claude Code skills in a flat structure under `.claude/skills/`:
 
 **Pipeline Skills** (user-invoked via `/slash-commands`):
-`/generate`, `/batch`, `/discover`, `/prepare-assets`, `/quality-gate`, `/iterate-quality`, `/deploy`
+`/generate`, `/batch`, `/discover`, `/prepare-assets`, `/quality-gate`, `/deploy`
 
 **Reference Skills** (Claude auto-loads when relevant):
-`duocode-design` (design system), `toolchain` (tool docs hub), `quality-standards` (quality docs hub), `project-standards` (code conventions)
+`duocode-design` (design system + shared template), `toolchain` (tool docs: browser-use, Lighthouse CI)
 
 **Utility Skill**: `/skill-creator`
 
 ### Load Order (per site generation)
 
 ```
-1. generate/SKILL.md              → orchestration steps (10-step process)
+1. generate/SKILL.md              → orchestration steps (5-step process)
 2. duocode-design/SKILL.md        → shared design principles (auto-loaded)
-3. duocode-design/references/{industry}.md  → industry-specific design
-4. duocode-design/schemas/{industry}.schema.json → data field requirements
+3. frontend-design skill          → unique page design per business
 ```
 
-### Industry Design Matrix
-
-| Industry | Display Font | Body Font | SVG Style | Hero Layout | CTA Style |
-|----------|-------------|-----------|-----------|-------------|-----------|
-| Restaurant | Playfair Display | Source Serif Pro | organic | full-bleed | rounded |
-| Beauty | Cormorant Garamond | Quicksand | elegant | split | pill |
-| Clinic | Inter | DM Sans | geometric | split | square |
-| Retail | Poppins | Inter | modern | full-bleed | rounded |
-| Fitness | Oswald | Barlow | geometric | full-bleed | square |
-| Service | Lato | Open Sans | modern | overlay | rounded |
-| Generic | Playfair Display | Source Sans 3 | modern | overlay | rounded |
+Design is driven by the `frontend-design` skill rather than fixed industry templates. Each site gets a unique layout tailored to the specific business, using brand colors, photos, and industry context as creative input.
 
 ---
 
@@ -349,7 +333,7 @@ Each site produced by the pipeline:
 ```
 output/{place_id}/
 ├── src/
-│   ├── app/[locale]/page.tsx        # Industry-specific page layout
+│   ├── app/[locale]/page.tsx        # Unique page layout per business
 │   ├── components/                  # 12+ shared components
 │   │   ├── Header.tsx               #   Navigation + language switcher
 │   │   ├── Hero.tsx                 #   Full-bleed / split / overlay

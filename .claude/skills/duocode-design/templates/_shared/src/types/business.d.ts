@@ -29,6 +29,8 @@ export interface BusinessContent {
 }
 
 export interface BusinessData {
+  schemaOrgType: string;
+  siteUrl?: string;
   /**
    * Theme is FLAT — colors and fonts at the same level.
    * CORRECT: business.theme.primary

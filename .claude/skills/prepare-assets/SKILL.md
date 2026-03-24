@@ -1,68 +1,49 @@
 ---
 name: prepare-assets
-description: "Orchestrate asset preparation for a lead: download Google Maps photos, fetch Unsplash stock photos, extract brand colors with node-vibrant, optimize images with Sharp. Use when starting site generation or user says 'prepare assets', 'download photos'."
-allowed-tools: Bash, Read, Write
+description: Download Google Maps photos, fetch stock photos, extract brand colors, optimize images to WebP. Direct CLI — no n8n dependency.
+allowed-tools: [Bash, Read, Glob]
+user-invocable: true
 ---
 
-# Prepare Assets
+# Asset Preparation
 
-Fetch and process all visual assets for a business lead before site generation.
+Prepares photos and brand colors for site generation.
 
-## Input
-
-| Parameter | Required | Source |
-|-----------|----------|--------|
-| place_id | Yes | Google Maps search result |
-| industry | Yes | Classification from n8n |
-| photos[] | Yes | Photo resource names from Maps API |
-| output_dir | Yes | `output/{place_id}/` |
-
-## Output
-
-| File | Description |
-|------|-------------|
-| `public/images/maps-*.webp` | Optimized Maps photos (4 breakpoints) |
-| `public/images/stock-*.webp` | Unsplash fallback photos |
-| `brand-colors.json` | 6 semantic colors extracted from lead photo |
-| `image-manifest.json` | Maps source images to responsive variants |
-| `attribution.json` | Unsplash compliance data |
-
-## Workflow
-
-### Step 1: Download Maps Photos
+## Usage
 ```bash
+SLUG="business-name"
+mkdir -p output/$SLUG/public/images
+
+# 1. Download Maps photos (up to 5)
 npx tsx packages/assets/maps-photos.ts \
-  --photos '{{photos_refs_json}}' \
-  --output output/{{place_id}}/public/images
-```
+  --photos '["places/xxx/photos/yyy", ...]' \
+  --output output/$SLUG/public/images
 
-### Step 2: Fetch Stock Photos (fallback)
-```bash
-npx tsx packages/assets/stock-photos.ts \
-  --industry {{industry}} \
-  --output output/{{place_id}}/public/images
-```
-
-### Step 3: Extract Brand Colors
-```bash
+# 2. Extract brand colors from best interior photo
+#    maps-1 is always exterior — use maps-2 or later
 npx tsx packages/assets/extract-colors.ts \
-  --image output/{{place_id}}/public/images/maps-1.jpg \
-  --output output/{{place_id}}
-```
+  --image output/$SLUG/public/images/maps-2.jpg \
+  --output output/$SLUG
 
-### Step 4: Optimize All Images
-```bash
+# 3. Optimize → WebP at 320/640/960/1280px + image-manifest.json
 npx tsx packages/assets/optimize-images.ts \
-  --input output/{{place_id}}/public/images \
-  --output output/{{place_id}}/public/images
+  --input output/$SLUG/public/images
+
+# 4. Optional: stock photos if fewer than 3 maps photos
+npx tsx packages/assets/stock-photos.ts \
+  --industry restaurant \
+  --output output/$SLUG/public/images
 ```
 
-### Step 5: Generate Manifests
-Write `brand-colors.json` and `image-manifest.json` -- already produced by Steps 3-4.
+## Output Files
+- `output/{slug}/brand-colors.json` — 6 semantic colors (primary, primaryDark, accent, surface, textTitle, textBody)
+- `output/{slug}/public/image-manifest.json` — responsive variant mapping
+- `output/{slug}/public/images/*.webp` — optimized images
+- `output/{slug}/attribution.json` — Unsplash credits (if stock photos used)
 
-## Dependencies
-
-- `packages/assets/maps-photos.ts` -- Google Maps photo download
-- `packages/assets/stock-photos.ts` -- Unsplash fallback photos
-- `packages/assets/extract-colors.ts` -- Brand color extraction (node-vibrant)
-- `packages/assets/optimize-images.ts` -- Sharp WebP optimization
+## n8n Webhook (optional convenience)
+```bash
+# Only if n8n is running (curl http://localhost:5678/healthz first)
+xh POST http://localhost:5678/webhook/prepare-assets \
+  place_id="xxx" industry="restaurant" output_dir="output/$SLUG"
+```

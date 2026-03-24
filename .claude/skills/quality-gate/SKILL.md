@@ -1,112 +1,52 @@
 ---
 name: quality-gate
-description: "Three-gate quality pipeline: Gate 1 (build verification), Gate 2 (Lighthouse CI audit for perf/a11y/SEO), Gate 3 (visual QA screenshots + scoring rubric). Run before deployment."
-allowed-tools: Bash, Read, Write
+description: Three-gate quality pipeline — build verification, Lighthouse audit, visual QA with browser-use screenshots.
+allowed-tools: [Bash, Read, Glob, Grep]
+user-invocable: true
 ---
 
-# Quality Gate
+# Quality Gates
 
-Three-stage quality pipeline ensuring every generated site meets production standards before deployment.
-
-**If no place_id or site path is provided, use AskUserQuestion to ask which site to QA.** Never output a plain-text question.
-
-## Thresholds
-
-| Metric | Target | Gate |
-|--------|--------|------|
-| Build | Zero errors | Gate 1 |
-| Performance | >= 90 | Gate 2 |
-| Accessibility | = 100 | Gate 2 |
-| Best Practices | >= 90 | Gate 2 |
-| SEO | >= 95 | Gate 2 |
-| Visual QA Score | >= 75/100 | Gate 3 |
+Run on a generated site before deployment. All 3 gates must pass.
 
 ## Gate 1: Build Verification
-
 ```bash
-cd output/{place_id}
+cd output/{slug}
 npm install && npm run build
 ```
+- **Pass:** Zero errors, `out/` directory created
+- **Fail:** Fix TypeScript/JSX errors, retry (max 3)
 
-- If build fails: attempt auto-fix (max 3 retries)
-- Output: `out/` directory (Next.js static export)
-
-## Gate 2: Lighthouse CI Audit
-
+## Gate 2: Lighthouse Audit
 ```bash
-cd output/{place_id}
 npx serve out -l 3456 &
-sleep 3
-
-npx lighthouse http://localhost:3456/en/ \
-  --output json \
-  --output-path lighthouse.json \
-  --chrome-flags="--headless --no-sandbox"
-
+npx lighthouse http://localhost:3456/en/ --output json --output-path lighthouse.json --chrome-flags="--headless"
 kill %1
-
-# Parse results
-PERF=$(jq '.categories.performance.score' lighthouse.json)
-A11Y=$(jq '.categories.accessibility.score' lighthouse.json)
-SEO=$(jq '.categories.seo.score' lighthouse.json)
-BP=$(jq '.categories["best-practices"].score' lighthouse.json)
-
-echo "Performance: $PERF | Accessibility: $A11Y | SEO: $SEO | Best Practices: $BP"
-
-# Check thresholds
-if (( $(echo "$PERF < 0.9" | bc -l) )); then echo "FAIL: Performance $PERF < 0.9"; exit 1; fi
-if (( $(echo "$A11Y < 1.0" | bc -l) )); then echo "FAIL: Accessibility $A11Y < 1.0"; exit 1; fi
-if (( $(echo "$SEO < 0.95" | bc -l) )); then echo "FAIL: SEO $SEO < 0.95"; exit 1; fi
 ```
 
-Refer to detailed guidance in quality standards references:
-- `quality-standards/references/core-web-vitals.md` -- LCP, INP, CLS optimization
-- `quality-standards/references/performance.md` -- Performance budget and optimization
-- `quality-standards/references/accessibility.md` -- WCAG 2.2 compliance
-- `quality-standards/references/seo.md` -- SEO best practices
+| Metric | Threshold |
+|--------|-----------|
+| Performance | ≥ 90 |
+| Accessibility | = 100 |
+| Best Practices | ≥ 90 |
+| SEO | ≥ 95 |
+
+- **Fail:** Read lighthouse.json, fix the flagged issues, rebuild, re-audit (max 3)
 
 ## Gate 3: Visual QA
-
 ```bash
-cd output/{place_id}
 npx serve out -l 3456 &
-sleep 3
-
-# Desktop screenshot
 browser-use open http://localhost:3456/en/
-sleep 3
 browser-use screenshot screenshots/desktop.png
-browser-use close
-
-# Mobile screenshot
-browser-use open http://localhost:3456/en/
 browser-use eval "await page.setViewportSize({width: 375, height: 812})"
-sleep 2
 browser-use screenshot screenshots/mobile.png
-browser-use close
-
 kill %1
 ```
 
-Then visually inspect the screenshots against the scoring rubric below.
-Score each dimension. Total >= 75/100 = PASS.
+Evaluate screenshots with design judgment:
+- Does it look professional and polished?
+- Does the design match the business identity?
+- Is mobile layout clean with no overflow?
+- Are brand colors applied consistently?
 
-### Scoring Rubric (100 points)
-
-| Dimension | Weight | Criteria |
-|-----------|--------|----------|
-| Hero Impact | 20 | Full-viewport, compelling CTA, brand colors |
-| Layout & Spacing | 15 | 8px grid, consistent rhythm, no overlap |
-| Typography | 15 | Hierarchy clear, max 2 fonts, readable |
-| Color Harmony | 15 | Brand-consistent, WCAG contrast passing |
-| Image Quality | 10 | Sharp, properly sized, lazy-loaded |
-| Mobile Responsiveness | 15 | No horizontal scroll, touch targets 44px+ |
-| Above-fold Content | 10 | Key info visible without scroll |
-
-## Output
-
-| File | Description |
-|------|-------------|
-| `qa-report.json` | Score breakdown, pass/fail, issues |
-| `screenshots/desktop.png` | Full-page desktop screenshot |
-| `screenshots/mobile.png` | Full-page mobile screenshot |
+If not satisfied, fix and iterate (max 3 rounds).

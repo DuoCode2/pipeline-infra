@@ -1,11 +1,7 @@
 # Batch process multiple leads
 
-Read and follow these skills:
-
-1. `Read .claude/skills/batch/SKILL.md` — batch coordination
-2. `Read .claude/skills/generate/SKILL.md` — per-lead generation
-3. `Read .claude/skills/duocode-design/SKILL.md` — design system
+Read and follow `.claude/skills/batch/SKILL.md`.
 
 If no parameters given, use AskUserQuestion to ask: city, industry categories, batch size.
 
-Then execute the batch orchestrator's full pipeline: discover → classify → assets → generate → gate → deploy → log.
+Execute the full pipeline: discover -> prepare assets -> generate -> quality gates -> deploy.

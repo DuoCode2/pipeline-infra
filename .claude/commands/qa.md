@@ -1,14 +1,12 @@
 # Run quality gates on a generated site
 
-Read and follow:
+Read and follow `.claude/skills/quality-gate/SKILL.md`.
 
-1. `Read .claude/skills/quality-gate/SKILL.md`
-
-If no place_id given, use AskUserQuestion to ask which site to QA.
+If no site specified, use AskUserQuestion to ask which site to QA.
 
 Run all 3 gates:
 - Gate 1: `npm run build` (zero errors)
-- Gate 2: Lighthouse on production URL via `npx tsx packages/quality/lighthouse-check.ts`
-- Gate 3: Visual QA via `browser-use` CLI (desktop + mobile screenshots, score rubric)
+- Gate 2: Lighthouse audit (Perf>=90, A11y=100, SEO>=95)
+- Gate 3: Visual QA via `browser-use` CLI (desktop + mobile screenshots)
 
-Report all scores and pass/fail. If any gate fails, read `.claude/skills/iterate-quality/SKILL.md` and follow its fix-and-retry loop.
+Report all results. If any gate fails, fix the issues and retry (max 3 rounds).

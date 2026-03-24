@@ -31,6 +31,22 @@ function hexFromRgb(rgb: number[]): string {
   );
 }
 
+function luminance(hex: string): number {
+  const rgb = hex.replace('#', '').match(/.{2}/g)!.map(h => {
+    const v = parseInt(h, 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+}
+
+function contrastRatio(hex1: string, hex2: string): number {
+  const l1 = luminance(hex1);
+  const l2 = luminance(hex2);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 /**
  * Extract brand colors from a business photo using node-vibrant.
  * Maps the 6 palette swatches to semantic CSS variable names.
@@ -77,6 +93,18 @@ export async function extractAndSave(
   outputDir: string
 ): Promise<BrandColors> {
   const colors = await extractColors(imagePath);
+
+  // WCAG contrast validation
+  const MIN_CONTRAST = 4.5;
+  if (contrastRatio(colors.surface, colors.textBody) < MIN_CONTRAST) {
+    console.warn(`WCAG: textBody ${colors.textBody} on surface ${colors.surface} fails 4.5:1. Using fallback.`);
+    colors.textBody = '#333333';
+  }
+  if (contrastRatio(colors.surface, colors.textTitle) < MIN_CONTRAST) {
+    console.warn(`WCAG: textTitle ${colors.textTitle} on surface ${colors.surface} fails 4.5:1. Using fallback.`);
+    colors.textTitle = '#1a1a1a';
+  }
+
   fs.mkdirSync(outputDir, { recursive: true });
   const outPath = path.join(outputDir, 'brand-colors.json');
   fs.writeFileSync(outPath, JSON.stringify(colors, null, 2));
@@ -93,9 +121,9 @@ if (require.main === module) {
   };
 
   const input = getArg('image', '') || getArg('input', '');
-  const output = getArg('output', 'output/test');
+  const output = getArg('output', '');
 
-  if (!input) {
+  if (!input || !output) {
     console.error('Usage: --image <image-path> --output <output-dir>');
     process.exit(1);
   }

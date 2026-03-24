@@ -79,8 +79,9 @@ export async function downloadStockPhotos(
     console.log(`Downloaded: ${filename} by ${photo.user.name}`);
   }
 
-  // Write attribution.json for compliance
-  const attrPath = path.join(path.dirname(outputDir), 'attribution.json');
+  // Write attribution.json to site root (alongside brand-colors.json)
+  const siteRoot = path.resolve(outputDir, '../..');
+  const attrPath = path.join(siteRoot, 'attribution.json');
   fs.writeFileSync(attrPath, JSON.stringify(attribution, null, 2));
 
   return { files, attribution };

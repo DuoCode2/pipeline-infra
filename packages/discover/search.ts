@@ -19,6 +19,11 @@ const FIELD_MASK = [
   'places.googleMapsUri',
 ].join(',');
 
+/**
+ * NOTE: Google Places API (New) returns rating + userRatingCount but NOT
+ * individual review text. Review content in business.ts must be
+ * synthesized during generation based on rating data.
+ */
 export interface PlaceResult {
   id: string;
   displayName: { text: string; languageCode: string };
@@ -65,11 +70,13 @@ async function fetchPage(
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Places API ${res.status}: ${text}`);
+    const errText = await res.text();
+    throw new Error(`Places API ${res.status}: ${errText}`);
   }
 
-  return res.json() as Promise<SearchResponse>;
+  const text = await res.text();
+  const sanitized = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  return JSON.parse(sanitized) as SearchResponse;
 }
 
 /**

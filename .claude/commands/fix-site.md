@@ -1,12 +1,10 @@
 # Fix visual quality issues on a deployed site
 
-For the given place_id:
+For the given site:
+1. Read `.claude/skills/duocode-design/references/malaysia-market.md` for locale rules
+2. Take screenshots with `browser-use` CLI (desktop + mobile)
+3. Visually inspect and identify issues (layout, colors, contrast, responsiveness)
+4. Fix each issue
+5. Rebuild, run `/qa`, redeploy
 
-1. `Read .claude/skills/duocode-design/SKILL.md`
-2. `Read .claude/skills/duocode-design/references/{industry}.md`
-3. Take screenshots with `browser-use` CLI (desktop + mobile)
-4. Visually inspect and identify issues (SVGs, favicon, hero image, maps, colors, contrast)
-5. Fix each issue following the design reference
-6. Rebuild, run `/qa`, redeploy
-
-If no place_id given, use AskUserQuestion to ask which site.
+If no site specified, use AskUserQuestion to ask which site.

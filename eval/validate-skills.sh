@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# DuoCode Skill Validation
-# Dimensions: Frontmatter completeness | Structure consistency | Reference integrity | Schema validation
+# DuoCode Skill Validation (post-refactor)
+# Validates: Frontmatter | Structure | Reference integrity | Schema | Security
 
 SKILLS_DIR="$(cd "$(dirname "$0")/.." && pwd)/.claude/skills"
 PASSED=0; FAILED=0; WARNED=0
@@ -20,18 +20,9 @@ echo ""
 echo "── 1. Frontmatter Completeness ──"
 for skill_file in $(find "$SKILLS_DIR" -maxdepth 2 -name "SKILL.md" -not -path "*/.git/*" | sort); do
   rel_path="${skill_file#$SKILLS_DIR/}"
-
-  # Extract frontmatter (between --- markers)
   frontmatter=$(sed -n '/^---$/,/^---$/p' "$skill_file" | sed '1d;$d')
-
-  # Check required fields (Claude Code spec: name, description, allowed-tools)
   has_name=$(echo "$frontmatter" | grep -c "^name:" || true)
   has_desc=$(echo "$frontmatter" | grep -c "^description:" || true)
-  has_tools=$(echo "$frontmatter" | grep -c "^allowed-tools:" || true)
-
-  # Check invocation control (should have one of these)
-  has_disable=$(echo "$frontmatter" | grep -c "^disable-model-invocation:" || true)
-  has_user_inv=$(echo "$frontmatter" | grep -c "^user-invocable:" || true)
 
   if [ "$has_name" -gt 0 ] && [ "$has_desc" -gt 0 ]; then
     pass "1.1 $rel_path — name+description present"
@@ -41,21 +32,14 @@ for skill_file in $(find "$SKILLS_DIR" -maxdepth 2 -name "SKILL.md" -not -path "
     [ "$has_desc" -eq 0 ] && missing="${missing}description "
     fail "1.1 $rel_path" "missing: $missing"
   fi
-
-  # Warn about non-standard fields
-  has_license=$(echo "$frontmatter" | grep -c "^license:" || true)
-  has_metadata=$(echo "$frontmatter" | grep -c "^metadata:" || true)
-  if [ "$has_license" -gt 0 ] || [ "$has_metadata" -gt 0 ]; then
-    warn "1.2 $rel_path — has non-standard fields (license/metadata)"
-  fi
 done
 echo ""
 
 # ── 2. Structure Consistency ──
 echo "── 2. Structure Consistency ──"
 
-# All 12 skills should exist as flat directories
-EXPECTED_SKILLS="generate batch discover prepare-assets quality-gate iterate-quality deploy duocode-design toolchain quality-standards project-standards skill-creator"
+# 9 skills after refactor (removed iterate-quality, quality-standards, project-standards)
+EXPECTED_SKILLS="generate batch discover prepare-assets quality-gate deploy duocode-design toolchain skill-creator"
 for skill in $EXPECTED_SKILLS; do
   if [ -f "$SKILLS_DIR/$skill/SKILL.md" ]; then
     pass "2.1 $skill/SKILL.md exists"
@@ -64,9 +48,8 @@ for skill in $EXPECTED_SKILLS; do
   fi
 done
 
-# Count total skills
 SKILL_COUNT=$(find "$SKILLS_DIR" -maxdepth 2 -name "SKILL.md" | wc -l | tr -d ' ')
-echo "  Total skills: $SKILL_COUNT (target: 12)"
+echo "  Total skills: $SKILL_COUNT (target: 9)"
 echo ""
 
 # ── 3. Reference Integrity ──
@@ -74,87 +57,60 @@ echo "── 3. Reference Integrity ──"
 
 DESIGN_DIR="$SKILLS_DIR/duocode-design"
 
-# Industry references
-INDUSTRIES="restaurant beauty clinic retail fitness service generic"
-for ind in $INDUSTRIES; do
-  if [ -f "$DESIGN_DIR/references/$ind.md" ]; then
-    pass "3.1 reference/$ind.md exists"
-  else
-    fail "3.1 reference/$ind.md" "missing industry reference"
-  fi
-done
-
-# Foundation files
-for f in _foundations.md _copy-foundations.md; do
-  if [ -f "$DESIGN_DIR/references/$f" ]; then
-    pass "3.2 reference/$f exists"
-  else
-    fail "3.2 reference/$f" "missing foundation file"
-  fi
-done
-
-# Toolchain references
-TOOLCHAIN_REFS="browser-use lighthouse-ci github n8n favicon-generator svg-icon-maker sheets-automation tailwind-css"
-for ref in $TOOLCHAIN_REFS; do
-  if [ -f "$SKILLS_DIR/toolchain/references/$ref.md" ]; then
-    pass "3.3 toolchain/$ref.md exists"
-  else
-    fail "3.3 toolchain/$ref.md" "missing toolchain reference"
-  fi
-done
-
-# Quality references
-QUALITY_REFS="accessibility best-practices core-web-vitals performance seo schema-markup visual-testing webapp-testing"
-for ref in $QUALITY_REFS; do
-  if [ -f "$SKILLS_DIR/quality-standards/references/$ref.md" ]; then
-    pass "3.4 quality/$ref.md exists"
-  else
-    fail "3.4 quality/$ref.md" "missing quality reference"
-  fi
-done
-echo ""
-
-# ── 4. Schema Validation ──
-echo "── 4. Schema Validation ──"
+# Malaysia market reference (single file replaces old industry references)
+if [ -f "$DESIGN_DIR/references/malaysia-market.md" ]; then
+  pass "3.1 malaysia-market.md exists"
+else
+  fail "3.1 malaysia-market.md" "missing market reference"
+fi
 
 # Base schema
 if [ -f "$DESIGN_DIR/schemas/_base.schema.json" ]; then
-  pass "4.1 _base.schema.json exists"
+  if python3 -c "import json; json.load(open('$DESIGN_DIR/schemas/_base.schema.json'))" 2>/dev/null; then
+    pass "3.2 _base.schema.json — valid JSON"
+  else
+    fail "3.2 _base.schema.json" "invalid JSON"
+  fi
 else
-  fail "4.1 _base.schema.json" "missing base schema"
+  fail "3.2 _base.schema.json" "missing"
+fi
+echo ""
+
+# ── 4. Scaffolding Integrity ──
+echo "── 4. Scaffolding Integrity ──"
+
+SHARED="$DESIGN_DIR/templates/_shared"
+for f in package.json next.config.js tailwind.config.ts tsconfig.json vercel.json .gitignore; do
+  if [ -f "$SHARED/$f" ]; then
+    pass "4.1 _shared/$f"
+  else
+    fail "4.1 _shared/$f" "missing"
+  fi
+done
+
+# Layout and types
+if [ -f "$SHARED/src/app/[locale]/layout.tsx" ]; then
+  pass "4.2 layout.tsx exists"
+else
+  fail "4.2 layout.tsx" "missing"
 fi
 
-# Industry schemas + JSON validity
-for ind in $INDUSTRIES; do
-  schema="$DESIGN_DIR/schemas/$ind.schema.json"
-  if [ -f "$schema" ]; then
-    if python3 -c "import json; json.load(open('$schema'))" 2>/dev/null; then
-      pass "4.2 $ind.schema.json — valid JSON"
-    else
-      fail "4.2 $ind.schema.json" "invalid JSON"
-    fi
-  else
-    fail "4.2 $ind.schema.json" "missing"
-  fi
-done
+if [ -f "$SHARED/src/types/business.d.ts" ]; then
+  pass "4.3 business.d.ts exists"
+else
+  fail "4.3 business.d.ts" "missing"
+fi
 
-# Schema-reference pairing
-for ind in $INDUSTRIES; do
-  has_schema=0; has_ref=0
-  [ -f "$DESIGN_DIR/schemas/$ind.schema.json" ] && has_schema=1
-  [ -f "$DESIGN_DIR/references/$ind.md" ] && has_ref=1
-  if [ "$has_schema" -eq 1 ] && [ "$has_ref" -eq 1 ]; then
-    pass "4.3 $ind — schema+reference paired"
-  else
-    fail "4.3 $ind" "schema=$has_schema reference=$has_ref"
-  fi
-done
+if [ -f "$SHARED/src/lib/i18n.ts" ]; then
+  pass "4.4 i18n.ts exists"
+else
+  fail "4.4 i18n.ts" "missing"
+fi
 echo ""
 
 # ── 5. Security Checks ──
 echo "── 5. Security Checks ──"
 
-# Check .env.template has no real keys
 TEMPLATE="$(cd "$(dirname "$0")/.." && pwd)/.env.template"
 if [ -f "$TEMPLATE" ]; then
   if grep -qE "AIzaSy|g5r7w|mIN2V|vcp_6aj|duocode2026" "$TEMPLATE"; then
@@ -164,22 +120,11 @@ if [ -f "$TEMPLATE" ]; then
   fi
 fi
 
-# Check docker-compose has no hardcoded password
-COMPOSE="$(cd "$(dirname "$0")/.." && pwd)/n8n/docker-compose.yml"
-if [ -f "$COMPOSE" ]; then
-  if grep -q "N8N_BASIC_AUTH_PASSWORD=duocode" "$COMPOSE"; then
-    fail "5.2 docker-compose.yml" "hardcoded password"
-  else
-    pass "5.2 docker-compose.yml — no hardcoded password"
-  fi
-fi
-
-# Check source files use requireEnv
 SRC_DIR="$(cd "$(dirname "$0")/.." && pwd)/packages"
 if grep -rq "process\.env\.\w\+!" "$SRC_DIR" 2>/dev/null; then
-  fail "5.3 source files" "non-null assertions on process.env found"
+  fail "5.2 source files" "non-null assertions on process.env found"
 else
-  pass "5.3 source files — all use requireEnv()"
+  pass "5.2 source files — all use requireEnv()"
 fi
 echo ""
 

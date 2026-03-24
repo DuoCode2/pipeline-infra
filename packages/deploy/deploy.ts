@@ -5,6 +5,10 @@ import { requireEnv } from '../utils/env';
 const VERCEL_TOKEN = requireEnv('VERCEL_TOKEN');
 const VERCEL_API = 'https://api.vercel.com';
 
+const EXCLUDE_DIRS = new Set(['.next', 'node_modules', '.git', 'screenshots', 'src', '.vercel']);
+const EXCLUDE_FILES = new Set(['.env', '.env.local', '.DS_Store', 'package-lock.json']);
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB per file
+
 interface DeployResult {
   url: string;
   projectId: string;
@@ -16,6 +20,13 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
     throw new Error(`Build directory not found: ${buildDir}`);
   }
 
+  // Read vercel.json from project root (one level up from out/)
+  const vercelConfigPath = path.join(path.resolve(buildDir, '..'), 'vercel.json');
+  let vercelConfig: Record<string, unknown> = {};
+  if (fs.existsSync(vercelConfigPath)) {
+    vercelConfig = JSON.parse(fs.readFileSync(vercelConfigPath, 'utf8'));
+  }
+
   // Collect files, skip large dirs
   const files: Array<{ file: string; data: string }> = [];
   function collectFiles(dir: string, prefix: string = '') {
@@ -23,9 +34,15 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
       const fullPath = path.join(dir, entry.name);
       const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.isDirectory()) {
-        if (['.next', 'node_modules', '.git'].includes(entry.name)) continue;
+        if (EXCLUDE_DIRS.has(entry.name)) continue;
         collectFiles(fullPath, relativePath);
       } else {
+        if (EXCLUDE_FILES.has(entry.name)) continue;
+        const stat = fs.statSync(fullPath);
+        if (stat.size > MAX_FILE_SIZE) {
+          console.warn(`Skipping large file (${(stat.size / 1024 / 1024).toFixed(1)}MB): ${relativePath}`);
+          continue;
+        }
         files.push({ file: relativePath, data: fs.readFileSync(fullPath).toString('base64') });
       }
     }
@@ -45,13 +62,7 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
       files: files.map(f => ({ file: f.file, data: f.data, encoding: 'base64' })),
       projectSettings: { framework: null },
       target: 'production',
-      routes: [
-        // Root redirect to /en
-        { src: "^/$", status: 302, headers: { Location: "/en" } },
-        // Clean URLs: strip .html extensions
-        { handle: "filesystem" },
-        { src: "/(.*)", dest: "/$1.html", check: true },
-      ],
+      ...vercelConfig,
     }),
   });
 
