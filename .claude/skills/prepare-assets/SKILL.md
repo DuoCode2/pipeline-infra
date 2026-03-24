@@ -2,7 +2,6 @@
 name: prepare-assets
 description: "Orchestrate asset preparation for a lead: download Google Maps photos, fetch Unsplash stock photos, extract brand colors with node-vibrant, optimize images with Sharp. Use when starting site generation or user says 'prepare assets', 'download photos'."
 allowed-tools: Bash, Read, Write
-disable-model-invocation: true
 ---
 
 # Prepare Assets

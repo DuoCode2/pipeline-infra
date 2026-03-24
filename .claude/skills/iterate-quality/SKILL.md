@@ -2,7 +2,6 @@
 name: iterate-quality
 description: "Analyze historical qa-report.json and work logs to identify patterns in Gate 3 failures, then improve design references and schemas. Follows observe-modify-evaluate-keep/revert loop."
 allowed-tools: Bash, Read, Write, Edit
-disable-model-invocation: true
 ---
 
 # Iterate Quality

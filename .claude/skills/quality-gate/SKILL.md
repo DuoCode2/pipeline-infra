@@ -2,12 +2,13 @@
 name: quality-gate
 description: "Three-gate quality pipeline: Gate 1 (build verification), Gate 2 (Lighthouse CI audit for perf/a11y/SEO), Gate 3 (visual QA screenshots + scoring rubric). Run before deployment."
 allowed-tools: Bash, Read, Write
-disable-model-invocation: true
 ---
 
 # Quality Gate
 
 Three-stage quality pipeline ensuring every generated site meets production standards before deployment.
+
+**If no place_id or site path is provided, use AskUserQuestion to ask which site to QA.** Never output a plain-text question.
 
 ## Thresholds
 

@@ -2,7 +2,6 @@
 name: batch
 description: "Parallel batch processing of multiple leads through the full pipeline: prepare assets, generate site, quality gate, deploy. Use when processing multiple businesses at once or user says 'batch', 'process all leads', 'run batch'."
 allowed-tools: Bash, Read, Write
-disable-model-invocation: true
 ---
 
 # Batch Orchestrator
@@ -19,6 +18,8 @@ npm run batch -- --city "Kuala Lumpur" --categories "restaurant,cafe" --batch-si
 
 - CLI flags: `--city`, `--categories` (comma-separated), `--batch-size`
 - Alternatively, pipe a `leads.json` array of classified leads from Google Sheets / n8n
+
+**If city or categories are not provided, use AskUserQuestion to ask.** Never output a plain-text question.
 
 ## Workflow
 
@@ -42,20 +43,23 @@ For each lead, the orchestrator:
 
 1. Copies shared and industry-specific templates from `duocode-design/templates/`
 2. Generates `src/data/business.ts` with business info, colors, images, and 4-language content (en, ms, zh-CN, zh-TW)
-3. Runs `npm install && npm run build` to produce the `out/` static export
+3. Runs `npm install && npm run build` to produce the `out/` static export (Gate 1)
+4. Runs Lighthouse audit (Gate 2) — perf >= 90, a11y = 100, SEO >= 95
+5. Takes desktop + mobile screenshots via `browser-use` and scores visual QA (Gate 3) — score >= 75/100
+6. If any gate fails, fix and retry (max 3 rounds)
 
-### Step 5: Deployment (sequential)
+### Step 5: GitHub Push + Vercel Deploy (per lead, sequential)
 
-Deploys each passing build to Vercel via `deployToVercel()` from `packages/deploy/deploy.ts`. Runs sequentially to avoid Vercel rate limits.
+**Do NOT pause between Gate 3 and deploy — execute continuously.**
 
-### Step 6: GitHub Push
+1. `gh repo create DuoCode2/{slug} --private --source=. --push` — non-critical, failures logged
+2. `deployToVercel()` from `packages/deploy/deploy.ts` — sequential to avoid rate limits
 
-Initializes a git repo in the output directory and pushes to `DuoCode2/{slug}` via GitHub CLI. Non-critical -- failures are logged but do not block the batch.
-
-### Step 7: Logging and Report
+### Step 6: Logging and Report
 
 - Each result is POSTed to the n8n `log-work` webhook for tracking in Google Sheets
 - A `batch-report.json` is saved to `output/` with per-lead status, URLs, and errors
+- **Report ONCE at the very end** — one summary table with all leads, URLs, scores
 
 ## Output
 

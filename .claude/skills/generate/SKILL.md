@@ -2,7 +2,6 @@
 name: generate
 description: "End-to-end website generation for a business lead. Takes a place_id + industry, runs 10 steps: prepare assets, load design skill, generate business.ts (4 languages) + SVGs, Gate 1 build, Gate 2 Lighthouse, Gate 3 visual QA. Use when user says 'generate site', 'build site', 'create prototype', or 'run lead'."
 allowed-tools: Bash, Read, Write
-disable-model-invocation: true
 ---
 
 # Generate Business Website
@@ -11,6 +10,8 @@ Produce a deployable 4-language website from a lead's Google Maps data.
 
 ## Input
 A lead with: place_id, name, industry, address, phone, hours, photos, rating, reviews
+
+**If any required input is missing, use AskUserQuestion to collect it.** Never guess or output a plain-text question — always use the AskUserQuestion tool so the user gets a proper prompt. At minimum you need: a business identity (place_id or name+city) and an industry category.
 
 ## Output
 A deployable site in `output/{place_id}/` passing all 3 quality gates.
@@ -123,10 +124,27 @@ I analyze both screenshots. Rubric (100 pts):
 
 >= 75 -> PASS. < 75 -> fix -> rebuild -> re-screenshot. Max 3 rounds.
 
-### Step 10: Log & Report
+### Step 10: Deploy & Log
+
+**Do NOT pause here — deploy immediately after Gate 3 passes.**
+
 ```bash
-xh POST http://localhost:5678/webhook/log-work \
-  place_id:='"{{place_id}}"' action:='"generated"' \
-  details:='{"qa_score":{{score}},"rounds":{{rounds}}}'
+# Push to GitHub
+cd output/{{place_id}}
+git init && git add -A && git commit -m "feat: generated site for {{business_name}}"
+gh repo create DuoCode2/{{slug}} --private --source=. --push
 ```
-Show user: score, grade, desktop + mobile screenshots.
+
+```bash
+# Deploy to Vercel
+npx tsx packages/deploy/deploy.ts --build-dir output/{{place_id}}/out --slug {{slug}}
+```
+
+```bash
+# Log results
+xh POST http://localhost:5678/webhook/log-work \
+  place_id:='"{{place_id}}"' action:='"deployed"' \
+  details:='{"qa_score":{{score}},"rounds":{{rounds}},"url":"{{vercel_url}}"}'
+```
+
+**Report at the very end only** — one summary with: Vercel URL, QA score, Lighthouse scores.

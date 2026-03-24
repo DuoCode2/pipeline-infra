@@ -2,7 +2,6 @@
 name: deploy
 description: "Deploy generated sites to Vercel. Handles project creation, file upload, and production deployment. Supports both Vercel CLI (primary) and no-auth fallback script."
 allowed-tools: Bash, Read, Write
-disable-model-invocation: true
 ---
 
 # Deploy to Vercel

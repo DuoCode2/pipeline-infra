@@ -2,7 +2,6 @@
 name: discover
 description: "Find local businesses without websites via Google Maps API. Extracts lead data (name, address, phone, hours, photos, rating, reviews) and enriches with website contact scraping. Use when user says 'discover', 'find leads', 'search businesses'."
 allowed-tools: Bash, Read, Write
-disable-model-invocation: true
 ---
 
 # Google Maps Lead Generation
@@ -17,6 +16,8 @@ Generate high-quality B2B leads from Google Maps with deep contact enrichment by
 | `--limit` | No | Max results (default: 10) |
 | `--sheet-url` | No | Existing sheet to append to |
 | `--workers` | No | Parallel workers (default: 3) |
+
+**If the search query (city + keyword) is not provided, use AskUserQuestion to ask for it.** Never output a plain-text question — always use the AskUserQuestion tool.
 
 ## Scripts
 - `./scripts/gmaps_lead_pipeline.py` - Main orchestration

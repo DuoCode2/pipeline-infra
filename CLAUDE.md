@@ -2,6 +2,14 @@
 
 Claude Code is the central brain orchestrating the entire pipeline. You (Claude) drive every phase — from lead discovery to site generation to deployment.
 
+## RULE: Never ask questions as plain text
+
+When you need information from the user (city, business name, place_id, industry, or any other parameter), you MUST use the **AskUserQuestion tool**. NEVER output a numbered list of questions as regular text — the user will not see it as an interactive prompt. This applies everywhere: skills, commands, and free-form conversation. One AskUserQuestion call per question. If you need multiple pieces of info, ask the most critical one first, then follow up.
+
+## RULE: Pipeline runs end-to-end without pausing
+
+Once a pipeline is started (generate, batch, or any multi-step skill), execute ALL steps continuously without stopping to ask "what's next?" or presenting intermediate options. The full pipeline is: **discover → prepare-assets → generate → Gate 1 → Gate 2 → Gate 3 → GitHub push → Vercel deploy → log**. Only stop if a gate FAILS after max retries. Never ask the user to choose the next step — just do all of them. Report results only at the very end with a single summary.
+
 ## Pipeline Tools
 
 These are the tools YOU use to execute the pipeline. Know them well.
@@ -145,7 +153,7 @@ YOU (Claude Code) ← central brain
 
 12 skills organized in a flat structure under `.claude/skills/`:
 
-**Pipeline Skills** (user-invoked via `/slash-commands`, `disable-model-invocation: true`):
+**Pipeline Skills** (invokable via `/slash-commands` or by Claude when instructed):
 - `/generate` — E2E site generation (10-step process)
 - `/batch` — batch orchestration for multiple leads
 - `/discover` — Google Maps lead discovery
