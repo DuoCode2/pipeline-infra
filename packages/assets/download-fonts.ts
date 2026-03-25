@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import * as fs from 'fs';
 import * as path from 'path';
+import { getArg } from '../utils/cli';
 
 const CHROME_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -176,14 +177,9 @@ export async function downloadFonts(
 // CLI usage
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const getArg = (name: string, fallback: string) => {
-    const idx = args.indexOf(`--${name}`);
-    return idx >= 0 && args[idx + 1] ? args[idx + 1] : fallback;
-  };
-
-  const fontsRaw = getArg('fonts', '');
-  const weightsRaw = getArg('weights', '400,500,600,700');
-  const outputDir = getArg('output', 'output/test/public/fonts');
+  const fontsRaw = getArg(args, 'fonts', '');
+  const weightsRaw = getArg(args, 'weights', '400,500,600,700');
+  const outputDir = getArg(args, 'output', 'output/test/public/fonts');
 
   if (!fontsRaw) {
     console.error(

@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { requireEnv } from '../utils/env';
+import { getArg } from '../utils/cli';
 
 const VERCEL_TOKEN = requireEnv('VERCEL_TOKEN');
 const VERCEL_API = 'https://api.vercel.com';
@@ -131,12 +132,8 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
 // CLI
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const getArg = (name: string, fallback: string) => {
-    const idx = args.indexOf(`--${name}`);
-    return idx >= 0 && args[idx + 1] ? args[idx + 1] : fallback;
-  };
-  const buildDir = getArg('build-dir', '');
-  const slug = getArg('slug', '');
+  const buildDir = getArg(args, 'build-dir', '');
+  const slug = getArg(args, 'slug', '');
   if (!buildDir || !slug) { console.error('Usage: --build-dir <path> --slug <name>'); process.exit(1); }
   deployToVercel(buildDir, slug)
     .then(r => console.log('Result:', JSON.stringify(r, null, 2)))

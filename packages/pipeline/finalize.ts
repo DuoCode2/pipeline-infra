@@ -14,6 +14,7 @@ import * as path from 'path';
 import { deployToVercel } from '../deploy/deploy';
 import { publishGeneratedSite } from '../deploy/publish';
 import { runLocalQualityGate } from '../quality/serve-and-check';
+import { getArg, hasFlag } from '../utils/cli';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -163,16 +164,19 @@ ${sitemapUrls}
     log(`Git publish warning (non-fatal): ${msg}`);
   }
 
-  fetch('http://localhost:5678/webhook/log-work', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      place_id: slug,
-      action: 'deployed',
-      result: deploy.url,
-      qa_score: scores,
-    }),
-  }).catch(() => {}); // fire and forget
+  const webhookUrl = process.env.N8N_WEBHOOK_URL;
+  if (webhookUrl) {
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        place_id: slug,
+        action: 'deployed',
+        result: deploy.url,
+        qa_score: scores,
+      }),
+    }).catch(() => {}); // fire and forget
+  }
 
   return { status: 'deployed', url: deploy.url, scores };
 }
@@ -184,13 +188,7 @@ ${sitemapUrls}
 async function main() {
   const args = process.argv.slice(2);
 
-  const getArg = (name: string): string | undefined => {
-    const idx = args.indexOf(`--${name}`);
-    return idx >= 0 && args[idx + 1] ? args[idx + 1] : undefined;
-  };
-  const hasFlag = (name: string): boolean => args.includes(`--${name}`);
-
-  const dir = getArg('dir');
+  const dir = getArg(args, 'dir');
   if (!dir) {
     process.stderr.write(
       'Usage: npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ [--slug name] [--dry-run]\n',
@@ -203,8 +201,8 @@ async function main() {
     process.exit(1);
   }
 
-  const slug = getArg('slug');
-  const dryRun = hasFlag('dry-run');
+  const slug = getArg(args, 'slug');
+  const dryRun = hasFlag(args, 'dry-run');
 
   try {
     const result = await finalize({ dir, slug, dryRun });

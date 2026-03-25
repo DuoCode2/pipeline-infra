@@ -17,28 +17,19 @@ echo "  DuoCode Quality Metrics Report"
 echo "═══════════════════════════════════════"
 echo ""
 
-# ── 1. Lighthouse CI 配置 ──
-echo "── 1. Lighthouse CI Configuration ──"
+# ── 1. Lighthouse thresholds (.lighthouserc.json → shared.ts reads this) ──
+echo "── 1. Quality Thresholds (.lighthouserc.json) ──"
 
 if [ -f "$SRC_DIR/.lighthouserc.json" ]; then
   pass "1.1 .lighthouserc.json exists"
 
-  # Check thresholds
   if python3 -c "
 import json, sys
 cfg = json.load(open('$SRC_DIR/.lighthouserc.json'))
-assertions = cfg.get('ci',{}).get('assert',{}).get('assertions',{})
-perf = assertions.get('categories:performance', [])
-a11y = assertions.get('categories:accessibility', [])
-seo = assertions.get('categories:seo', [])
-print('perf:', perf)
-print('a11y:', a11y)
-print('seo:', seo)
-# Verify thresholds
-if perf and perf[1].get('minScore', 0) >= 0.9: print('PERF_OK')
-if a11y and a11y[1].get('minScore', 0) >= 1.0: print('A11Y_OK')
-if seo and seo[1].get('minScore', 0) >= 0.95: print('SEO_OK')
-" 2>/dev/null | grep -q "PERF_OK"; then
+a = cfg.get('ci',{}).get('assert',{}).get('assertions',{})
+perf = a.get('categories:performance', [None,{}])[1].get('minScore', 0)
+if perf >= 0.9: print('OK')
+" 2>/dev/null | grep -q "OK"; then
     pass "1.2 Performance threshold >= 0.9"
   else
     fail "1.2 Performance threshold" "< 0.9 or not set"
@@ -48,12 +39,19 @@ if seo and seo[1].get('minScore', 0) >= 0.95: print('SEO_OK')
 import json
 cfg = json.load(open('$SRC_DIR/.lighthouserc.json'))
 a = cfg.get('ci',{}).get('assert',{}).get('assertions',{})
-a11y = a.get('categories:accessibility', [])
-if a11y and a11y[1].get('minScore', 0) >= 1.0: print('OK')
+a11y = a.get('categories:accessibility', [None,{}])[1].get('minScore', 0)
+if a11y >= 0.95: print('OK')
 " 2>/dev/null | grep -q "OK"; then
-    pass "1.3 Accessibility threshold = 1.0"
+    pass "1.3 Accessibility threshold >= 0.95"
   else
-    fail "1.3 Accessibility threshold" "< 1.0 or not set"
+    fail "1.3 Accessibility threshold" "< 0.95 or not set"
+  fi
+
+  # Verify shared.ts reads from this file (not hardcoded)
+  if grep -q "lighthouserc.json" "$SRC_DIR/packages/quality/shared.ts"; then
+    pass "1.4 shared.ts reads from .lighthouserc.json"
+  else
+    fail "1.4 shared.ts" "does not reference .lighthouserc.json (config drift risk)"
   fi
 else
   fail "1.1 .lighthouserc.json" "file missing"

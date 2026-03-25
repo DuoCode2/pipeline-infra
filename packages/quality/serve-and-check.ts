@@ -21,6 +21,7 @@ import {
   type QualityCategoryResult,
   type QualityFailure,
 } from './shared';
+import { getArg } from '../utils/cli';
 
 // ---------------------------------------------------------------------------
 // Free port detection
@@ -205,12 +206,8 @@ export async function runLocalQualityGate(options: {
 
 async function main() {
   const args = process.argv.slice(2);
-  const getArg = (name: string, fallback?: string): string | undefined => {
-    const idx = args.indexOf(`--${name}`);
-    return idx >= 0 && args[idx + 1] ? args[idx + 1] : fallback;
-  };
 
-  const buildDir = getArg('dir');
+  const buildDir = getArg(args, 'dir');
   if (!buildDir) {
     console.error(
       'Usage: npx tsx packages/quality/serve-and-check.ts --dir <build-dir> [--screenshots <dir>] [--output <dir>] [--port <port>]',
@@ -223,9 +220,9 @@ async function main() {
     process.exit(1);
   }
 
-  const screenshotDir = getArg('screenshots');
-  const outputDir = getArg('output');
-  const portStr = getArg('port');
+  const screenshotDir = getArg(args, 'screenshots');
+  const outputDir = getArg(args, 'output');
+  const portStr = getArg(args, 'port');
   const port = portStr ? parseInt(portStr, 10) : undefined;
 
   if (port !== undefined && (isNaN(port) || port < 1 || port > 65535)) {

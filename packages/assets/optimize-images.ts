@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import sharp from 'sharp';
+import { getArg } from '../utils/cli';
 
 const SIZES = [320, 640, 960, 1280];
 const WEBP_QUALITY = 80;
@@ -71,12 +72,7 @@ export async function optimizeImages(
 // CLI usage
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const getArg = (name: string, fallback: string) => {
-    const idx = args.indexOf(`--${name}`);
-    return idx >= 0 && args[idx + 1] ? args[idx + 1] : fallback;
-  };
-
-  const inputDir = getArg('input', 'output/test/public/images');
+  const inputDir = getArg(args, 'input', 'output/test/public/images');
 
   optimizeImages(inputDir)
     .then((manifest) =>

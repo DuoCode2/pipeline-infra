@@ -10,6 +10,7 @@ import {
   classifyIndustry,
   slugify,
 } from '../generate/industry-config';
+import { getArg } from '../utils/cli';
 
 interface BatchConfig {
   city: string;
@@ -805,6 +806,8 @@ function getOptimizedImagePaths(outputDir: string): string[] {
   return fs
     .readdirSync(imageDir)
     .filter((fileName) => fileName.endsWith('-960.webp') || fileName.endsWith('-1280.webp'))
+    // Skip maps-1 (exterior) — convention shared with prepare.ts pickHeroPhoto
+    .filter((fileName) => !fileName.startsWith('maps-1'))
     .sort()
     .map((fileName) => `/images/${fileName}`);
 }
@@ -1028,15 +1031,11 @@ async function batch(config: BatchConfig): Promise<void> {
 
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const getArg = (name: string, fallback: string) => {
-    const index = args.indexOf(`--${name}`);
-    return index >= 0 && args[index + 1] ? args[index + 1] : fallback;
-  };
 
   batch({
-    city: getArg('city', 'Kuala Lumpur'),
-    categories: getArg('categories', 'restaurant').split(','),
-    batchSize: parseInt(getArg('batch-size', '2'), 10),
+    city: getArg(args, 'city', 'Kuala Lumpur'),
+    categories: getArg(args, 'categories', 'restaurant').split(','),
+    batchSize: parseInt(getArg(args, 'batch-size', '2'), 10),
     dryRun: args.includes('--dry-run'),
   }).catch((err) => {
     console.error(err);

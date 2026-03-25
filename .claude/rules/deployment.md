@@ -6,7 +6,8 @@ description: Deployment configuration for Vercel and GitHub
 
 ## GitHub
 - Org: **DuoCode2** — `gh repo create DuoCode2/{slug} --private --source=. --push`
-- Git identity: `user.name=LiuWei`, `email=sunflowers0607@outlook.com`
+- Git identity defaults: `user.name=LiuWei`, `email=sunflowers0607@outlook.com`
+- Override via env: `GIT_OWNER`, `GIT_USER_NAME`, `GIT_USER_EMAIL`
 
 ## Vercel
 - Deploy: `npx tsx packages/deploy/deploy.ts --build-dir output/{slug}/out --slug {slug}`
@@ -19,3 +20,7 @@ description: Deployment configuration for Vercel and GitHub
 | `UNSPLASH_ACCESS_KEY` | Stock photo fallback |
 | `VERCEL_TOKEN` | Deployment |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | Notifications |
+| `N8N_WEBHOOK_URL` | Post-deploy logging (optional, e.g. `http://localhost:5678/webhook/log-work`) |
+| `GIT_OWNER` | GitHub org override (default: `DuoCode2`) |
+| `GIT_USER_NAME` | Git commit author name (default: `LiuWei`) |
+| `GIT_USER_EMAIL` | Git commit author email (default: `sunflowers0607@outlook.com`) |

@@ -14,6 +14,7 @@ import {
   slugify,
   type IndustryDesign,
 } from '../generate/industry-config';
+import { getArg } from '../utils/cli';
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -43,6 +44,17 @@ export interface PrepareResult {
 
 // ── Business.ts skeleton ─────────────────────────────────────────
 
+/**
+ * Pick the hero image from the photo list.
+ * Convention: NEVER use maps-1 (exterior shot) as hero — prefer maps-2+
+ * (interior / food / ambience). Falls back to the first non-maps-1 photo.
+ */
+function pickHeroPhoto(photos: string[]): string {
+  const non1 = photos.filter(p => !p.startsWith('maps-1'));
+  const pick = non1[0] ?? photos[0];
+  return pick ? `/images/${pick.replace('.jpg', '-960.webp')}` : '';
+}
+
 function generateBusinessSkeleton(
   lead: LeadInput,
   industry: string,
@@ -53,8 +65,43 @@ function generateBusinessSkeleton(
   outputDir: string
 ) {
   const schemaType = SCHEMA_ORG_TYPE[industry] || 'LocalBusiness';
-  const hero = photos.length >= 2 ? `/images/${photos[1].replace('.jpg', '-960.webp')}` : photos[0] ? `/images/${photos[0].replace('.jpg', '-960.webp')}` : '';
-  const gallery = photos.slice(2).map(p => `/images/${p.replace('.jpg', '-960.webp')}`);
+  const hero = pickHeroPhoto(photos);
+  const gallery = photos
+    .filter(p => !p.startsWith('maps-1'))
+    .slice(1)
+    .map(p => `/images/${p.replace('.jpg', '-960.webp')}`);
+
+  const name = lead.displayName.text;
+  const address = lead.formattedAddress;
+  const phone = lead.nationalPhoneNumber || '';
+  const whatsapp = phone ? phone.replace(/[^+0-9]/g, '') : '';
+  const rating = lead.rating || 0;
+  const reviewCount = lead.userRatingCount || 0;
+  const mapsUrl = lead.googleMapsUri || '';
+
+  const hours: Record<string, string> = {};
+  for (const row of lead.regularOpeningHours?.weekdayDescriptions || []) {
+    const [day, ...rest] = row.split(': ');
+    if (day && rest.length > 0) {
+      hours[day] = rest.join(': ');
+    }
+  }
+
+  const localeBlock = (locale: string) => `{
+      meta: { title: ${JSON.stringify(name)}, description: "" },
+      hero: { title: "", subtitle: "", cta: "", image: ${JSON.stringify(hero)} },
+      hours: ${JSON.stringify(hours)},
+      location: { address: ${JSON.stringify(address)}, mapsUrl: ${JSON.stringify(mapsUrl)} },
+      contact: { phone: ${JSON.stringify(phone)}${whatsapp ? `, whatsapp: ${JSON.stringify(whatsapp)}` : ''} },
+      reviews: { rating: ${rating}, count: ${reviewCount}, featured: [] },
+      trustBar: {
+        items: [
+          { icon: "star", label: "Rating", value: ${JSON.stringify(`${rating}/5`)} },
+          { icon: "users", label: "Reviews", value: ${JSON.stringify(`${reviewCount}+`)} },
+          { icon: "map-pin", label: "Locale", value: ${JSON.stringify(locale)} },
+        ],
+      },
+    }`;
 
   const ts = `import type { BusinessData } from '@/types/business';
 
@@ -75,42 +122,14 @@ export const business: BusinessData = {
     fontBody: "${config.fontBody}",
   },
   assets: {
-    heroImage: "${hero}",
+    heroImage: ${JSON.stringify(hero)},
     galleryImages: ${JSON.stringify(gallery)},
   },
   content: {
-    en: {
-      meta: { title: "${lead.displayName.text}", description: "" },
-      hero: { title: "", subtitle: "", cta: "" },
-      hours: {},
-      location: { address: "${lead.formattedAddress}", mapsUrl: "${lead.googleMapsUri || ''}" },
-      contact: { phone: "${lead.nationalPhoneNumber || ''}" },
-      reviews: { rating: ${lead.rating || 0}, count: ${lead.userRatingCount || 0}, featured: [] },
-    },
-    ms: {
-      meta: { title: "${lead.displayName.text}", description: "" },
-      hero: { title: "", subtitle: "", cta: "" },
-      hours: {},
-      location: { address: "${lead.formattedAddress}", mapsUrl: "${lead.googleMapsUri || ''}" },
-      contact: { phone: "${lead.nationalPhoneNumber || ''}" },
-      reviews: { rating: ${lead.rating || 0}, count: ${lead.userRatingCount || 0}, featured: [] },
-    },
-    "zh-CN": {
-      meta: { title: "${lead.displayName.text}", description: "" },
-      hero: { title: "", subtitle: "", cta: "" },
-      hours: {},
-      location: { address: "${lead.formattedAddress}", mapsUrl: "${lead.googleMapsUri || ''}" },
-      contact: { phone: "${lead.nationalPhoneNumber || ''}" },
-      reviews: { rating: ${lead.rating || 0}, count: ${lead.userRatingCount || 0}, featured: [] },
-    },
-    "zh-TW": {
-      meta: { title: "${lead.displayName.text}", description: "" },
-      hero: { title: "", subtitle: "", cta: "" },
-      hours: {},
-      location: { address: "${lead.formattedAddress}", mapsUrl: "${lead.googleMapsUri || ''}" },
-      contact: { phone: "${lead.nationalPhoneNumber || ''}" },
-      reviews: { rating: ${lead.rating || 0}, count: ${lead.userRatingCount || 0}, featured: [] },
-    },
+    en: ${localeBlock('en')},
+    ms: ${localeBlock('ms')},
+    "zh-CN": ${localeBlock('zh-CN')},
+    "zh-TW": ${localeBlock('zh-TW')},
   },
 };
 `;
@@ -223,13 +242,9 @@ export async function prepare(lead: LeadInput, industry?: string): Promise<Prepa
 
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const getArg = (name: string, fallback: string) => {
-    const idx = args.indexOf(`--${name}`);
-    return idx >= 0 && args[idx + 1] ? args[idx + 1] : fallback;
-  };
 
-  const leadJson = getArg('lead', '');
-  const industry = getArg('industry', '');
+  const leadJson = getArg(args, 'lead', '');
+  const industry = getArg(args, 'industry', '');
 
   if (!leadJson) {
     console.error('Usage: npx tsx packages/pipeline/prepare.ts --lead \'{"id":"...","displayName":{"text":"..."},...}\' [--industry restaurant]');

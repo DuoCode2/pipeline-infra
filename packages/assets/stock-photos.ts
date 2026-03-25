@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { requireEnv } from '../utils/env';
+import { getArg } from '../utils/cli';
 
 const UNSPLASH_KEY = requireEnv('UNSPLASH_ACCESS_KEY');
 const UNSPLASH_URL = 'https://api.unsplash.com/search/photos';
@@ -90,13 +91,8 @@ export async function downloadStockPhotos(
 // CLI usage
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const getArg = (name: string, fallback: string) => {
-    const idx = args.indexOf(`--${name}`);
-    return idx >= 0 && args[idx + 1] ? args[idx + 1] : fallback;
-  };
-
-  const industry = getArg('industry', 'restaurant');
-  const outputDir = getArg('output', 'output/test/public/images');
+  const industry = getArg(args, 'industry', 'restaurant');
+  const outputDir = getArg(args, 'output', 'output/test/public/images');
 
   downloadStockPhotos(industry, outputDir)
     .then(({ files }) => console.log(`\nDownloaded ${files.length} stock photos`))

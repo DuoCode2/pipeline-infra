@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { requireEnv } from '../utils/env';
+import { getArg } from '../utils/cli';
 
 const API_KEY = requireEnv('GOOGLE_API_KEY');
 
@@ -46,13 +47,8 @@ export async function downloadMapsPhotos(
 // CLI usage
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const getArg = (name: string, fallback: string) => {
-    const idx = args.indexOf(`--${name}`);
-    return idx >= 0 && args[idx + 1] ? args[idx + 1] : fallback;
-  };
-
-  const photosJson = getArg('photos', '[]');
-  const outputDir = getArg('output', 'output/test/public/images');
+  const photosJson = getArg(args, 'photos', '[]');
+  const outputDir = getArg(args, 'output', 'output/test/public/images');
 
   let photoNames: string[];
   try {

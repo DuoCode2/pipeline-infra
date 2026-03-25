@@ -107,7 +107,7 @@ infra/src/
 │
 ├── package.json                     # Dependencies & scripts
 ├── tsconfig.json                    # TypeScript strict, ES2020
-├── .lighthouserc.json               # Quality thresholds
+├── .lighthouserc.json               # Quality thresholds (single source of truth)
 └── .env.template                    # Required API keys
 ```
 
@@ -220,7 +220,7 @@ Every generated site must pass 2 required gates before deployment. Screenshot ca
 | Gate | Tool | Thresholds | Config |
 |------|------|------------|--------|
 | **Gate 1** | `npm run build` | Zero TypeScript/build errors | `tsconfig.json` |
-| **Gate 2** | Lighthouse CI | Performance ≥ 90, Accessibility ≥ 95, SEO ≥ 95, Speed Index ≤ 3000ms, LCP ≤ 2500ms, CLS ≤ 0.1 | `.lighthouserc.json` |
+| **Gate 2** | Lighthouse (local serve) | Performance ≥ 90, Accessibility ≥ 95, SEO ≥ 95, LCP ≤ 2500ms, CLS ≤ 0.1 | `.lighthouserc.json` → `shared.ts` |
 | **Support** | `browser-use` screenshots | Desktop + mobile captures when the tool is available; non-fatal if unavailable | `packages/quality/serve-and-check.ts` |
 
 ---

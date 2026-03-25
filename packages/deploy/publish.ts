@@ -18,9 +18,9 @@ export interface PublishResult {
   repo: string;
 }
 
-const DEFAULT_OWNER = 'DuoCode2';
-const DEFAULT_USER_NAME = 'LiuWei';
-const DEFAULT_USER_EMAIL = 'sunflowers0607@outlook.com';
+const DEFAULT_OWNER = process.env.GIT_OWNER || 'DuoCode2';
+const DEFAULT_USER_NAME = process.env.GIT_USER_NAME || 'LiuWei';
+const DEFAULT_USER_EMAIL = process.env.GIT_USER_EMAIL || 'sunflowers0607@outlook.com';
 const DEFAULT_IGNORE_ENTRIES = ['.next/', 'node_modules/', '.vercel/'];
 
 function run(command: string, cwd: string): string {

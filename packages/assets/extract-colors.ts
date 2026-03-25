@@ -2,6 +2,7 @@ import 'dotenv/config';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Vibrant } from 'node-vibrant/node';
+import { getArg } from '../utils/cli';
 import {
   wcagContrast,
   wcagLuminance,
@@ -178,13 +179,8 @@ export async function extractAndSave(
 // CLI usage
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const getArg = (name: string, fallback: string) => {
-    const idx = args.indexOf(`--${name}`);
-    return idx >= 0 && args[idx + 1] ? args[idx + 1] : fallback;
-  };
-
-  const input = getArg('image', '') || getArg('input', '');
-  const output = getArg('output', '');
+  const input = getArg(args, 'image', '') || getArg(args, 'input', '');
+  const output = getArg(args, 'output', '');
 
   if (!input || !output) {
     console.error('Usage: --image <image-path> --output <output-dir>');

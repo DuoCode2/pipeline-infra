@@ -7,14 +7,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { evaluateLighthouseReport } from './shared';
 
-const args = process.argv.slice(2);
-const getArg = (name: string, fallback: string) => {
-  const idx = args.indexOf(`--${name}`);
-  return idx >= 0 && args[idx + 1] ? args[idx + 1] : fallback;
-};
+import { getArg } from '../utils/cli';
 
-const url = getArg('url', '');
-const outputDir = getArg('output', '.');
+const args = process.argv.slice(2);
+const url = getArg(args, 'url', '');
+const outputDir = getArg(args, 'output', '.');
 
 if (!url) {
   console.error('Usage: --url <production-url> [--output <dir>]');
