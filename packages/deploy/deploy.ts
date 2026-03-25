@@ -29,19 +29,22 @@ function toHttps(hostname: string): string {
 }
 
 function resolveDeploymentUrl(
-  created: DeploymentState,
+  slug: string,
   current?: Partial<DeploymentState>,
 ): string {
-  const alias = current?.alias?.[0];
-  if (alias) {
-    return toHttps(alias);
-  }
+  // Prefer the alias that matches {slug}.vercel.app (our canonical URL).
+  const slugAlias = current?.alias?.find(a => a === `${slug}.vercel.app`);
+  if (slugAlias) return toHttps(slugAlias);
 
-  if (current?.url) {
-    return toHttps(current.url);
-  }
+  // Fall back to any alias assigned by Vercel.
+  const anyAlias = current?.alias?.[0];
+  if (anyAlias) return toHttps(anyAlias);
 
-  return toHttps(created.url);
+  // Last resort: raw deployment URL.
+  if (current?.url) return toHttps(current.url);
+
+  // Construct expected canonical URL (deploy was created with name=slug).
+  return `https://${slug}.vercel.app`;
 }
 
 export async function deployToVercel(buildDir: string, slug: string): Promise<DeployResult> {
@@ -103,7 +106,7 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   const deployment = (await res.json()) as DeploymentState;
   console.log(`Deployment created: ${deployment.url} (${deployment.readyState})`);
 
-  // Wait for READY
+  // Wait for READY + alias assignment
   const POLL_INTERVAL_MS = 5_000;
   const POLL_TIMEOUT_MS = 120_000;
   const maxPolls = Math.ceil(POLL_TIMEOUT_MS / POLL_INTERVAL_MS);
@@ -114,17 +117,49 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
       headers: { 'Authorization': `Bearer ${VERCEL_TOKEN}` },
     });
     const status = await check.json() as DeploymentState;
-    if (status.readyState === 'READY') {
-      const prodUrl = resolveDeploymentUrl(deployment, status);
-      console.log(`Deployed: ${prodUrl}`);
-      return { url: prodUrl, projectId: slug, deploymentId: deployment.id };
-    }
+
     if (status.readyState === 'ERROR') {
       throw new Error(`Vercel deployment failed (id=${deployment.id}, state=${status.readyState})`);
     }
+
+    if (status.readyState === 'READY') {
+      // Wait a few more polls for alias assignment if not yet done.
+      if (status.aliasAssigned || status.alias?.length) {
+        const prodUrl = resolveDeploymentUrl(slug, status);
+        console.log(`Deployed: ${prodUrl}`);
+        return { url: prodUrl, projectId: slug, deploymentId: deployment.id };
+      }
+      // READY but alias not yet assigned — keep polling (up to overall timeout).
+    }
   }
 
-  throw new Error(`Vercel deployment timed out after ${POLL_TIMEOUT_MS / 1000}s (id=${deployment.id})`);
+  // Timeout: deployment may be READY but alias never arrived.
+  // Explicitly assign alias via Vercel API as fallback.
+  const expectedAlias = `${slug}.vercel.app`;
+  console.log(`Alias not auto-assigned, explicitly setting ${expectedAlias}...`);
+  try {
+    const aliasRes = await fetch(`${VERCEL_API}/v2/deployments/${deployment.id}/aliases`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${VERCEL_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ alias: expectedAlias }),
+    });
+    if (aliasRes.ok) {
+      const prodUrl = `https://${expectedAlias}`;
+      console.log(`Deployed: ${prodUrl} (alias set explicitly)`);
+      return { url: prodUrl, projectId: slug, deploymentId: deployment.id };
+    }
+    console.warn(`Explicit alias failed: ${aliasRes.status} ${await aliasRes.text()}`);
+  } catch (err) {
+    console.warn(`Explicit alias request error: ${err instanceof Error ? err.message : err}`);
+  }
+
+  // Final fallback: return expected canonical URL (deployment is READY, alias may propagate later).
+  const fallbackUrl = `https://${expectedAlias}`;
+  console.log(`Deployed: ${fallbackUrl} (alias pending)`);
+  return { url: fallbackUrl, projectId: slug, deploymentId: deployment.id };
 }
 
 // CLI

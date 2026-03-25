@@ -17,6 +17,7 @@ import {
 import { resolveArchetype, type Archetype, type ArchetypeMapping } from '../generate/archetype-config';
 import { type PlaceResult } from '../discover/search';
 import { getArg } from '../utils/cli';
+import { detectRegionId } from '../utils/env';
 import { logAction } from '../utils/n8n';
 
 // ── Industry-specific favicon SVGs ──────────────────────────────
@@ -207,8 +208,11 @@ function saveLeadJson(lead: PlaceResult, industry: string, archetype: Archetype,
 
 // ── Main pipeline ────────────────────────────────────────────────
 
-export async function prepare(lead: PlaceResult, industry?: string, regionId: string = 'my'): Promise<PrepareResult> {
-  // Zero-config: derive location hint from lead address, no region config needed
+export async function prepare(lead: PlaceResult, industry?: string, regionId?: string): Promise<PrepareResult> {
+  // Zero-config: auto-detect region from address if not explicitly provided
+  const resolvedRegionId = regionId ?? detectRegionId(lead.formattedAddress);
+
+  // Derive location hint from lead address for stock photo queries
   let regionNameKeywords: Record<string, RegExp> | undefined;
   const locationHint = lead.formattedAddress.split(',').pop()?.trim().toLowerCase() || 'local';
   const skipWords: string[] = [];
@@ -291,8 +295,9 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId: st
   console.error(`  Archetype: ${archetype}${archetypeMapping.secondary ? ` (secondary: ${archetypeMapping.secondary})` : ''}`);
 
   // 11. Save lead.json for traceability
-  saveLeadJson(lead, resolvedIndustry, archetype, regionId, outputDir);
+  saveLeadJson(lead, resolvedIndustry, archetype, resolvedRegionId, outputDir);
 
+  console.error(`  Region: ${resolvedRegionId}${regionId ? '' : ' (auto-detected)'}`);
   console.error(`  ✓ Ready for design at ${outputDir}`);
 
   // Notify n8n (optional, fire-and-forget)
@@ -304,7 +309,7 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId: st
     industry: resolvedIndustry,
     archetype,
     archetypeMapping,
-    regionId,
+    regionId: resolvedRegionId,
     brandColors: colors,
     photos: allJpgs,
     photoCount: allJpgs.length,
@@ -336,7 +341,7 @@ if (require.main === module) {
   const leadJson = getArg(args, 'lead', '');
   const leadFile = getArg(args, 'lead-file', '');
   const industry = getArg(args, 'industry', '');
-  const regionId = getArg(args, 'region', 'my');
+  const regionId = getArg(args, 'region', '') || undefined;
   const index = parseInt(getArg(args, 'index', '0'), 10);
 
   if (!leadJson && !leadFile) {

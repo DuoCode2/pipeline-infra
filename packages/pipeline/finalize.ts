@@ -56,54 +56,53 @@ export async function finalize(options: {
   log(`Dry  : ${dryRun}`);
 
   // ------------------------------------------------------------------
-  // 1. Build (if out/ does not exist)
+  // 1. Build (always rebuild to avoid deploying stale artifacts)
   // ------------------------------------------------------------------
-  if (!fs.existsSync(outDir)) {
-    log('out/ not found — running build...');
-    try {
-      execSync('npm install --silent && npm run build', {
-        cwd: dir,
-        stdio: 'pipe',
-        timeout: 120_000,
-      });
-    } catch (err: unknown) {
-      let stderr: string;
-      if (err && typeof err === 'object' && 'stderr' in err) {
-        const buf = (err as Record<string, unknown>).stderr;
-        stderr = buf instanceof Buffer ? buf.toString() : String(buf);
-      } else {
-        stderr = err instanceof Error ? err.message : String(err);
-      }
-      log('Build FAILED');
-      return { status: 'build-failed', error: stderr };
-    }
-
-    if (!fs.existsSync(outDir)) {
-      return { status: 'build-failed', error: 'Build produced no out/ directory' };
-    }
-    log('Build OK');
+  if (fs.existsSync(outDir)) {
+    fs.rmSync(outDir, { recursive: true, force: true });
+    log('Removed stale out/ — rebuilding...');
   } else {
-    log('out/ already exists — skipping build');
+    log('Building...');
   }
 
+  try {
+    execSync('npm install --silent && npm run build', {
+      cwd: dir,
+      stdio: 'pipe',
+      timeout: 120_000,
+    });
+  } catch (err: unknown) {
+    let stderr: string;
+    if (err && typeof err === 'object' && 'stderr' in err) {
+      const buf = (err as Record<string, unknown>).stderr;
+      stderr = buf instanceof Buffer ? buf.toString() : String(buf);
+    } else {
+      stderr = err instanceof Error ? err.message : String(err);
+    }
+    log('Build FAILED');
+    return { status: 'build-failed', error: stderr };
+  }
+
+  if (!fs.existsSync(outDir)) {
+    return { status: 'build-failed', error: 'Build produced no out/ directory' };
+  }
+  log('Build OK');
+
   // ------------------------------------------------------------------
-  // 2. Read region from lead.json for locale-aware generation
+  // 2. Read region + locale from lead.json (prepared by prepare.ts)
   // ------------------------------------------------------------------
-  let regionId = 'my';
   const leadJsonPath2 = path.join(dir, 'lead.json');
+  let regionId = 'xx';
+  let defaultLocale = 'en';
   if (fs.existsSync(leadJsonPath2)) {
     try {
       const leadData = JSON.parse(fs.readFileSync(leadJsonPath2, 'utf8'));
       if (leadData.regionId) regionId = leadData.regionId;
-    } catch { /* ignore */ }
+      if (leadData.defaultLocale) defaultLocale = leadData.defaultLocale;
+    } catch { /* ignore parse errors */ }
   }
-  // Zero-config: read locales from lead.json if available, otherwise default to 'en'
-  let defaultLocale = 'en';
-  if (fs.existsSync(leadJsonPath2)) {
-    try {
-      const ld = JSON.parse(fs.readFileSync(leadJsonPath2, 'utf8'));
-      if (ld.defaultLocale) defaultLocale = ld.defaultLocale;
-    } catch { /* ignore */ }
+  if (regionId === 'xx') {
+    log('[warn] No regionId in lead.json — using fallback (xx)');
   }
 
   // ------------------------------------------------------------------
@@ -119,23 +118,30 @@ export async function finalize(options: {
   }
 
   // ------------------------------------------------------------------
-  // 4. Generate sitemap.xml
+  // 4. Generate sitemap.xml (pre-deploy with expected URL; updated post-deploy)
   // ------------------------------------------------------------------
   const locales = getLocalesForRegion(regionId);
-  const sitemapUrls = locales
-    .map((l) => `  <url><loc>https://${slug}.vercel.app/${l}</loc></url>`)
-    .join('\n');
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+  function writeSitemap(baseUrl: string) {
+    const sitemapUrls = locales
+      .map((l) => `  <url><loc>${baseUrl}/${l}</loc></url>`)
+      .join('\n');
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${sitemapUrls}
 </urlset>
 `;
-  fs.writeFileSync(path.join(outDir, 'sitemap.xml'), sitemap);
+    fs.writeFileSync(path.join(outDir, 'sitemap.xml'), sitemap);
+  }
+  writeSitemap(`https://${slug}.vercel.app`);
   log('sitemap.xml written');
 
   // ------------------------------------------------------------------
-  // 4. Run local quality gate (with retry — Lighthouse scores vary ±5)
+  // 4. Run local quality gate (smart retry: only for score fluctuations)
   // ------------------------------------------------------------------
+  // Lighthouse performance scores fluctuate ±5 between runs. But a11y, SEO,
+  // and best-practices failures are deterministic code issues — retrying the
+  // same code won't improve the score. Only retry when the sole failures are
+  // warn-level categories (performance).
   const MAX_QA_RETRIES = 2;
   let quality!: Awaited<ReturnType<typeof runLocalQualityGate>>;
 
@@ -150,7 +156,16 @@ ${sitemapUrls}
     });
 
     if (quality.allPass || attempt > MAX_QA_RETRIES) break;
-    log(`Quality gate attempt ${attempt}/${MAX_QA_RETRIES + 1} failed, retrying...`);
+
+    // Check if any error-level category failed — if so, don't retry.
+    const hasErrorLevelFailure = Object.values(quality.lighthouse)
+      .some(r => !r.pass && r.level === 'error');
+    if (hasErrorLevelFailure) {
+      log('Quality gate failed on error-level category (a11y/SEO/BP) — no retry, fix code');
+      break;
+    }
+
+    log(`Quality gate attempt ${attempt}/${MAX_QA_RETRIES + 1}: only warn-level failures, retrying...`);
   }
 
   const scores = Object.fromEntries(
@@ -175,6 +190,13 @@ ${sitemapUrls}
   log('Deploying to Vercel...');
   const deploy = await deployToVercel(outDir, slug);
   log(`Deployed: ${deploy.url}`);
+
+  // Update sitemap if actual URL differs from pre-deploy assumption
+  const expectedUrl = `https://${slug}.vercel.app`;
+  if (deploy.url !== expectedUrl) {
+    writeSitemap(deploy.url);
+    log(`sitemap.xml updated with actual URL: ${deploy.url}`);
+  }
 
   log(`Publishing git repo for ${slug}...`);
   try {

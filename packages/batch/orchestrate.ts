@@ -616,7 +616,7 @@ async function batch(config: BatchConfig): Promise<void> {
 
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const regionId = getArg(args, 'region', 'my');
+  const regionId = getArg(args, 'region', '') || 'my';
 
   batch({
     city: getArg(args, 'city', 'Kuala Lumpur'),
