@@ -3,6 +3,12 @@
 Claude Code drives the full pipeline. Use `frontend-design` skill for all design work.
 
 ## Rules
+- **NEVER write files to the project root** — all outputs go to their proper directory:
+  - Lead JSON → `data/leads/`
+  - Exports/CSV → `data/exports/`
+  - Screenshots → `tests/screenshots/`
+  - Site output → `output/{slug}/`
+  - Scripts → `scripts/`
 - Use **AskUserQuestion tool** for user input — never plain text questions
 - Pipeline runs **end-to-end without pausing** — only stop if a gate fails after max retries
 - **ONLY generate sites for businesses WITHOUT a website** — discover defaults to no-website filter

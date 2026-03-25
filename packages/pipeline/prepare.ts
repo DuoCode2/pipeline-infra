@@ -260,17 +260,18 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId?: s
     colors = await extractAndSave('nonexistent', outputDir);
   }
 
-  // 5. Download fonts (self-host Latin)
+  // 5. Download fonts (self-host Latin only, skip unused weight 300)
   console.error(`  Downloading fonts: ${config.fontDisplay}, ${config.fontBody}...`);
   await downloadFonts(
     [config.fontDisplay, config.fontBody],
-    [300, 400, 500, 600, 700, 800],
+    [400, 500, 600, 700, 800],
     path.join(outputDir, 'public/fonts')
   );
 
-  // 6. Optimize images
-  console.error('  Optimizing images to WebP...');
-  await optimizeImages(imgDir);
+  // 6. Optimize images (WebP + AVIF, generate TS module for srcset)
+  console.error('  Optimizing images to WebP + AVIF...');
+  const imagesTsPath = path.join(outputDir, 'src/data/images.ts');
+  await optimizeImages(imgDir, imagesTsPath);
 
   // 7. Copy template scaffolding
   console.error('  Copying template scaffolding...');

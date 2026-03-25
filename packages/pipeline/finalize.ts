@@ -89,6 +89,23 @@ export async function finalize(options: {
   log('Build OK');
 
   // ------------------------------------------------------------------
+  // 1b. Remove non-deployable files from out/ (Next.js copies all of public/)
+  // ------------------------------------------------------------------
+  const outImagesDir = path.join(outDir, 'images');
+  if (fs.existsSync(outImagesDir)) {
+    // Remove image-manifest.json (build artifact, not for deployment)
+    const manifestInOut = path.join(outDir, 'image-manifest.json');
+    if (fs.existsSync(manifestInOut)) {
+      fs.unlinkSync(manifestInOut);
+    }
+    // Remove attribution.json from out/ (keep in project root for compliance)
+    const attrInOut = path.join(outDir, 'attribution.json');
+    if (fs.existsSync(attrInOut)) {
+      fs.unlinkSync(attrInOut);
+    }
+  }
+
+  // ------------------------------------------------------------------
   // 2. Read region + locale from lead.json (prepared by prepare.ts)
   // ------------------------------------------------------------------
   const leadJsonPath2 = path.join(dir, 'lead.json');

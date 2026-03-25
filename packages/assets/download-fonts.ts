@@ -9,9 +9,24 @@ const CHROME_UA =
 const GOOGLE_FONTS_CSS_BASE = 'https://fonts.googleapis.com/css2';
 
 /**
+ * Unicode-range subsets to keep. Google Fonts splits fonts by script.
+ * For English-only sites we only need Latin (base + extended covers accented chars).
+ * Each entry is a substring that appears in the Google Fonts CSS `unicode-range` line.
+ */
+const LATIN_RANGE_MARKERS = [
+  'U+0000-00FF',   // Latin (base ASCII + common symbols)
+  'U+0100-02BA',   // Latin Extended (accented characters, ligatures)
+];
+
+function isLatinSubset(block: string): boolean {
+  const rangeMatch = block.match(/unicode-range:\s*([^;]+)/);
+  if (!rangeMatch) return true; // no unicode-range = keep it
+  const range = rangeMatch[1];
+  return LATIN_RANGE_MARKERS.some(marker => range.includes(marker));
+}
+
+/**
  * Build the Google Fonts CSS URL for the requested families and weights.
- *
- * Format: https://fonts.googleapis.com/css2?family=Font+Name:wght@300;400;500&family=Other+Font:wght@300;400&display=swap
  */
 function buildCssUrl(fonts: string[], weights: number[]): string {
   const weightStr = weights.join(';');
@@ -50,24 +65,20 @@ function parseFontFaces(css: string): Array<{
     block: string;
   }> = [];
 
-  // Match each @font-face block
   const blockRegex = /@font-face\s*\{[^}]+\}/g;
   let match: RegExpExecArray | null;
 
   while ((match = blockRegex.exec(css)) !== null) {
     const block = match[0];
 
-    // Extract font-family
     const familyMatch = block.match(/font-family:\s*['"]([^'"]+)['"]/);
     if (!familyMatch) continue;
     const family = familyMatch[1];
 
-    // Extract font-weight
     const weightMatch = block.match(/font-weight:\s*(\d+)/);
     if (!weightMatch) continue;
     const weight = weightMatch[1];
 
-    // Extract woff2 URL
     const urlMatch = block.match(
       /url\((https:\/\/fonts\.gstatic\.com\/[^)]+\.woff2)\)/
     );
@@ -80,29 +91,36 @@ function parseFontFaces(css: string): Array<{
   return blocks;
 }
 
+export interface DownloadFontsOptions {
+  /** Font family names (e.g. ["Montserrat", "Source Sans 3"]) */
+  fonts: string[];
+  /** Font weights to download (e.g. [400, 500, 600, 700]) */
+  weights: number[];
+  /** Output directory for .woff2 files and font-face.css */
+  outputDir: string;
+  /** Only keep Latin subsets (default: true). Set false for multi-script sites. */
+  latinOnly?: boolean;
+}
+
 /**
  * Download Google Font families as .woff2 files for self-hosting.
  *
- * Fetches the CSS from Google Fonts, downloads each .woff2 file,
- * then writes a rewritten font-face.css with relative paths.
- *
- * @param fonts - Array of font family names (e.g. ["Cormorant Garamond", "Quicksand"])
- * @param weights - Array of font weights (e.g. [300, 400, 500, 600, 700])
- * @param outputDir - Directory to save .woff2 files and font-face.css
+ * Improvements over naive approach:
+ * - Filters to Latin-only subsets by default (saves ~85% for English sites)
+ * - Only downloads requested weights
  */
 export async function downloadFonts(
   fonts: string[],
   weights: number[],
-  outputDir: string
+  outputDir: string,
+  latinOnly: boolean = true,
 ): Promise<void> {
-  // Ensure output directory exists
   fs.mkdirSync(outputDir, { recursive: true });
 
   const cssUrl = buildCssUrl(fonts, weights);
   console.log(`Fetching Google Fonts CSS…`);
   console.log(`  URL: ${cssUrl}`);
 
-  // Fetch CSS with Chrome UA to get woff2 format
   const cssResponse = await fetch(cssUrl, {
     headers: { 'User-Agent': CHROME_UA },
   });
@@ -114,7 +132,7 @@ export async function downloadFonts(
   }
 
   const css = await cssResponse.text();
-  const faces = parseFontFaces(css);
+  let faces = parseFontFaces(css);
 
   if (faces.length === 0) {
     throw new Error(
@@ -122,12 +140,20 @@ export async function downloadFonts(
     );
   }
 
-  console.log(`Found ${faces.length} @font-face rules`);
+  const totalFaces = faces.length;
+
+  // Filter to Latin subsets only (English-only sites don't need Cyrillic, Vietnamese, etc.)
+  if (latinOnly) {
+    faces = faces.filter(f => isLatinSubset(f.block));
+    console.log(`  Filtered: ${faces.length}/${totalFaces} @font-face rules (Latin only)`);
+  } else {
+    console.log(`  Found ${faces.length} @font-face rules (all subsets)`);
+  }
 
   // Download each woff2 file and build rewritten CSS
-  // Track per-family+weight index for unicode-range subsets
   const seen = new Map<string, number>();
   let rewrittenCss = '';
+  let downloaded = 0;
 
   for (const face of faces) {
     const key = `${sanitizeName(face.family)}-${face.weight}`;
@@ -151,8 +177,8 @@ export async function downloadFonts(
 
       const buffer = Buffer.from(await fontResponse.arrayBuffer());
       fs.writeFileSync(outPath, buffer);
+      downloaded++;
 
-      // Rewrite the CSS block to use the local filename
       const rewrittenBlock = face.block.replace(
         /url\(https:\/\/fonts\.gstatic\.com\/[^)]+\.woff2\)/,
         `url(./${filename})`
@@ -165,12 +191,11 @@ export async function downloadFonts(
     }
   }
 
-  // Write the rewritten CSS
   const cssPath = path.join(outputDir, 'font-face.css');
   fs.writeFileSync(cssPath, rewrittenCss.trim() + '\n');
   console.log(`\nSaved font-face.css → ${cssPath}`);
   console.log(
-    `Downloaded ${faces.length} font files to ${path.resolve(outputDir)}`
+    `Downloaded ${downloaded} font files to ${path.resolve(outputDir)}`
   );
 }
 

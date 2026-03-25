@@ -31,6 +31,16 @@ n8n/service-account.json
 data/leads/*.json
 data/discoveries/*.json
 data/logs/*.jsonl
+data/exports/*.csv
+
+# Stray files in root (catch AI-generated junk)
+/*.json
+!package.json
+!tsconfig.json
+!skills-lock.json
+/*.png
+/*.jpg
+/*.csv
 
 # Lock files (per-workspace, regenerated)
 package-lock.json
@@ -39,3 +49,4 @@ package-lock.json
 coverage/
 eval/results/
 eval/backstop/
+tests/screenshots/
