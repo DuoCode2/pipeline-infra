@@ -14,23 +14,8 @@ import {
   slugify,
   type IndustryDesign,
 } from '../generate/industry-config';
+import { type PlaceResult } from '../discover/search';
 import { getArg } from '../utils/cli';
-
-// ── Types ────────────────────────────────────────────────────────
-
-interface LeadInput {
-  id: string;
-  displayName: { text: string; languageCode?: string };
-  primaryType?: string;
-  formattedAddress: string;
-  nationalPhoneNumber?: string;
-  rating?: number;
-  userRatingCount?: number;
-  regularOpeningHours?: { weekdayDescriptions: string[] };
-  photos?: Array<{ name: string; widthPx?: number; heightPx?: number }>;
-  location?: { latitude: number; longitude: number };
-  googleMapsUri?: string;
-}
 
 export interface PrepareResult {
   outputDir: string;
@@ -56,7 +41,7 @@ function pickHeroPhoto(photos: string[]): string {
 }
 
 function generateBusinessSkeleton(
-  lead: LeadInput,
+  lead: PlaceResult,
   industry: string,
   colors: BrandColors,
   config: IndustryDesign,
@@ -139,7 +124,7 @@ export const business: BusinessData = {
 
 // ── Save lead.json for traceability ──────────────────────────────
 
-function saveLeadJson(lead: LeadInput, industry: string, outputDir: string) {
+function saveLeadJson(lead: PlaceResult, industry: string, outputDir: string) {
   fs.writeFileSync(path.join(outputDir, 'lead.json'), JSON.stringify({
     place_id: lead.id,
     name: lead.displayName.text,
@@ -155,7 +140,7 @@ function saveLeadJson(lead: LeadInput, industry: string, outputDir: string) {
 
 // ── Main pipeline ────────────────────────────────────────────────
 
-export async function prepare(lead: LeadInput, industry?: string): Promise<PrepareResult> {
+export async function prepare(lead: PlaceResult, industry?: string): Promise<PrepareResult> {
   const resolvedIndustry = industry || classifyIndustry(lead.primaryType);
   const config = INDUSTRY_CONFIG[resolvedIndustry] || INDUSTRY_CONFIG.generic;
   const schemaOrgType = SCHEMA_ORG_TYPE[resolvedIndustry] || 'LocalBusiness';
@@ -225,6 +210,21 @@ export async function prepare(lead: LeadInput, industry?: string): Promise<Prepa
 
   console.error(`  ✓ Ready for design at ${outputDir}`);
 
+  // Notify n8n (optional, fire-and-forget)
+  const webhookUrl = process.env.N8N_WEBHOOK_URL;
+  if (webhookUrl) {
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        place_id: lead.id,
+        slug,
+        action: 'prepared',
+        result: outputDir,
+      }),
+    }).catch(() => {});
+  }
+
   const result: PrepareResult = {
     outputDir,
     slug,
@@ -240,22 +240,71 @@ export async function prepare(lead: LeadInput, industry?: string): Promise<Prepa
 
 // ── CLI ──────────────────────────────────────────────────────────
 
+function parseLead(raw: unknown): PlaceResult {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error('Lead data must be a JSON object');
+  }
+  const obj = raw as Record<string, unknown>;
+  if (!obj.id || !obj.displayName) {
+    throw new Error(
+      'Lead must have at least "id" and "displayName" fields.\n' +
+      'Use search.ts default output (full PlaceResult format), not --compact.'
+    );
+  }
+  return raw as PlaceResult;
+}
+
 if (require.main === module) {
   const args = process.argv.slice(2);
 
   const leadJson = getArg(args, 'lead', '');
+  const leadFile = getArg(args, 'lead-file', '');
   const industry = getArg(args, 'industry', '');
+  const index = parseInt(getArg(args, 'index', '0'), 10);
 
-  if (!leadJson) {
-    console.error('Usage: npx tsx packages/pipeline/prepare.ts --lead \'{"id":"...","displayName":{"text":"..."},...}\' [--industry restaurant]');
+  if (!leadJson && !leadFile) {
+    console.error(
+      'Usage:\n' +
+      '  npx tsx packages/pipeline/prepare.ts --lead-file leads.json [--index 0] [--industry restaurant]\n' +
+      '  npx tsx packages/pipeline/prepare.ts --lead \'{"id":"...","displayName":{"text":"..."},...}\' [--industry restaurant]\n\n' +
+      'Typical workflow:\n' +
+      '  npx tsx packages/discover/search.ts --city "KL" --category "restaurant" --out leads.json\n' +
+      '  npx tsx packages/pipeline/prepare.ts --lead-file leads.json --index 0'
+    );
     process.exit(1);
   }
 
-  let lead: LeadInput;
+  let lead: PlaceResult;
   try {
-    lead = JSON.parse(leadJson);
-  } catch {
-    console.error('Error: --lead must be valid JSON');
+    let raw: unknown;
+    if (leadFile) {
+      if (!fs.existsSync(leadFile)) {
+        console.error(`File not found: ${leadFile}`);
+        process.exit(1);
+      }
+      raw = JSON.parse(fs.readFileSync(leadFile, 'utf8'));
+    } else {
+      raw = JSON.parse(leadJson);
+    }
+
+    // Support both single object and array (pick by --index)
+    if (Array.isArray(raw)) {
+      if (raw.length === 0) {
+        console.error('Error: lead array is empty');
+        process.exit(1);
+      }
+      if (index >= raw.length) {
+        console.error(`Error: --index ${index} out of range (array has ${raw.length} items)`);
+        process.exit(1);
+      }
+      console.error(`Selecting lead [${index}] of ${raw.length}: ${(raw[index] as Record<string, unknown>).displayName ? ((raw[index] as Record<string, {text: string}>).displayName?.text) : 'unknown'}`);
+      raw = raw[index];
+    }
+
+    lead = parseLead(raw);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`Error: ${msg}`);
     process.exit(1);
   }
 

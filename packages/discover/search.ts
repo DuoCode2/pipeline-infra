@@ -183,12 +183,14 @@ if (require.main === module) {
   const includeAll = args.includes('--include-all');
   const filterNoWebsite = !includeAll;
 
-  const compact = args.includes('--compact') || !args.includes('--full');
+  const compact = args.includes('--compact');
+  const outFile = getArg(args, 'out', '');
 
   searchPlaces(category, city, limit, filterNoWebsite)
     .then((results) => {
+      let output: unknown;
       if (compact) {
-        const slim = results.map((p) => ({
+        output = results.map((p) => ({
           id: p.id,
           name: p.displayName?.text || '',
           type: p.primaryType || null,
@@ -204,13 +206,21 @@ if (require.main === module) {
             ? { lat: p.location.latitude, lng: p.location.longitude }
             : null,
         }));
-        console.log(JSON.stringify(slim, null, 2));
       } else {
-        console.log(JSON.stringify(results, null, 2));
+        output = results;
+      }
+
+      const json = JSON.stringify(output, null, 2);
+      if (outFile) {
+        fs.mkdirSync(path.dirname(path.resolve(outFile)), { recursive: true });
+        fs.writeFileSync(outFile, json);
+        console.error(`Written to ${outFile}`);
+      } else {
+        console.log(json);
       }
       console.error(`\nQualified leads: ${results.length}`);
       console.error(`Filters: operational + has phone + has photos + reviews≥3 + rating≥3.0${filterNoWebsite ? ' + no website' : ''}`);
-      console.error(`Output: ${compact ? 'compact (use --full for raw API response)' : 'full'}`);
+      console.error(`Output: ${compact ? 'compact (use default for full PlaceResult)' : 'full (PlaceResult[], pipe-ready for prepare.ts)'}`);
     })
     .catch((err) => {
       console.error('Error:', err.message);

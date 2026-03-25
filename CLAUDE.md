@@ -19,16 +19,19 @@ When running /generate or /batch, Claude must:
 - Only stop if: (a) missing required input (use AskUserQuestion), (b) gate fails after 3 retries
 
 ## Pipeline: /generate (3 steps)
-1. **Prepare** — `npx tsx packages/pipeline/prepare.ts --lead '...' --industry X` → all mechanical work
+1. **Discover + Prepare** — find lead, then prepare assets + scaffold
 2. **Design** — Claude creates unique components + 4-language content (the ONLY creative step)
 3. **Finalize** — `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/` → build + quality + deploy
 
 ## Pipeline Commands
 | Command | When |
 |---------|------|
-| `npx tsx packages/discover/search.ts --city X --category Y --limit N` | Find leads |
-| `npx tsx packages/pipeline/prepare.ts --lead '...' --industry X` | Before design (all asset prep + scaffold) |
+| `npx tsx packages/discover/search.ts --city X --category Y --limit N --out leads.json` | Find leads → save to file |
+| `npx tsx packages/pipeline/prepare.ts --lead-file leads.json --index 0` | Prepare from search output (by index) |
+| `npx tsx packages/pipeline/prepare.ts --lead '{"id":"...","displayName":{"text":"..."},...}'` | Prepare from inline JSON (PlaceResult format) |
 | `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/` | After design (build + quality + deploy) |
+
+**Data flow**: `search.ts` outputs `PlaceResult[]` (full Google API format) → `prepare.ts` accepts it directly via `--lead-file`. No field mapping needed.
 
 ## Dev Commands
 ```bash
@@ -46,7 +49,7 @@ npx tsx packages/batch/orchestrate.ts --city X --categories "a,b" --batch-size N
 | Skill | Type | Purpose |
 |-------|------|---------|
 | `/generate` | invoke | prepare → design → finalize (one site) |
-| `/batch` | invoke | parallel prepare → sequential design → parallel finalize |
+| `/batch` | invoke | fully parallel — one Agent per lead runs prepare→design→finalize |
 | `/fix-site` | invoke | Fix visual issues → rebuild → redeploy |
 | `frontend-design` | auto | Anthropic design skill — typography, color, layout, motion |
 | `duocode-design` | auto | Malaysia market rules + A11y checklist + template structure |
