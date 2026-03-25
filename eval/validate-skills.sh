@@ -38,8 +38,8 @@ echo ""
 # ── 2. Structure Consistency ──
 echo "── 2. Structure Consistency ──"
 
-# 9 skills after refactor (removed iterate-quality, quality-standards, project-standards)
-EXPECTED_SKILLS="generate batch discover prepare-assets quality-gate deploy duocode-design toolchain skill-creator"
+# 6 skills after refactor
+EXPECTED_SKILLS="generate batch fix-site duocode-design frontend-design skill-creator"
 for skill in $EXPECTED_SKILLS; do
   if [ -f "$SKILLS_DIR/$skill/SKILL.md" ]; then
     pass "2.1 $skill/SKILL.md exists"
@@ -49,7 +49,7 @@ for skill in $EXPECTED_SKILLS; do
 done
 
 SKILL_COUNT=$(find "$SKILLS_DIR" -maxdepth 2 -name "SKILL.md" | wc -l | tr -d ' ')
-echo "  Total skills: $SKILL_COUNT (target: 9)"
+echo "  Total skills: $SKILL_COUNT (target: 6)"
 echo ""
 
 # ── 3. Reference Integrity ──
@@ -73,6 +73,12 @@ if [ -f "$DESIGN_DIR/schemas/_base.schema.json" ]; then
   fi
 else
   fail "3.2 _base.schema.json" "missing"
+fi
+
+if [ -f "$DESIGN_DIR/references/a11y-checklist.md" ]; then
+  pass "3.3 a11y-checklist.md exists"
+else
+  fail "3.3 a11y-checklist.md" "missing a11y reference"
 fi
 echo ""
 
@@ -105,6 +111,12 @@ if [ -f "$SHARED/src/lib/i18n.ts" ]; then
   pass "4.4 i18n.ts exists"
 else
   fail "4.4 i18n.ts" "missing"
+fi
+
+if [ -f "$SHARED/public/robots.txt" ] && [ -f "$SHARED/public/favicon.svg" ]; then
+  pass "4.5 Template public defaults (robots.txt + favicon.svg)"
+else
+  fail "4.5 Template public defaults" "missing robots.txt or favicon.svg"
 fi
 echo ""
 

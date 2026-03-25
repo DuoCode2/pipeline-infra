@@ -138,18 +138,18 @@ else
   warn "4.1 SEO metadata" "no title/meta tags found"
 fi
 
-# Check schema-markup skill available
-if [ -f "$SRC_DIR/.claude/skills/quality-standards/references/schema-markup.md" ]; then
-  pass "4.2 schema-markup skill available for structured data"
+# Check schema definition available
+if [ -f "$SRC_DIR/.claude/skills/duocode-design/schemas/_base.schema.json" ]; then
+  pass "4.2 schema definition available for structured data"
 else
-  warn "4.2 schema-markup skill" "not found"
+  warn "4.2 schema definition" "not found"
 fi
 
-# Check SEO skill available
-if [ -f "$SRC_DIR/.claude/skills/quality-standards/references/seo.md" ]; then
-  pass "4.3 SEO skill available"
+# Check Lighthouse CI reference available
+if [ -f "$SRC_DIR/.claude/skills/duocode-design/references/lighthouse-ci.md" ]; then
+  pass "4.3 Lighthouse CI reference available"
 else
-  fail "4.3 SEO skill" "missing"
+  warn "4.3 Lighthouse CI reference" "not found"
 fi
 echo ""
 

@@ -185,23 +185,21 @@ echo "── 4. Skills Structure ──"
 
 SKILLS_DIR=".claude/skills"
 
-# 4.1 All 12 skills exist (flat structure)
-for skill in generate batch discover prepare-assets quality-gate iterate-quality deploy duocode-design toolchain quality-standards project-standards skill-creator; do
+# 4.1 All 6 skills exist (flat structure)
+for skill in generate batch fix-site duocode-design frontend-design skill-creator; do
   if [ -f "$SKILLS_DIR/$skill/SKILL.md" ]; then log_pass "4.1 $skill/SKILL.md exists"
   else log_fail "4.1 $skill/SKILL.md" "missing"; fi
 done
 
 # 4.2 DuoCode design references
-for ref in _foundations.md _copy-foundations.md restaurant.md beauty.md clinic.md retail.md fitness.md service.md generic.md; do
+for ref in malaysia-market.md a11y-checklist.md browser-use.md lighthouse-ci.md; do
   if [ -f "$SKILLS_DIR/duocode-design/references/$ref" ]; then log_pass "4.2 reference/$ref"
   else log_fail "4.2 reference/$ref" "file missing"; fi
 done
 
 # 4.3 DuoCode design schemas
-for schema in _base.schema.json restaurant.schema.json beauty.schema.json clinic.schema.json retail.schema.json fitness.schema.json service.schema.json generic.schema.json; do
-  if [ -f "$SKILLS_DIR/duocode-design/schemas/$schema" ]; then log_pass "4.3 schema/$schema"
-  else log_fail "4.3 schema/$schema" "file missing"; fi
-done
+if [ -f "$SKILLS_DIR/duocode-design/schemas/_base.schema.json" ]; then log_pass "4.3 _base.schema.json"
+else log_fail "4.3 _base.schema.json" "file missing"; fi
 
 # 4.4 Schemas are valid JSON
 for schema in "$SKILLS_DIR"/duocode-design/schemas/*.json; do
@@ -209,17 +207,15 @@ for schema in "$SKILLS_DIR"/duocode-design/schemas/*.json; do
   else log_fail "4.4 $(basename $schema)" "invalid JSON"; fi
 done
 
-# 4.5 Toolchain references
-for ref in browser-use lighthouse-ci github n8n; do
-  if [ -f "$SKILLS_DIR/toolchain/references/$ref.md" ]; then log_pass "4.5 toolchain/$ref.md"
-  else log_fail "4.5 toolchain/$ref.md" "missing"; fi
+# 4.5 duocode-design references (merged from toolchain)
+for ref in browser-use lighthouse-ci; do
+  if [ -f "$SKILLS_DIR/duocode-design/references/$ref.md" ]; then log_pass "4.5 duocode-design/$ref.md"
+  else log_fail "4.5 duocode-design/$ref.md" "missing"; fi
 done
 
-# 4.6 Quality references
-for ref in accessibility seo performance core-web-vitals; do
-  if [ -f "$SKILLS_DIR/quality-standards/references/$ref.md" ]; then log_pass "4.6 quality/$ref.md"
-  else log_fail "4.6 quality/$ref.md" "missing"; fi
-done
+# 4.6 a11y checklist (replaces quality-standards)
+if [ -f "$SKILLS_DIR/duocode-design/references/a11y-checklist.md" ]; then log_pass "4.6 a11y-checklist.md"
+else log_fail "4.6 a11y-checklist.md" "missing"; fi
 
 # ─── TEST GROUP 5: Template System ──────────────
 echo ""
@@ -231,25 +227,20 @@ TPL_DIR="$SKILLS_DIR/duocode-design/templates"
 if [ -d "$TPL_DIR/_shared" ]; then log_pass "5.1 _shared template dir"
 else log_fail "5.1 _shared template" "directory missing"; fi
 
-if [ -d "$TPL_DIR/restaurant" ]; then log_pass "5.1 restaurant template dir"
-else log_fail "5.1 restaurant template" "directory missing"; fi
-
-# 5.2 Shared components exist
-REQUIRED_COMPONENTS=(Header Hero Footer CTA Reviews Hours Location ResponsiveImage)
-for comp in "${REQUIRED_COMPONENTS[@]}"; do
-  if [ -f "$TPL_DIR/_shared/components/$comp.tsx" ]; then log_pass "5.2 Component $comp.tsx"
-  else log_fail "5.2 Component $comp.tsx" "not created yet (Phase 2 task)"; fi
+# 5.2 Template scaffolding files
+for f in package.json next.config.js tailwind.config.ts tsconfig.json; do
+  if [ -f "$TPL_DIR/_shared/$f" ]; then log_pass "5.2 _shared/$f"
+  else log_fail "5.2 _shared/$f" "missing template config"; fi
 done
 
 # 5.3 Type definitions
-if [ -f "$TPL_DIR/_shared/types/business.d.ts" ]; then log_pass "5.3 business.d.ts"
+if [ -f "$TPL_DIR/_shared/src/types/business.d.ts" ]; then log_pass "5.3 business.d.ts"
 else log_fail "5.3 business.d.ts" "not created yet (Phase 2 task)"; fi
 
-# 5.4 Example business.ts
-EXAMPLE_DIR="$SKILLS_DIR/duocode-design/examples/restaurant"
-if [ -d "$EXAMPLE_DIR" ] && ls "$EXAMPLE_DIR"/*/business.ts >/dev/null 2>&1; then
-  log_pass "5.4 Restaurant example exists"
-else log_fail "5.4 Restaurant example" "not created yet (Phase 2 task)"; fi
+# 5.4 Template public defaults
+if [ -f "$TPL_DIR/_shared/public/robots.txt" ] && [ -f "$TPL_DIR/_shared/public/favicon.svg" ]; then
+  log_pass "5.4 Template public defaults (robots.txt + favicon.svg)"
+else log_fail "5.4 Template public defaults" "missing robots.txt or favicon.svg"; fi
 
 # ─── TEST GROUP 6: n8n ──────────────────────────
 echo ""
@@ -272,6 +263,18 @@ echo "── 7. Packages ──"
 for pkg in discover/search.ts assets/maps-photos.ts assets/stock-photos.ts assets/extract-colors.ts assets/optimize-images.ts deploy/deploy.ts; do
   if [ -f "packages/$pkg" ]; then log_pass "7.1 packages/$pkg"
   else log_fail "7.1 packages/$pkg" "not created yet (Phase 1 task)"; fi
+done
+
+# 7.2 Pipeline packages
+for pkg in pipeline/prepare.ts pipeline/finalize.ts; do
+  if [ -f "packages/$pkg" ]; then log_pass "7.2 packages/$pkg"
+  else log_fail "7.2 packages/$pkg" "missing pipeline module"; fi
+done
+
+# 7.3 New asset tools
+for pkg in assets/download-fonts.ts quality/serve-and-check.ts; do
+  if [ -f "packages/$pkg" ]; then log_pass "7.3 packages/$pkg"
+  else log_fail "7.3 packages/$pkg" "missing"; fi
 done
 
 # ─── SUMMARY ────────────────────────────────────

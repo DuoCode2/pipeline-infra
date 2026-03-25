@@ -47,36 +47,41 @@ Each generated site ships with:
 ```
 infra/src/
 ├── packages/                        # Core TypeScript pipeline modules
+│   ├── pipeline/
+│   │   ├── prepare.ts               # One-command pre-design: photos → colors → fonts → scaffold
+│   │   └── finalize.ts              # One-command post-design: build → lighthouse → deploy
 │   ├── discover/search.ts           # Google Maps Places API integration
 │   ├── assets/
 │   │   ├── maps-photos.ts           # Download business photos from Maps
 │   │   ├── stock-photos.ts          # Unsplash/Pexels fallback photos
-│   │   ├── extract-colors.ts        # node-vibrant → 6 CSS brand colors
+│   │   ├── extract-colors.ts        # node-vibrant → 9 WCAG-safe brand colors
+│   │   ├── download-fonts.ts        # Self-host Google Fonts as .woff2
 │   │   └── optimize-images.ts       # Sharp → 4 WebP responsive sizes
 │   ├── generate/industry-config.ts  # Industry classification + design config
-│   ├── batch/orchestrate.ts         # Main orchestrator (592 lines)
+│   ├── quality/
+│   │   ├── serve-and-check.ts       # Local Lighthouse with auto port management
+│   │   └── lighthouse-check.ts      # Remote Lighthouse audit
+│   ├── batch/orchestrate.ts         # Full automation fallback (no Claude design)
 │   ├── deploy/deploy.ts             # Vercel REST API v13 deployment
 │   └── utils/env.ts                 # requireEnv() helper
 │
-├── .claude/skills/                  # 9 Claude Code skills (flat structure)
-│   ├── generate/SKILL.md           #   /generate — E2E site generation (5-step)
-│   ├── batch/SKILL.md              #   /batch — multi-lead orchestration
-│   ├── discover/SKILL.md           #   /discover — Google Maps lead discovery
-│   ├── prepare-assets/SKILL.md     #   /prepare-assets — photos + colors
-│   ├── quality-gate/SKILL.md       #   /quality-gate — 3-gate QA pipeline
-│   ├── deploy/SKILL.md             #   /deploy — Vercel deployment
-│   ├── duocode-design/             #   Auto-load: design system
-│   │   ├── SKILL.md                #     Core design principles
-│   │   ├── references/             #     Malaysia market locale rules
+├── .claude/skills/                  # 6 Claude Code skills
+│   ├── generate/SKILL.md           #   /generate — prepare → design → finalize
+│   ├── batch/SKILL.md              #   /batch — parallel prepare → design → parallel finalize
+│   ├── fix-site/SKILL.md           #   /fix-site — screenshot → fix → redeploy
+│   ├── duocode-design/             #   Auto-load: design system + references
+│   │   ├── SKILL.md                #     Malaysia market rules + scaffolding
+│   │   ├── references/             #     market, a11y, browser-use, lighthouse
 │   │   └── templates/              #     Next.js shared template scaffolding
-│   ├── toolchain/                  #   Auto-load: tool documentation hub
-│   │   └── references/             #     browser-use, lighthouse-ci
+│   ├── frontend-design/SKILL.md    #   Auto-load: Anthropic design skill
 │   └── skill-creator/SKILL.md      #   Skill creation and testing
 │
-├── n8n/                             # Workflow engine (Docker)
-│   ├── docker-compose.yml           # n8n + Evolution API (Phase 5)
+├── n8n/                             # Background automation (Docker)
+│   ├── docker-compose.yml           # n8n service config
 │   ├── Dockerfile                   # Custom n8n with npm packages
-│   └── *.json                       # 6 workflow definitions
+│   ├── init-workflows.sh            # Auto-import on container start
+│   ├── backup-workflows.sh          # Export workflows from running n8n
+│   └── workflows/                   # 4 active + 1 reference
 │
 ├── output/                          # Generated sites (one per place_id)
 │   └── {place_id}/
@@ -112,14 +117,18 @@ infra/src/
 
 | Module | Lines | Purpose | Key Export |
 |--------|------:|---------|------------|
-| `batch/orchestrate.ts` | 592 | Main orchestrator — runs full pipeline per lead | `batch(config)` |
-| `discover/search.ts` | 140 | Google Maps Places API (New) search | `searchPlaces(category, city)` → `PlaceResult[]` |
-| `generate/industry-config.ts` | 126 | Industry classification + design specs | `classifyIndustry()`, `INDUSTRY_CONFIG`, `slugify()` |
-| `assets/extract-colors.ts` | 109 | Brand color extraction via node-vibrant | `extractColors(img)` → `BrandColors` |
+| `pipeline/prepare.ts` | 240 | One-command pre-design pipeline | `prepare(lead, industry)` → `PrepareResult` |
+| `pipeline/finalize.ts` | 360 | One-command post-design pipeline | `finalize({dir, slug, dryRun})` → `FinalizeResult` |
+| `discover/search.ts` | 206 | Google Maps Places API (New) search | `searchPlaces(category, city)` → `PlaceResult[]` |
+| `generate/industry-config.ts` | 146 | Industry classification + design specs | `classifyIndustry()`, `INDUSTRY_CONFIG`, `slugify()` |
+| `assets/extract-colors.ts` | 170 | Brand color extraction + WCAG enforcement | `extractAndSave(img, dir)` → `BrandColors` (9 tokens) |
+| `assets/download-fonts.ts` | 200 | Self-host Google Fonts as .woff2 | `downloadFonts(fonts, weights, dir)` |
 | `assets/stock-photos.ts` | 106 | Unsplash/Pexels stock photo fallback | `downloadStockPhotos(industry, dir)` |
 | `assets/optimize-images.ts` | 88 | Sharp WebP conversion at 4 breakpoints | `optimizeImages(dir)` → `ImageManifest` |
 | `assets/maps-photos.ts` | 71 | Google Places photo download | `downloadMapsPhotos(names, dir)` |
-| `deploy/deploy.ts` | 101 | Vercel REST API v13 deployment | `deployToVercel(buildDir, slug)` → `DeployResult` |
+| `quality/serve-and-check.ts` | 200 | Local Lighthouse with auto port mgmt | `runLocalQualityGate(options)` |
+| `deploy/deploy.ts` | 113 | Vercel REST API v13 deployment | `deployToVercel(buildDir, slug)` → `DeployResult` |
+| `batch/orchestrate.ts` | 600 | Full automation fallback (no Claude design) | CLI only |
 | `utils/env.ts` | 14 | Environment variable validation | `requireEnv(key)` |
 
 ### Key TypeScript Interfaces
@@ -138,14 +147,17 @@ interface PlaceResult {
   googleMapsUri?: string;
 }
 
-// BrandColors — extracted from business photos
+// BrandColors — extracted from business photos, WCAG-safe
 interface BrandColors {
-  primary: string;      // Vibrant swatch
-  primaryDark: string;  // DarkVibrant
-  accent: string;       // LightVibrant
-  surface: string;      // LightMuted
-  textTitle: string;    // DarkMuted
-  textBody: string;     // Muted
+  primary: string;        // Vibrant swatch (≥3:1 on surface)
+  primaryDark: string;    // DarkVibrant
+  accent: string;         // LightVibrant (≥3:1 on surface)
+  surface: string;        // LightMuted
+  textTitle: string;      // DarkMuted (≥4.5:1 on surface)
+  textBody: string;       // Muted (≥4.5:1 on surface)
+  onPrimary: string;      // Text on primary bg (≥4.5:1)
+  onPrimaryDark: string;  // Text on primaryDark bg (≥4.5:1)
+  accentText: string;     // Accent for text on surface (≥4.5:1)
 }
 
 // IndustryDesign — per-industry visual specs
@@ -164,28 +176,34 @@ interface IndustryDesign {
 ## Skill Architecture
 
 <picture>
-  <img src="docs/skill-system.svg" alt="Flat skill architecture — 9 skills: 6 pipeline commands + 2 auto-load references + 1 utility">
+  <img src="docs/skill-system.svg" alt="Skill architecture — 6 skills: 3 pipeline + 2 auto-load + 1 utility">
 </picture>
 
-9 Claude Code skills in a flat structure under `.claude/skills/`:
+6 Claude Code skills under `.claude/skills/`:
 
 **Pipeline Skills** (user-invoked via `/slash-commands`):
-`/generate`, `/batch`, `/discover`, `/prepare-assets`, `/quality-gate`, `/deploy`
+`/generate` (prepare → design → finalize), `/batch` (parallel version), `/fix-site` (post-deploy fixes)
 
 **Reference Skills** (Claude auto-loads when relevant):
-`duocode-design` (design system + shared template), `toolchain` (tool docs: browser-use, Lighthouse CI)
+`duocode-design` (Malaysia market + a11y + browser-use + lighthouse), `frontend-design` (Anthropic design skill)
 
 **Utility Skill**: `/skill-creator`
 
-### Load Order (per site generation)
+### Pipeline Architecture
 
 ```
-1. generate/SKILL.md              → orchestration steps (5-step process)
-2. duocode-design/SKILL.md        → shared design principles (auto-loaded)
-3. frontend-design skill          → unique page design per business
+User: "吉隆坡3个餐厅"
+  ↓
+search.ts → 3 leads
+  ↓
+prepare.ts × 3 (parallel)  →  Claude designs × 3  →  finalize.ts × 3 (parallel)
+  (mechanical)                   (creative)              (mechanical)
+  ↓                                                      ↓
+  photos, colors, fonts,                                 build, lighthouse,
+  scaffold, business.ts                                  deploy, git push
 ```
 
-Design is driven by the `frontend-design` skill rather than fixed industry templates. Each site gets a unique layout tailored to the specific business, using brand colors, photos, and industry context as creative input.
+Design is driven by the `frontend-design` skill. Each site gets a unique layout — no fixed templates.
 
 ---
 
@@ -214,36 +232,33 @@ Every generated site must pass 3 gates before deployment:
 | GitHub | Source code storage (DuoCode2 org) | `gh` CLI auth | `batch/orchestrate.ts` |
 | n8n | Workflow orchestration | Basic Auth | Docker (port 5678) |
 
-### n8n Workflows
+### n8n Workflows (background automation only — not in generation path)
 
-| Workflow | Webhook Endpoint | Purpose |
-|----------|-----------------|---------|
-| `prepare-assets.json` | `POST /webhook/prepare-assets` | Photo download + color extraction + optimization |
-| `log-work.json` | `POST /webhook/log-work` | Log generation results to Google Sheets |
-| `lead-status.json` | `POST /webhook/lead-status` | Update lead status in Sheets |
-| `lead-discovery.json` | — | Discover leads via Maps API |
-| `deploy-vercel.json` | — | Trigger Vercel deployment |
-| `classify-industry.json` | — | Gemini-based industry classification |
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `log-work.json` | Webhook `POST /webhook/log-work` | Log deployment results to Google Sheets |
+| `lead-status.json` | Webhook `POST /webhook/lead-status` | Query lead status from Sheets |
+| `sheets-init.json` | Webhook `POST /webhook/sheets-init` | Initialize spreadsheet headers |
+| `sheets-rebuild.json` | Webhook `POST /webhook/sheets-rebuild` | Clear and rebuild spreadsheet |
 
 ---
 
 ## Commands
 
-### Pipeline
+### Pipeline (3 commands)
 
 ```bash
-# Discover businesses without websites
-npm run discover -- --city "Kuala Lumpur" --category "restaurant" --limit 1
+# 1. Discover leads
+npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "restaurant" --limit 1
 
-# Run full batch pipeline (discover → generate → deploy)
-npm run batch -- --city "Kuala Lumpur" --categories "restaurant,beauty" --batch-size 2
+# 2. Prepare (all mechanical work before design)
+npx tsx packages/pipeline/prepare.ts --lead '{"id":"...","displayName":{"text":"..."},...}' --industry restaurant
 
-# Individual asset operations
-npx tsx packages/assets/extract-colors.ts --image path/to/photo.jpg --output output/test
-npx tsx packages/assets/optimize-images.ts --input output/test/public/images
+# 3. Finalize (build + quality + deploy after design)
+npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ [--dry-run]
 
-# Deploy a built site
-npx tsx packages/deploy/deploy.ts --build-dir output/{place_id}/out --slug business-name
+# Full automation fallback (no Claude design, hardcoded content)
+npx tsx packages/batch/orchestrate.ts --city "Kuala Lumpur" --categories "restaurant,beauty" --batch-size 2
 ```
 
 ### Testing
@@ -334,17 +349,8 @@ Each site produced by the pipeline:
 output/{place_id}/
 ├── src/
 │   ├── app/[locale]/page.tsx        # Unique page layout per business
-│   ├── components/                  # 12+ shared components
-│   │   ├── Header.tsx               #   Navigation + language switcher
-│   │   ├── Hero.tsx                 #   Full-bleed / split / overlay
-│   │   ├── Menu.tsx                 #   Restaurant: multi-language menu
-│   │   ├── Services.tsx             #   Beauty: service catalog
-│   │   ├── Reviews.tsx              #   Star ratings + testimonials
-│   │   ├── Hours.tsx                #   Operating hours from Maps
-│   │   ├── Location.tsx             #   Address + embedded map
-│   │   ├── ContactForm.tsx          #   Lead capture form
-│   │   ├── ResponsiveImage.tsx      #   srcset with image manifest
-│   │   └── LanguageSwitcher.tsx     #   en / ms / 中文 / 中文
+│   ├── components/                  # Claude generates unique per business
+│   │   └── *.tsx                    #   No fixed set — varies by industry
 │   ├── data/business.ts             # All business content (4 languages)
 │   └── styles/globals.css           # CSS variables from brand colors
 ├── public/

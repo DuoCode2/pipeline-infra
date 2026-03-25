@@ -31,6 +31,14 @@ ALL visual design decisions are made by Claude using the `frontend-design` skill
 - Any additional styles or utilities
 
 ## Data files (from asset preparation):
-- `brand-colors.json` — 6 semantic colors extracted from business photos
+- `brand-colors.json` — 9 color tokens (6 base + 3 WCAG-safe: onPrimary, onPrimaryDark, accentText)
 - `public/image-manifest.json` — responsive image variants
 - `public/images/` — optimized WebP photos
+- `public/fonts/font-face.css` — self-hosted Latin fonts
+- `public/robots.txt` + `public/favicon.svg` — SEO defaults
+
+## Reference documents (auto-loaded):
+- `references/malaysia-market.md` — RM pricing, +60 phone, Halal badges, bilingual menus
+- `references/a11y-checklist.md` — WCAG 2.1 AA rules for generated sites
+- `references/browser-use.md` — browser-use CLI commands for screenshots
+- `references/lighthouse-ci.md` — Lighthouse CI setup and performance budgets
