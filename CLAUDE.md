@@ -33,11 +33,21 @@ When running /generate or /batch, Claude must:
 
 **Data flow**: `search.ts` outputs `PlaceResult[]` (full Google API format) → `prepare.ts` accepts it directly via `--lead-file`. No field mapping needed.
 
+## Industries (9 types)
+`food` | `beauty` | `clinic` | `retail` | `fitness` | `service` | `automotive` | `tech` | `generic`
+
+Pipeline auto-classifies from Google Places `primaryType`. Config in `packages/generate/industry-config.ts`.
+
+## Quality Gate
+- **a11y ≥ 95, SEO ≥ 95, best-practices ≥ 90** → hard fail (blocks deploy)
+- **performance ≥ 90** → warn only (does NOT block deploy)
+- Lighthouse runs with `--preset=desktop`; retry up to 2× on failure
+
 ## Dev Commands
 ```bash
 npm test                 # API keys + env + discover
 npm run test:all         # Full test suite
-npm run build:check      # TypeScript compile check
+npm run build:check      # TypeScript compile check (run from INFRA ROOT, not output/)
 ```
 
 ## CLI Fallback (no Claude design, generated fallback page)
