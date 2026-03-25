@@ -73,7 +73,7 @@
   <text x="282" y="258" class="mod-name" fill="#be123c">assets/stock-photos.ts</text>
   <text x="262" y="280" class="mod-file">106 lines · Unsplash fallback</text>
   <text x="262" y="294" class="mod-desc">downloadStockPhotos(industry, dir)</text>
-  <text x="262" y="308" class="mod-file">Attribution compliance · Pexels alt</text>
+  <text x="262" y="308" class="mod-file">Attribution compliance · Unsplash metadata</text>
 
   <!-- extract-colors -->
   <rect x="468" y="240" width="200" height="76" rx="8" fill="#ffffff" stroke="#fde68a" filter="url(#s)"/>

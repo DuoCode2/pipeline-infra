@@ -84,7 +84,7 @@
   <line x1="547" y1="206" x2="568" y2="206" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
 
   <rect x="572" y="174" width="200" height="64" rx="6" fill="#ffffff" stroke="#6366f1" stroke-width="1.5" filter="url(#sh)"/>
-  <text x="588" y="194" class="node" fill="#4338ca">output/{place_id}/public/</text>
+  <text x="588" y="194" class="node" fill="#4338ca">output/{slug}/public/</text>
   <text x="588" y="210" class="data" fill="#6366f1">images/maps-1-640.webp ...</text>
   <text x="588" y="222" class="data" fill="#6366f1">svgs/steam.svg, wave-divider.svg</text>
   <text x="588" y="232" class="data" fill="#6366f1">image-manifest.json</text>

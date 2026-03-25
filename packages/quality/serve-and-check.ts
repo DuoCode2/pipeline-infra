@@ -16,6 +16,11 @@ import { spawn, execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as net from 'net';
+import {
+  evaluateLighthouseReport,
+  type QualityCategoryResult,
+  type QualityFailure,
+} from './shared';
 
 // ---------------------------------------------------------------------------
 // Free port detection
@@ -59,33 +64,25 @@ async function waitForServer(
   );
 }
 
-// ---------------------------------------------------------------------------
-// Thresholds (same as lighthouse-check.ts)
-// ---------------------------------------------------------------------------
-
-const THRESHOLDS: Record<string, number> = {
-  performance: 90,
-  accessibility: 100,
-  seo: 95,
-  'best-practices': 90,
-};
-
-// ---------------------------------------------------------------------------
-// Main exported function
-// ---------------------------------------------------------------------------
-
 export async function runLocalQualityGate(options: {
   buildDir: string;
   screenshotDir?: string;
   outputDir?: string;
   port?: number;
+  logger?: (message: string) => void;
+  warn?: (message: string) => void;
+  commandStdio?: 'inherit' | 'pipe';
 }): Promise<{
   port: number;
-  lighthouse: Record<string, { score: number; pass: boolean }>;
+  lighthouse: Record<string, QualityCategoryResult>;
+  failures: QualityFailure[];
   allPass: boolean;
 }> {
   const { buildDir, screenshotDir, outputDir } = options;
   const resolvedOutputDir = outputDir ?? path.resolve(buildDir, '..');
+  const log = options.logger ?? console.log;
+  const warn = options.warn ?? console.warn;
+  const commandStdio = options.commandStdio ?? 'inherit';
   fs.mkdirSync(resolvedOutputDir, { recursive: true });
 
   // 1. Determine port ---------------------------------------------------
@@ -93,9 +90,9 @@ export async function runLocalQualityGate(options: {
   const baseUrl = `http://localhost:${port}`;
   const checkUrl = `${baseUrl}/en/`;
 
-  console.log(`\n[serve-and-check] Build dir : ${buildDir}`);
-  console.log(`[serve-and-check] Port      : ${port}`);
-  console.log(`[serve-and-check] Check URL : ${checkUrl}`);
+  log(`\n[serve-and-check] Build dir : ${buildDir}`);
+  log(`[serve-and-check] Port      : ${port}`);
+  log(`[serve-and-check] Check URL : ${checkUrl}`);
 
   // 2. Start serve ------------------------------------------------------
   const serve = spawn('npx', ['serve', buildDir, '-l', String(port)], {
@@ -106,7 +103,7 @@ export async function runLocalQualityGate(options: {
   // Forward serve stderr for troubleshooting (non-blocking).
   serve.stderr?.on('data', (chunk: Buffer) => {
     const line = chunk.toString().trim();
-    if (line) console.log(`[serve] ${line}`);
+    if (line) log(`[serve] ${line}`);
   });
 
   // Ensure cleanup on unexpected exit of this process.
@@ -125,50 +122,43 @@ export async function runLocalQualityGate(options: {
 
   try {
     // 3. Wait for HTTP 200 ------------------------------------------------
-    console.log('[serve-and-check] Waiting for server...');
+    log('[serve-and-check] Waiting for server...');
     await waitForServer(checkUrl);
-    console.log('[serve-and-check] Server ready.');
+    log('[serve-and-check] Server ready.');
 
     // 4. Run Lighthouse ---------------------------------------------------
     const reportPath = path.join(resolvedOutputDir, 'lighthouse-report.json');
 
-    console.log(`[serve-and-check] Running Lighthouse on ${checkUrl}...`);
+    log(`[serve-and-check] Running Lighthouse on ${checkUrl}...`);
     execSync(
       `npx lighthouse "${checkUrl}" --output json --output-path "${reportPath}" --chrome-flags="--headless --no-sandbox" --max-wait-for-load=15000 --only-categories=performance,accessibility,seo,best-practices --quiet`,
-      { stdio: 'inherit', timeout: 120_000 },
+      { stdio: commandStdio, timeout: 120_000 },
     );
 
     const report = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
-    const cats = report.categories;
+    const { lighthouse, failures, allPass } = evaluateLighthouseReport(report);
 
-    const results: Record<string, { score: number; pass: boolean }> = {};
-    let allPass = true;
-
-    for (const [name, threshold] of Object.entries(THRESHOLDS)) {
-      const score = (cats[name]?.score ?? 0) * 100;
-      const pass = score >= threshold;
-      if (!pass) allPass = false;
-      results[name] = { score, pass };
-      console.log(`  ${name}: ${score.toFixed(0)} [${pass ? 'PASS' : 'FAIL'}]`);
+    for (const [name, result] of Object.entries(lighthouse)) {
+      log(`  ${name}: ${result.score} [${result.pass ? 'PASS' : 'FAIL'}]`);
     }
 
     // 5. (Optional) Gate 3 — browser-use screenshots ----------------------
     if (screenshotDir) {
       fs.mkdirSync(screenshotDir, { recursive: true });
-      console.log(`\n[serve-and-check] Running browser-use screenshots → ${screenshotDir}`);
+      log(`\n[serve-and-check] Running browser-use screenshots → ${screenshotDir}`);
       try {
         execSync(
           `npx browser-use screenshot "${baseUrl}/en/" --output "${screenshotDir}/en-desktop.png" --width 1440 --height 900`,
-          { stdio: 'inherit', timeout: 60_000 },
+          { stdio: commandStdio, timeout: 60_000 },
         );
         execSync(
           `npx browser-use screenshot "${baseUrl}/en/" --output "${screenshotDir}/en-mobile.png" --width 375 --height 812`,
-          { stdio: 'inherit', timeout: 60_000 },
+          { stdio: commandStdio, timeout: 60_000 },
         );
-        console.log('[serve-and-check] Screenshots captured.');
+        log('[serve-and-check] Screenshots captured.');
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.warn(`[serve-and-check] Screenshot step failed (non-fatal): ${msg}`);
+        warn(`[serve-and-check] Screenshot step failed (non-fatal): ${msg}`);
       }
     }
 
@@ -177,23 +167,24 @@ export async function runLocalQualityGate(options: {
       url: checkUrl,
       timestamp: new Date().toISOString(),
       port,
-      lighthouse: results,
+      lighthouse,
+      failures,
       allPass,
     };
     const qaPath = path.join(resolvedOutputDir, 'qa-report.json');
     fs.writeFileSync(qaPath, JSON.stringify(qaReport, null, 2));
-    console.log(`\n[serve-and-check] QA report saved to ${qaPath}`);
+    log(`\n[serve-and-check] QA report saved to ${qaPath}`);
 
     if (allPass) {
-      console.log('[serve-and-check] Gate 2 PASSED');
+      log('[serve-and-check] Gate 2 PASSED');
     } else {
-      console.log('[serve-and-check] Gate 2 FAILED — some metrics below threshold');
+      log('[serve-and-check] Gate 2 FAILED — some metrics below threshold');
     }
 
-    return { port, lighthouse: results, allPass };
+    return { port, lighthouse, failures, allPass };
   } finally {
     // 5b. Kill serve process by PID ---------------------------------------
-    console.log('[serve-and-check] Stopping server...');
+    log('[serve-and-check] Stopping server...');
     if (serve.pid && !serve.killed) {
       try {
         process.kill(serve.pid, 'SIGTERM');

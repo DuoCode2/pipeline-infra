@@ -15,6 +15,34 @@ interface DeployResult {
   deploymentId: string;
 }
 
+interface DeploymentState {
+  id: string;
+  url: string;
+  readyState: string;
+  alias?: string[];
+  aliasAssigned?: boolean;
+}
+
+function toHttps(hostname: string): string {
+  return hostname.startsWith('http') ? hostname : `https://${hostname}`;
+}
+
+function resolveDeploymentUrl(
+  created: DeploymentState,
+  current?: Partial<DeploymentState>,
+): string {
+  const alias = current?.alias?.[0];
+  if (alias) {
+    return toHttps(alias);
+  }
+
+  if (current?.url) {
+    return toHttps(current.url);
+  }
+
+  return toHttps(created.url);
+}
+
 export async function deployToVercel(buildDir: string, slug: string): Promise<DeployResult> {
   if (!fs.existsSync(buildDir)) {
     throw new Error(`Build directory not found: ${buildDir}`);
@@ -71,20 +99,20 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
     throw new Error(`Vercel deploy failed: ${res.status} ${err}`);
   }
 
-  const deployment = await res.json() as { id: string; url: string; readyState: string };
+  const deployment = (await res.json()) as DeploymentState;
   console.log(`Deployment created: ${deployment.url} (${deployment.readyState})`);
 
   // Wait for READY (max 60s)
+  let lastStatus: DeploymentState | undefined;
   for (let i = 0; i < 12; i++) {
     await new Promise(r => setTimeout(r, 5000));
     const check = await fetch(`${VERCEL_API}/v13/deployments/${deployment.id}`, {
       headers: { 'Authorization': `Bearer ${VERCEL_TOKEN}` },
     });
-    const status = await check.json() as { readyState: string; alias?: string[] };
+    const status = await check.json() as DeploymentState;
+    lastStatus = status;
     if (status.readyState === 'READY') {
-      // Use actual alias from Vercel (may differ from slug if name conflicts)
-      const alias = status.alias?.[0];
-      const prodUrl = alias ? `https://${alias}` : `https://${slug}.vercel.app`;
+      const prodUrl = resolveDeploymentUrl(deployment, status);
       console.log(`Deployed: ${prodUrl}`);
       return { url: prodUrl, projectId: slug, deploymentId: deployment.id };
     }
@@ -93,7 +121,11 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
     }
   }
 
-  return { url: `https://${deployment.url}`, projectId: slug, deploymentId: deployment.id };
+  return {
+    url: resolveDeploymentUrl(deployment, lastStatus),
+    projectId: slug,
+    deploymentId: deployment.id,
+  };
 }
 
 // CLI

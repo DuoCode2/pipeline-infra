@@ -34,7 +34,7 @@ if [ -f .env ]; then log_pass "1.1 .env file exists"
 else log_fail "1.1 .env file" "not found"; fi
 
 # 1.2 Required env vars are set
-for var in GOOGLE_API_KEY UNSPLASH_ACCESS_KEY PEXELS_API_KEY VERCEL_TOKEN; do
+for var in GOOGLE_API_KEY UNSPLASH_ACCESS_KEY VERCEL_TOKEN; do
   val=$(eval echo \$$var)
   if [ -n "$val" ]; then log_pass "1.2 $var is set"
   else log_fail "1.2 $var" "empty or missing"; fi
@@ -100,25 +100,18 @@ UNSPLASH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
 if [ "$UNSPLASH_RESPONSE" = "200" ]; then log_pass "2.5 Unsplash API"
 else log_fail "2.5 Unsplash API" "HTTP $UNSPLASH_RESPONSE"; fi
 
-# 2.6 Pexels API
-PEXELS_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
-  "https://api.pexels.com/v1/search?query=restaurant&per_page=1" \
-  -H "Authorization: $PEXELS_API_KEY")
-if [ "$PEXELS_RESPONSE" = "200" ]; then log_pass "2.6 Pexels API"
-else log_fail "2.6 Pexels API" "HTTP $PEXELS_RESPONSE"; fi
-
-# 2.7 Vercel API
+# 2.6 Vercel API
 VERCEL_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
   "https://api.vercel.com/v9/projects" \
   -H "Authorization: Bearer $VERCEL_TOKEN")
-if [ "$VERCEL_RESPONSE" = "200" ]; then log_pass "2.7 Vercel API"
-else log_fail "2.7 Vercel API" "HTTP $VERCEL_RESPONSE"; fi
+if [ "$VERCEL_RESPONSE" = "200" ]; then log_pass "2.6 Vercel API"
+else log_fail "2.6 Vercel API" "HTTP $VERCEL_RESPONSE"; fi
 
-# 2.8 Gemini API (for n8n classification)
+# 2.7 Gemini API (for n8n classification)
 GEMINI_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
   "https://generativelanguage.googleapis.com/v1beta/models?key=$GOOGLE_API_KEY")
-if [ "$GEMINI_RESPONSE" = "200" ]; then log_pass "2.8 Gemini API"
-else log_fail "2.8 Gemini API" "HTTP $GEMINI_RESPONSE"; fi
+if [ "$GEMINI_RESPONSE" = "200" ]; then log_pass "2.7 Gemini API"
+else log_fail "2.7 Gemini API" "HTTP $GEMINI_RESPONSE"; fi
 
 # ─── TEST GROUP 3: Google Maps Deep Tests ────────
 echo ""

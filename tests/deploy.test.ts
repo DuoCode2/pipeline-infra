@@ -23,8 +23,9 @@ const content = fs.readFileSync(deployFile, 'utf8');
 const anyMatches = content.match(/:\s*any\b/g);
 assert('No bare any types in deploy.ts', !anyMatches, anyMatches ? `Found ${anyMatches.length} any types` : undefined);
 
-// Test 2: VercelProject interface defined
-assert('VercelProject interface defined', content.includes('interface VercelProject'));
+// Test 2: Deployment state is explicitly typed
+assert('DeploymentState interface defined', content.includes('interface DeploymentState'));
+assert('resolveDeploymentUrl helper defined', content.includes('function resolveDeploymentUrl'));
 
 // Test 3: DeployResult interface defined
 assert('DeployResult interface defined', content.includes('interface DeployResult'));
@@ -35,6 +36,10 @@ assert('No process.env non-null assertions', !content.includes('process.env.') |
 
 // Test 5: Function signature exported
 assert('deployToVercel function exported', content.includes('export async function deployToVercel'));
+assert(
+  'Does not guess slug.vercel.app as fallback',
+  !content.includes('https://${slug}.vercel.app')
+);
 
 console.log(`\nResults: ${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

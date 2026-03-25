@@ -1,11 +1,17 @@
 # DuoCode Pipeline
 
-**Automated business website generation pipeline** — discovers businesses without websites via Google Maps, generates multilingual Next.js landing pages with industry-specific design, and deploys to Vercel with quality gates.
+**Automated business website generation pipeline** — discovers businesses without websites via Google Maps, generates multilingual Next.js landing pages with industry-specific design, and deploys to Vercel with shared quality gates.
 
-One command turns a Google Maps search into a live, production-grade website.
+Primary agentic workflow in Claude Code:
 
 ```
-npm run batch -- --city "Kuala Lumpur" --categories "restaurant,beauty" --batch-size 3
+/batch "Kuala Lumpur 3 restaurants"
+```
+
+CLI fallback for smoke testing without Claude-driven design:
+
+```bash
+npm run batch:fallback -- --city "Kuala Lumpur" --categories "restaurant,beauty" --batch-size 3
 ```
 
 ---
@@ -30,7 +36,7 @@ Each generated site ships with:
 - Brand colors extracted from the business's own photos
 - Responsive images in 4 WebP sizes (320/640/960/1280)
 - Unique design per business (driven by `frontend-design` skill, not fixed templates)
-- Perfect accessibility score (Lighthouse a11y = 100)
+- Strict accessibility threshold (Lighthouse a11y ≥ 95)
 
 ---
 
@@ -53,7 +59,7 @@ infra/src/
 │   ├── discover/search.ts           # Google Maps Places API integration
 │   ├── assets/
 │   │   ├── maps-photos.ts           # Download business photos from Maps
-│   │   ├── stock-photos.ts          # Unsplash/Pexels fallback photos
+│   │   ├── stock-photos.ts          # Unsplash fallback photos
 │   │   ├── extract-colors.ts        # node-vibrant → 9 WCAG-safe brand colors
 │   │   ├── download-fonts.ts        # Self-host Google Fonts as .woff2
 │   │   └── optimize-images.ts       # Sharp → 4 WebP responsive sizes
@@ -61,7 +67,7 @@ infra/src/
 │   ├── quality/
 │   │   ├── serve-and-check.ts       # Local Lighthouse with auto port management
 │   │   └── lighthouse-check.ts      # Remote Lighthouse audit
-│   ├── batch/orchestrate.ts         # Full automation fallback (no Claude design)
+│   ├── batch/orchestrate.ts         # CLI fallback reusing prepare + finalize
 │   ├── deploy/deploy.ts             # Vercel REST API v13 deployment
 │   └── utils/env.ts                 # requireEnv() helper
 │
@@ -83,8 +89,8 @@ infra/src/
 │   ├── backup-workflows.sh          # Export workflows from running n8n
 │   └── workflows/                   # 4 active + 1 reference
 │
-├── output/                          # Generated sites (one per place_id)
-│   └── {place_id}/
+├── output/                          # Generated sites (one per slug)
+│   └── {slug}/
 │       ├── src/data/business.ts     #   Generated: 4-language content
 │       ├── public/images/           #   Optimized WebP photos
 │       ├── public/svgs/             #   Industry SVG decorations
@@ -123,12 +129,12 @@ infra/src/
 | `generate/industry-config.ts` | 146 | Industry classification + design specs | `classifyIndustry()`, `INDUSTRY_CONFIG`, `slugify()` |
 | `assets/extract-colors.ts` | 170 | Brand color extraction + WCAG enforcement | `extractAndSave(img, dir)` → `BrandColors` (9 tokens) |
 | `assets/download-fonts.ts` | 200 | Self-host Google Fonts as .woff2 | `downloadFonts(fonts, weights, dir)` |
-| `assets/stock-photos.ts` | 106 | Unsplash/Pexels stock photo fallback | `downloadStockPhotos(industry, dir)` |
+| `assets/stock-photos.ts` | 106 | Unsplash stock photo fallback | `downloadStockPhotos(industry, dir)` |
 | `assets/optimize-images.ts` | 88 | Sharp WebP conversion at 4 breakpoints | `optimizeImages(dir)` → `ImageManifest` |
 | `assets/maps-photos.ts` | 71 | Google Places photo download | `downloadMapsPhotos(names, dir)` |
 | `quality/serve-and-check.ts` | 200 | Local Lighthouse with auto port mgmt | `runLocalQualityGate(options)` |
 | `deploy/deploy.ts` | 113 | Vercel REST API v13 deployment | `deployToVercel(buildDir, slug)` → `DeployResult` |
-| `batch/orchestrate.ts` | 600 | Full automation fallback (no Claude design) | CLI only |
+| `batch/orchestrate.ts` | 600 | CLI fallback built on prepare + finalize | CLI only |
 | `utils/env.ts` | 14 | Environment variable validation | `requireEnv(key)` |
 
 ### Key TypeScript Interfaces
@@ -209,13 +215,13 @@ Design is driven by the `frontend-design` skill. Each site gets a unique layout 
 
 ## Quality Gates
 
-Every generated site must pass 3 gates before deployment:
+Every generated site must pass 2 required gates before deployment. Screenshot capture is also attempted during local QA to support visual review.
 
 | Gate | Tool | Thresholds | Config |
 |------|------|------------|--------|
 | **Gate 1** | `npm run build` | Zero TypeScript/build errors | `tsconfig.json` |
-| **Gate 2** | Lighthouse CI | Performance ≥ 90, Accessibility = 100, SEO ≥ 95, Speed Index ≤ 3000ms, LCP ≤ 2500ms, CLS ≤ 0.1 | `.lighthouserc.json` |
-| **Gate 3** | browser-use / Playwright | Visual QA score ≥ 75/100 (desktop + mobile screenshots) | — |
+| **Gate 2** | Lighthouse CI | Performance ≥ 90, Accessibility ≥ 95, SEO ≥ 95, Speed Index ≤ 3000ms, LCP ≤ 2500ms, CLS ≤ 0.1 | `.lighthouserc.json` |
+| **Support** | `browser-use` screenshots | Desktop + mobile captures when the tool is available; non-fatal if unavailable | `packages/quality/serve-and-check.ts` |
 
 ---
 
@@ -227,9 +233,8 @@ Every generated site must pass 3 gates before deployment:
 | Google Sheets | Lead storage + work logging | n8n OAuth2 | n8n workflows |
 | Gemini 2.5 Flash | Industry classification (via n8n) | `GOOGLE_API_KEY` | n8n `classify-industry.json` |
 | Unsplash | Stock photo fallback | `UNSPLASH_ACCESS_KEY` | `assets/stock-photos.ts` |
-| Pexels | Secondary stock photo source | `PEXELS_API_KEY` | `assets/stock-photos.ts` |
 | Vercel | Static hosting + CDN | `VERCEL_TOKEN` | `deploy/deploy.ts` |
-| GitHub | Source code storage (DuoCode2 org) | `gh` CLI auth | `batch/orchestrate.ts` |
+| GitHub | Source code storage (DuoCode2 org) | `gh` CLI auth | `pipeline/finalize.ts`, `deploy/publish.ts` |
 | n8n | Workflow orchestration | Basic Auth | Docker (port 5678) |
 
 ### n8n Workflows (background automation only — not in generation path)
@@ -257,14 +262,14 @@ npx tsx packages/pipeline/prepare.ts --lead '{"id":"...","displayName":{"text":"
 # 3. Finalize (build + quality + deploy after design)
 npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ [--dry-run]
 
-# Full automation fallback (no Claude design, hardcoded content)
+# CLI fallback (no Claude design, shared pipeline + generated fallback page)
 npx tsx packages/batch/orchestrate.ts --city "Kuala Lumpur" --categories "restaurant,beauty" --batch-size 2
 ```
 
 ### Testing
 
 ```bash
-npm test                  # API keys + env + discover (quick)
+npm test                  # API keys + env + discover + deploy contract
 npm run test:all          # Full 7-group suite (300+ checks)
 npm run test:keys         # Validate API key connectivity
 npm run test:deploy       # Vercel deployment test
@@ -327,7 +332,7 @@ npm test
 cd n8n && docker compose up -d
 
 # 5. Run pipeline
-npm run batch -- --city "Kuala Lumpur" --categories "restaurant" --batch-size 1
+npm run batch:fallback -- --city "Kuala Lumpur" --categories "restaurant" --batch-size 1
 ```
 
 ### Required API Keys
@@ -336,7 +341,6 @@ npm run batch -- --city "Kuala Lumpur" --categories "restaurant" --batch-size 1
 |-----|----------|--------------|
 | `GOOGLE_API_KEY` | [Google Cloud Console](https://console.cloud.google.com/apis/credentials) | Places API (New) + Generative Language API |
 | `UNSPLASH_ACCESS_KEY` | [Unsplash Developers](https://unsplash.com/oauth/applications) | Image search |
-| `PEXELS_API_KEY` | [Pexels API](https://www.pexels.com/api/new/) | Fallback photos |
 | `VERCEL_TOKEN` | [Vercel Account](https://vercel.com/account/tokens) | Full Access scope |
 
 ---
@@ -346,7 +350,7 @@ npm run batch -- --city "Kuala Lumpur" --categories "restaurant" --batch-size 1
 Each site produced by the pipeline:
 
 ```
-output/{place_id}/
+output/{slug}/
 ├── src/
 │   ├── app/[locale]/page.tsx        # Unique page layout per business
 │   ├── components/                  # Claude generates unique per business

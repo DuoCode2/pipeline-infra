@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "npx tsx tests/api-keys.test.ts && npx tsx tests/env.test.ts && npx tsx tests/discover.test.ts",
+    "test": "npx tsx tests/api-keys.test.ts && npx tsx tests/env.test.ts && npx tsx tests/discover.test.ts && npx tsx tests/deploy.test.ts",
     "test:keys": "npx tsx tests/api-keys.test.ts",
     "test:discover": "npx tsx tests/discover.test.ts",
     "test:all": "bash tests/run-all.sh",
@@ -21,6 +21,7 @@
     "eval:all": "bash eval/run-all-evals.sh",
     "discover": "npx tsx packages/discover/search.ts",
     "batch": "npx tsx packages/batch/orchestrate.ts",
+    "batch:fallback": "npx tsx packages/batch/orchestrate.ts",
     "build:check": "npx tsc --noEmit"
   },
   "keywords": [],

@@ -61,4 +61,4 @@ Report all live URLs:
 ```bash
 npx tsx packages/batch/orchestrate.ts --city "Kuala Lumpur" --categories "restaurant" --batch-size 3
 ```
-Uses hardcoded content templates. Good for bulk testing, not for production quality.
+Uses the same `prepare` + `finalize` pipeline, but generates a generic fallback page instead of bespoke Claude design. Good for smoke tests, not for production quality.

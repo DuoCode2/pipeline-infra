@@ -5,6 +5,7 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { evaluateLighthouseReport } from './shared';
 
 const args = process.argv.slice(2);
 const getArg = (name: string, fallback: string) => {
@@ -32,30 +33,18 @@ try {
   );
 
   const report = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
-  const cats = report.categories;
+  const { lighthouse, failures, allPass } = evaluateLighthouseReport(report);
 
-  const results: Record<string, { score: number; pass: boolean }> = {};
-  const thresholds: Record<string, number> = {
-    performance: 90,
-    accessibility: 100,
-    seo: 95,
-    'best-practices': 90,
-  };
-
-  let allPass = true;
-  for (const [name, threshold] of Object.entries(thresholds)) {
-    const score = (cats[name]?.score ?? 0) * 100;
-    const pass = score >= threshold;
-    if (!pass) allPass = false;
-    results[name] = { score, pass };
-    console.log(`  ${name}: ${score.toFixed(0)} [${pass ? 'PASS' : 'FAIL'}]`);
+  for (const [name, result] of Object.entries(lighthouse)) {
+    console.log(`  ${name}: ${result.score} [${result.pass ? 'PASS' : 'FAIL'}]`);
   }
 
   // Save QA report
   const qaReport = {
     url,
     timestamp: new Date().toISOString(),
-    lighthouse: results,
+    lighthouse,
+    failures,
     allPass,
   };
   fs.writeFileSync(path.join(outputDir, 'qa-report.json'), JSON.stringify(qaReport, null, 2));

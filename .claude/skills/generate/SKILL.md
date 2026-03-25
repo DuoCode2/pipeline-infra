@@ -58,10 +58,10 @@ npx tsx packages/pipeline/finalize.ts --dir output/{slug}/
 This does: build → Lighthouse audit (auto port) → deploy to Vercel → git push → log.
 
 Returns JSON:
-- **Success**: `{ "status": "deployed", "url": "https://slug.vercel.app", "scores": {...} }`
+- **Success**: `{ "status": "deployed", "url": "https://<resolved-vercel-url>", "scores": {...} }`
 - **Failure**: `{ "status": "quality-failed", "failures": [{ "audit": "...", "elements": [...] }] }`
 
-If quality-failed: fix the specific issues in `failures`, then re-run finalize (max 3 retries).
+If quality-failed: fix the specific issues in `failures`, then re-run finalize. Keep retries intentional and capped.
 
 ## Output
-Report the live URL: `https://{slug}.vercel.app`
+Report the live URL returned by `finalize`.

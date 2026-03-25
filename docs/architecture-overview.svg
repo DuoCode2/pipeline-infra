@@ -193,7 +193,7 @@
 
   <!-- Output indicator -->
   <rect x="880" y="479" width="170" height="22" rx="4" fill="#dbeafe" stroke="#93c5fd"/>
-  <text x="892" y="494" style="font-size: 9px; font-weight: 600; fill: #1e40af;">→ output/{place_id}/out/</text>
+  <text x="892" y="494" style="font-size: 9px; font-weight: 600; fill: #1e40af;">→ output/{slug}/out/</text>
 
   <!-- ═══ EXTERNAL SERVICES ═══ -->
   <text x="48" y="596" class="subtitle">EXTERNAL SERVICES &amp; INFRASTRUCTURE</text>
@@ -224,7 +224,7 @@
   <rect x="428" y="628" width="180" height="8" fill="#fce7f3"/>
   <text x="470" y="630" style="font-size: 11px; font-weight: 600; fill: #9d174d;">Stock Photos</text>
   <text x="440" y="654" class="box-sub">Unsplash API</text>
-  <text x="440" y="668" class="box-sub">Pexels API (fallback)</text>
+  <text x="440" y="668" class="box-sub">Unsplash API (fallback)</text>
   <text x="440" y="682" class="tech" style="fill:#64748b;">Automatic attribution</text>
   <text x="440" y="696" class="tech" style="fill:#94a3b8;">packages/assets/stock-photos.ts</text>
 

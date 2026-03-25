@@ -37,7 +37,7 @@ npm run test:all         # Full test suite
 npm run build:check      # TypeScript compile check
 ```
 
-## Full Automation (no Claude design, hardcoded content templates)
+## CLI Fallback (no Claude design, generated fallback page)
 ```bash
 npx tsx packages/batch/orchestrate.ts --city X --categories "a,b" --batch-size N
 ```
