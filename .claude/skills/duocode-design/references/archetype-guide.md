@@ -1,5 +1,7 @@
 # Website Archetype Guide
 
+> **Note**: These archetypes are validated patterns, not rigid templates. Claude may use them as-is, mix elements from multiple archetypes, or create custom structures based on the business's unique needs. The sections listed are recommendations -- not all are required, and additional sections can be added.
+
 > **How to use**: The `PrepareResult` JSON includes an `archetype` field. Read the section for that archetype to know what page sections to create, what the primary CTA should be, and how to structure the design. The archetype determines **WHAT** to build; the `frontend-design` skill determines **HOW** to style it.
 
 > **Demo features**: All interactive features (ordering, booking, cart, etc.) are **frontend prototypes**. They should be fully interactive UI components, but clicking the final action (submit, checkout, book) shows a demo confirmation: "此功能将在正式版中启用 / This feature will be available in the production version."

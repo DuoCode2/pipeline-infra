@@ -2,6 +2,9 @@
 
 Claude Code drives the full pipeline. Use `frontend-design` skill for all design work.
 
+## Design Philosophy
+**Region-agnostic, industry-agnostic.** The pipeline works for any business in any country. Claude makes all design decisions — industry classification and archetype suggestions from Prepare are *hints*, not constraints. Claude may use, mix, or override them.
+
 ## Rules
 - **NEVER write files to the project root** — all outputs go to their proper directory:
   - Lead JSON → `data/leads/`
@@ -12,55 +15,54 @@ Claude Code drives the full pipeline. Use `frontend-design` skill for all design
 - Use **AskUserQuestion tool** for user input — never plain text questions
 - Pipeline runs **end-to-end without pausing** — only stop if a gate fails after max retries
 - **ONLY generate sites for businesses WITHOUT a website** — discover defaults to no-website filter
-- Default locale is **English only** — multi-locale support is opt-in via `--locales en,ms,zh-CN`
-- Region market rules: see `.claude/skills/duocode-design/references/` (e.g. `malaysia-market.md`)
+- Default locale is **English only** — multi-locale opt-in via `--locales`
+- Region market rules: see `.claude/skills/duocode-design/references/`
 - A11y rules: see `.claude/skills/duocode-design/references/a11y-checklist.md`
-- Archetype guide: see `.claude/skills/duocode-design/references/archetype-guide.md`
 
 ## RULE: Self-iterate to deliver
 When running /generate or /batch, Claude must:
-- Make ALL design decisions autonomously (fonts, layout, colors, copy)
-- Use the **archetype** from PrepareResult to determine what sections/features to build
+- Make ALL design decisions autonomously (fonts, layout, colors, copy, site structure)
+- Use PrepareResult `hints` as suggestions — agree or override based on business context
+- Pick fonts using `frontend-design` skill, then download: `npx tsx packages/assets/download-fonts.ts --fonts "Font1,Font2" --output output/{slug}/public/fonts`
+- Import shared UI components from `src/components/ui/` — don't regenerate them
 - Fix quality gate failures without asking
 - Deploy to Vercel and report the live URL
 - NEVER stop to ask "should I continue?" or "does this look good?"
 - Only stop if: (a) missing required input (use AskUserQuestion), (b) gate fails after 3 retries
 
 ## Pipeline: /generate (3 steps)
-1. **Discover + Prepare** — find lead, then prepare assets + scaffold (returns `industry`, `archetype`, `regionId`)
-2. **Design** — Claude creates archetype-aware components + localized content (the ONLY creative step)
+1. **Discover + Prepare** — find lead, prepare assets + scaffold. Returns `lead` (full business data) + `hints` (suggested industry/archetype)
+2. **Design** — Claude reads business data, decides site structure, picks fonts, creates components (the ONLY creative step)
 3. **Finalize** — `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/` → build + quality + deploy
 
 ## Pipeline Commands
 | Command | When |
 |---------|------|
-| `npx tsx packages/discover/search.ts --city X --category Y --limit N --out leads.json` | Find leads → save to file |
-| `npx tsx packages/pipeline/prepare.ts --lead-file leads.json --index 0` | Prepare from search output (by index) |
-| `npx tsx packages/pipeline/prepare.ts --lead '{"id":"...","displayName":{"text":"..."},...}'` | Prepare from inline JSON (PlaceResult format) |
+| `npx tsx packages/discover/search.ts --city X --category Y --limit N --out data/leads/leads.json` | Find leads (--city and --category required) |
+| `npx tsx packages/discover/search.ts --city X --category Y --include-all --out data/leads/leads.json` | Include businesses WITH websites |
+| `npx tsx packages/pipeline/prepare.ts --lead-file data/leads/leads.json --index 0` | Prepare from search output |
 | `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/` | After design (build + quality + deploy) |
+| `npx tsx packages/assets/download-fonts.ts --fonts "Font1,Font2" --output output/{slug}/public/fonts` | Download fonts (called by Claude during design) |
 
-Data flow: `search.ts` → `PlaceResult[]` → `prepare.ts` (via `--lead-file`). Zero-config: any country auto-detected from address, English by default.
+Data flow: `search.ts` → `PlaceResult[]` → `prepare.ts` (via `--lead-file`). Any country auto-detected from address.
 
-## Industries (15 types)
-`food` | `beauty` | `clinic` | `retail` | `fitness` | `service` | `automotive` | `tech` | `education` | `pet` | `events` | `hospitality` | `realestate` | `community` | `generic`
+## RULE: Photos must come from Google Maps
+- **ALWAYS use `--lead-file` (from search.ts)**, not inline `--lead` JSON
+- If search returns 0 results because business has a website, use `--include-all`
+- Check `lead.json → photoSource` after prepare: `"maps"` = good, `"stock"` = bad
+- The `src/data/images.ts` module provides responsive srcset data for `<picture>` elements
 
-Pipeline auto-classifies from Google Places `primaryType`. Config in `packages/generate/industry-config.ts`.
-
-## Website Archetypes (8 types)
-Each industry maps to an archetype that determines what the site looks like:
-
-| Archetype | Industries | Primary Feature |
-|-----------|-----------|-----------------|
-| `menu-order` | food | Interactive menu, ordering demo |
-| `booking-services` | beauty, clinic, pet, education | Service catalog, booking flow |
-| `lead-trust` | service, automotive, tech | Credentials, quote form, FAQ |
-| `ecommerce-catalog` | retail | Product catalog, cart demo |
-| `portfolio-gallery` | events | Gallery, packages, inquiry |
-| `membership-schedule` | fitness | Timetable, membership tiers |
-| `property-listing` | hospitality, realestate | Listings browser, inquiry |
-| `community-info` | community | Events calendar, donations |
-
-Config in `packages/generate/archetype-config.ts`.
+## Classification Hints
+Prepare auto-classifies from Google Places `primaryType` and provides `hints`:
+```json
+{
+  "suggestedIndustry": "food",
+  "suggestedArchetype": "menu-order",
+  "confidence": "high",
+  "source": "primaryType exact match"
+}
+```
+**These are suggestions.** Claude decides the final site structure. See `references/archetype-guide.md` for validated patterns.
 
 ## Quality Gate
 - **a11y ≥ 95, SEO ≥ 95, best-practices ≥ 90** → hard fail (blocks deploy)
@@ -77,16 +79,15 @@ npm run test:all         # All tests + evals
 npm run build:check      # TypeScript compile check (run from INFRA ROOT, not output/)
 ```
 
-## CLI Fallback (no Claude design, generated fallback page)
-```bash
-npx tsx packages/batch/orchestrate.ts --city X --categories "a,b" --batch-size N
-```
-
 ## Skills
 | Skill | Type | Purpose |
 |-------|------|---------|
-| `/generate` | invoke | prepare → design → finalize (one site, archetype-aware) |
-| `/batch` | invoke | fully parallel — one Agent per lead, archetype-aware |
+| `/generate` | invoke | prepare → design → finalize (one site) |
+| `/batch` | invoke | fully parallel — one Agent per lead |
 | `/fix-site` | invoke | Fix visual issues → rebuild → redeploy |
 | `frontend-design` | auto | Anthropic design skill — typography, color, layout, motion |
-| `duocode-design` | auto | Region market rules + archetype guide + A11y + template structure |
+| `duocode-design` | auto | Design references + archetype guide + A11y + scaffolding |
+
+## Shared UI Components (in scaffold)
+Import from `@/components/ui` — these are pre-built, don't recreate:
+`Button` | `Section` | `Card` | `Grid` | `Accordion` | `Badge` | `ResponsiveImage` | `DemoModal` | `ReviewStars` | `HoursTable`

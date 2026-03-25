@@ -55,16 +55,36 @@ const INDUSTRY_FAVICON: Record<string, (bg: string, fg: string) => string> = {
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M7 24V14l9-6 9 6v10H7zm4-8v5h4v-5zm7 0v5h4v-5z" fill="${fg}"/></svg>`,
 };
 
+/** Classification hint — informational, not binding. Claude may override. */
+export interface ClassificationHint {
+  suggestedIndustry: string;
+  suggestedArchetype: Archetype;
+  secondaryArchetype?: Archetype;
+  schemaOrgType: string;
+  confidence: 'high' | 'medium' | 'low';
+  source: string; // e.g. "primaryType exact match", "name regex fallback"
+}
+
 export interface PrepareResult {
   outputDir: string;
   slug: string;
-  industry: string;
-  archetype: Archetype;
-  archetypeMapping: ArchetypeMapping;
   regionId: string;
   brandColors: BrandColors;
   photos: string[];
   photoCount: number;
+  /** Full lead data for Claude to read and make design decisions. */
+  lead: PlaceResult;
+  /** Classification hints — Claude may use or override these. */
+  hints: ClassificationHint;
+
+  // ── Deprecated (kept for backward compatibility, will be removed) ──
+  /** @deprecated Use hints.suggestedIndustry instead */
+  industry: string;
+  /** @deprecated Use hints.suggestedArchetype instead */
+  archetype: Archetype;
+  /** @deprecated Use hints instead */
+  archetypeMapping: ArchetypeMapping;
+  /** @deprecated Claude picks fonts and design tokens via frontend-design skill */
   config: IndustryDesign & { schemaOrgType: string };
 }
 
@@ -150,8 +170,8 @@ export const business: BusinessData = {
     onPrimary: "${colors.onPrimary}",
     onPrimaryDark: "${colors.onPrimaryDark}",
     accentText: "${colors.accentText}",
-    fontDisplay: "${config.fontDisplay}",
-    fontBody: "${config.fontBody}",
+    fontDisplay: "", // Claude fills this — pick fonts using frontend-design skill
+    fontBody: "",    // then run: npx tsx packages/assets/download-fonts.ts --fonts "Font1,Font2" --output public/fonts
   },
   assets: {
     heroImage: ${JSON.stringify(hero)},
@@ -190,7 +210,14 @@ function extractPhotoKeywords(lead: PlaceResult, industry: string, regionSkipWor
   return keywords.length > 0 ? keywords : [industry];
 }
 
-function saveLeadJson(lead: PlaceResult, industry: string, archetype: Archetype, regionId: string, outputDir: string) {
+function saveLeadJson(
+  lead: PlaceResult,
+  industry: string,
+  archetype: Archetype,
+  regionId: string,
+  outputDir: string,
+  photoSource: 'maps' | 'stock' | 'mixed' | 'none',
+) {
   fs.writeFileSync(path.join(outputDir, 'lead.json'), JSON.stringify({
     place_id: lead.id,
     name: lead.displayName.text,
@@ -202,6 +229,7 @@ function saveLeadJson(lead: PlaceResult, industry: string, archetype: Archetype,
     rating: lead.rating,
     reviews: lead.userRatingCount,
     mapsUrl: lead.googleMapsUri,
+    photoSource,
     timestamp: new Date().toISOString(),
   }, null, 2));
 }
@@ -230,21 +258,44 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId?: s
     fs.mkdirSync(path.join(outputDir, d), { recursive: true });
   }
 
-  // 2. Download Maps photos
+  // 2. Download Maps photos (real business images — highest priority)
   const photoNames = (lead.photos || []).map(p => p.name).slice(0, 5);
+  let photoSource: 'maps' | 'stock' | 'mixed' | 'none' = 'none';
   if (photoNames.length > 0) {
     console.error(`  Downloading ${photoNames.length} Maps photos...`);
-    await downloadMapsPhotos(photoNames, path.join(outputDir, 'public/images'), 3);
+    await downloadMapsPhotos(photoNames, path.join(outputDir, 'public/images'), 5);
+  } else {
+    console.error('  ⚠ No Maps photos available in lead data');
   }
 
-  // 3. Stock photos if needed (with keywords from lead)
+  // 3. Stock photos if needed (fallback — NOT the real business)
   const imgDir = path.join(outputDir, 'public/images');
-  const jpgs = fs.readdirSync(imgDir).filter(f => f.endsWith('.jpg'));
-  if (jpgs.length < 3) {
+  const mapsJpgs = fs.readdirSync(imgDir).filter(f => f.endsWith('.jpg'));
+  const mapsCount = mapsJpgs.length;
+  if (mapsCount >= 3) {
+    photoSource = 'maps';
+  } else if (mapsCount > 0) {
+    console.error(`  ⚠ Only ${mapsCount} Maps photos — supplementing with stock images`);
     const photoKeywords = extractPhotoKeywords(lead, resolvedIndustry, skipWords);
-    console.error(`  Only ${jpgs.length} photos, fetching stock...`);
     console.error(`  Stock photo keywords: ${photoKeywords.join(', ')}`);
-    await downloadStockPhotos(resolvedIndustry, imgDir, 3 - jpgs.length, photoKeywords, locationHint);
+    await downloadStockPhotos(resolvedIndustry, imgDir, 3 - mapsCount, photoKeywords, locationHint);
+    photoSource = 'mixed';
+  } else {
+    console.error('  ⚠ ZERO Maps photos — falling back entirely to stock images');
+    console.error('  → Site will NOT show real business photos. Consider using search.ts --lead-file instead of inline --lead.');
+    const photoKeywords = extractPhotoKeywords(lead, resolvedIndustry, skipWords);
+    console.error(`  Stock photo keywords: ${photoKeywords.join(', ')}`);
+    await downloadStockPhotos(resolvedIndustry, imgDir, 3, photoKeywords, locationHint);
+    photoSource = 'stock';
+  }
+
+  // Final photo count check
+  const finalJpgs = fs.readdirSync(imgDir).filter(f => f.endsWith('.jpg'));
+  if (finalJpgs.length === 0) {
+    console.error('  ✗ CRITICAL: No photos at all (Maps + Stock both failed). Site will have no images.');
+    photoSource = 'none';
+  } else {
+    console.error(`  Photo source: ${photoSource} (${mapsCount} maps + ${finalJpgs.length - mapsCount} stock = ${finalJpgs.length} total)`);
   }
 
   // 4. Extract brand colors (WCAG-safe)
@@ -260,13 +311,10 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId?: s
     colors = await extractAndSave('nonexistent', outputDir);
   }
 
-  // 5. Download fonts (self-host Latin only, skip unused weight 300)
-  console.error(`  Downloading fonts: ${config.fontDisplay}, ${config.fontBody}...`);
-  await downloadFonts(
-    [config.fontDisplay, config.fontBody],
-    [400, 500, 600, 700, 800],
-    path.join(outputDir, 'public/fonts')
-  );
+  // 5. Font download — SKIPPED. Claude picks fonts using frontend-design skill,
+  //    then calls download-fonts.ts directly during the design phase.
+  //    This allows each site to have unique typography instead of industry-hardcoded fonts.
+  console.error('  Fonts: deferred to design phase (Claude picks fonts)');
 
   // 6. Optimize images (WebP + AVIF, generate TS module for srcset)
   console.error('  Optimizing images to WebP + AVIF...');
@@ -295,8 +343,8 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId?: s
   const archetype = archetypeMapping.primary;
   console.error(`  Archetype: ${archetype}${archetypeMapping.secondary ? ` (secondary: ${archetypeMapping.secondary})` : ''}`);
 
-  // 11. Save lead.json for traceability
-  saveLeadJson(lead, resolvedIndustry, archetype, resolvedRegionId, outputDir);
+  // 11. Save lead.json for traceability (includes photoSource for audit)
+  saveLeadJson(lead, resolvedIndustry, archetype, resolvedRegionId, outputDir, photoSource);
 
   console.error(`  Region: ${resolvedRegionId}${regionId ? '' : ' (auto-detected)'}`);
   console.error(`  ✓ Ready for design at ${outputDir}`);
@@ -304,16 +352,37 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId?: s
   // Notify n8n (optional, fire-and-forget)
   logAction({ place_id: lead.id, slug, action: 'prepared', result: outputDir, industry: resolvedIndustry });
 
+  // Determine classification confidence
+  const classifiedFromType = lead.primaryType && resolvedIndustry !== 'generic';
+  const confidence: ClassificationHint['confidence'] = industry
+    ? 'high' // explicitly provided by user
+    : classifiedFromType ? 'high' : 'low';
+  const source = industry
+    ? 'user-provided'
+    : classifiedFromType ? 'primaryType match' : 'name regex fallback';
+
+  const hints: ClassificationHint = {
+    suggestedIndustry: resolvedIndustry,
+    suggestedArchetype: archetype,
+    secondaryArchetype: archetypeMapping.secondary,
+    schemaOrgType,
+    confidence,
+    source,
+  };
+
   const result: PrepareResult = {
     outputDir,
     slug,
-    industry: resolvedIndustry,
-    archetype,
-    archetypeMapping,
     regionId: resolvedRegionId,
     brandColors: colors,
     photos: allJpgs,
     photoCount: allJpgs.length,
+    lead, // full PlaceResult for Claude to read
+    hints, // classification suggestions, not constraints
+    // Deprecated fields (backward compat)
+    industry: resolvedIndustry,
+    archetype,
+    archetypeMapping,
     config: { ...config, schemaOrgType },
   };
 
@@ -333,6 +402,19 @@ function parseLead(raw: unknown): PlaceResult {
       'Use search.ts default output (full PlaceResult format), not --compact.'
     );
   }
+
+  // Warn loudly about missing photos — this is the #1 cause of stock-photo fallback.
+  // search.ts output always includes photos; inline JSON often misses it.
+  const photos = obj.photos as unknown[] | undefined;
+  if (!photos || !Array.isArray(photos) || photos.length === 0) {
+    console.error(
+      '\n⚠ WARNING: Lead has no "photos" field — Google Maps photos will NOT be downloaded.\n' +
+      '  The site will use generic Unsplash stock photos instead of real business images.\n' +
+      '  To fix: use search.ts output (--lead-file) instead of inline --lead JSON.\n' +
+      '  If the business was filtered out, try: --include-all\n'
+    );
+  }
+
   return raw as PlaceResult;
 }
 

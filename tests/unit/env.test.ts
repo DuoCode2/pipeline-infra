@@ -81,10 +81,14 @@ describe('getLocalesForRegion', () => {
     expect(getLocalesForRegion()).toEqual(['en']);
   });
 
-  it('returns English-only regardless of region argument', () => {
-    expect(getLocalesForRegion('my')).toEqual(['en']);
-    expect(getLocalesForRegion('au')).toEqual(['en']);
+  it('returns region-specific locales for known regions', () => {
+    expect(getLocalesForRegion('my')).toEqual(['en', 'ms', 'zh-CN', 'zh-TW']);
+    expect(getLocalesForRegion('jp')).toEqual(['ja', 'en']);
+  });
+
+  it('returns English-only for unknown regions and xx', () => {
     expect(getLocalesForRegion('xx')).toEqual(['en']);
+    expect(getLocalesForRegion('zz')).toEqual(['en']);
   });
 
   it('returns an array of strings', () => {

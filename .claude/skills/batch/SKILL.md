@@ -13,12 +13,15 @@ All agents run concurrently. No sequential bottleneck.
 ## Step 1: Discover
 
 ```bash
-npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "food" --limit 3 --out leads.json
+npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "food" --limit 3 --out data/leads/leads.json
 ```
 
-**IMPORTANT**: search.ts defaults to `--no-website` filter (only businesses WITHOUT a website). Do NOT use `--include-all`. Verify by checking that no `websiteUri` field exists in leads.json.
+**IMPORTANT**: search.ts defaults to no-website filter (only businesses WITHOUT a website).
+- If the user specifies businesses that HAVE websites, use `--include-all`.
+- **ALWAYS use `--lead-file`** in prepare, never inline `--lead` JSON (it will lack `photos` → generic stock images).
+- After prepare, check `lead.json → photoSource`: `"maps"` = real photos (good), `"stock"` = fallback (bad).
 
-Read `leads.json` to get the lead count and names.
+Read the leads file to get the lead count and names.
 
 ## Step 2: Launch Parallel Agents
 
@@ -52,6 +55,9 @@ For each lead [i] in leads.json:
       - Use theme tokens: theme.onPrimary for text on primary bg, theme.onPrimaryDark for dark bg
       - NEVER hardcode color: white or text-white on colored backgrounds
       - NEVER use opacity < 1 on text elements
+      - Hero: use <img> with fetchPriority="high", NOT CSS background-image
+      - Non-hero images: loading="lazy" decoding="async"
+      - Use <picture> with AVIF/WebP <source> for responsive images (see Hero.tsx template)
       - Headings sequential (h1 → h2 → h3), touch targets ≥ 44px
       - Read region market rules for formatting
       - Read .claude/skills/duocode-design/references/a11y-checklist.md for a11y rules

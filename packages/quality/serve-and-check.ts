@@ -95,10 +95,9 @@ export async function runLocalQualityGate(options: {
   log(`[serve-and-check] Port      : ${port}`);
   log(`[serve-and-check] Check URL : ${checkUrl}`);
 
-  // 2. Start serve (exclusive listen to avoid port conflicts in parallel) --
+  // 2. Start serve (NOT detached — keeps child tied to parent for reliable cleanup)
   const serve = spawn('npx', ['serve', buildDir, '-l', String(port), '--no-clipboard'], {
     stdio: 'pipe',
-    detached: true,
   });
 
   // Forward serve stderr for troubleshooting (non-blocking).
@@ -107,17 +106,12 @@ export async function runLocalQualityGate(options: {
     if (line) log(`[serve] ${line}`);
   });
 
-  // Ensure cleanup on unexpected exit of this process.
-  // Unref so the serve process doesn't prevent Node from exiting
-  serve.unref();
-
   const cleanup = () => {
+    if (!serve.pid || serve.killed) return;
     try {
-      if (serve.pid) {
-        process.kill(-serve.pid, 'SIGTERM');
-      }
+      serve.kill('SIGTERM');
     } catch {
-      try { if (serve.pid) process.kill(serve.pid, 'SIGKILL'); } catch { /* dead */ }
+      try { serve.kill('SIGKILL'); } catch { /* already dead */ }
     }
   };
   process.on('exit', cleanup);
@@ -195,17 +189,9 @@ export async function runLocalQualityGate(options: {
 
     return { port, lighthouse, failures, allPass };
   } finally {
-    // 5b. Kill serve process tree by PID ----------------------------------
+    // 5b. Kill serve process -----------------------------------------------
     log('[serve-and-check] Stopping server...');
-    if (serve.pid) {
-      try {
-        // Kill the entire process group (detached) to avoid orphan serve processes
-        process.kill(-serve.pid, 'SIGTERM');
-      } catch {
-        // Fallback: kill just the process
-        try { process.kill(serve.pid, 'SIGKILL'); } catch { /* already dead */ }
-      }
-    }
+    cleanup();
     // Remove listeners to avoid double-cleanup.
     process.removeListener('exit', cleanup);
     process.removeListener('SIGINT', cleanup);

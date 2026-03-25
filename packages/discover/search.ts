@@ -129,13 +129,25 @@ export async function searchPlaces(
   });
 
   let finalResults: PlaceResult[];
+  let filteredByWebsite = 0;
 
   if (filterNoWebsite) {
     // Simple rule: if Google Maps has ANY websiteUri, the business has
     // web presence — skip it. Only generate for truly website-less businesses.
+    const withWebsite = quality.filter((p) => !!p.websiteUri);
+    filteredByWebsite = withWebsite.length;
     finalResults = quality.filter((p) => !p.websiteUri);
   } else {
     finalResults = quality;
+  }
+
+  // Surface diagnostic info when no results found
+  if (finalResults.length === 0 && filterNoWebsite && filteredByWebsite > 0) {
+    console.error(
+      `\n⚠ 0 leads without websites, but ${filteredByWebsite} leads HAVE websites and were filtered out.` +
+      `\n  To include them: add --include-all flag` +
+      `\n  Example: npx tsx packages/discover/search.ts --city "${city}" --category "${category}" --include-all --out leads.json\n`
+    );
   }
 
   // Log discovered leads to Sheets (fire-and-forget)
@@ -155,14 +167,37 @@ export async function searchPlaces(
   return finalResults;
 }
 
-// CLI usage: npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "food" --limit 1 [--region my]
+// CLI usage: npx tsx packages/discover/search.ts --city "Tokyo" --category "food" --limit 5
 if (require.main === module) {
   const args = process.argv.slice(2);
 
-  const defaultCity = 'Kuala Lumpur';
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`Usage: npx tsx packages/discover/search.ts --city <city> --category <type> [options]
 
-  const city = getArg(args, 'city', defaultCity);
-  const category = getArg(args, 'category', 'food');
+Required:
+  --city <name>       City to search in (e.g., "Kuala Lumpur", "Tokyo", "New York")
+  --category <type>   Business category (e.g., "food", "beauty", "clinic")
+
+Options:
+  --limit <n>         Max results (default: 1)
+  --out <file>        Write JSON to file instead of stdout
+  --compact           Output compact format (less fields)
+  --include-all       Include businesses WITH websites (default: no-website only)
+  --help, -h          Show this help message
+
+Examples:
+  npx tsx packages/discover/search.ts --city "Tokyo" --category "food" --limit 5 --out data/leads/leads.json
+  npx tsx packages/discover/search.ts --city "New York" --category "beauty" --limit 3 --compact`);
+    process.exit(0);
+  }
+
+  const city = getArg(args, 'city', '');
+  const category = getArg(args, 'category', '');
+
+  if (!city || !category) {
+    console.error('Error: --city and --category are required. Use --help for usage info.');
+    process.exit(1);
+  }
   const limit = parseInt(getArg(args, 'limit', '1'), 10);
   // Default: filter out businesses WITH websites (we only want leads without sites)
   const includeAll = args.includes('--include-all');

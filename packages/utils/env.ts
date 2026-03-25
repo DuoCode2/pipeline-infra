@@ -25,11 +25,33 @@ export function optionalEnv(key: string, fallback: string): string {
 export type Locale = string;
 
 /**
- * Get locales for a site. Zero-config: defaults to English only.
- * Multi-locale support is opt-in via CLI --locales flag.
+ * Get default locales for a region. Returns ['en'] for unknown regions.
+ * Multi-locale support can also be overridden via CLI --locales flag.
  */
-export function getLocalesForRegion(_regionId?: string): string[] {
-  return ['en'];
+const REGION_LOCALES: Record<string, string[]> = {
+  my: ['en', 'ms', 'zh-CN', 'zh-TW'],
+  sg: ['en', 'zh-CN', 'ms'],
+  hk: ['en', 'zh-TW', 'zh-CN'],
+  tw: ['zh-TW', 'en'],
+  cn: ['zh-CN', 'en'],
+  jp: ['ja', 'en'],
+  kr: ['ko', 'en'],
+  th: ['th', 'en'],
+  vn: ['vi', 'en'],
+  id: ['id', 'en'],
+  ph: ['en', 'tl'],
+  in: ['en', 'hi'],
+  ae: ['en', 'ar'],
+  sa: ['ar', 'en'],
+  de: ['de', 'en'],
+  fr: ['fr', 'en'],
+  nl: ['nl', 'en'],
+  bn: ['en', 'ms'],
+};
+
+export function getLocalesForRegion(regionId?: string): string[] {
+  if (!regionId || regionId === 'xx') return ['en'];
+  return REGION_LOCALES[regionId] ?? ['en'];
 }
 
 // ── Zero-config region detection ────────────────────────────────

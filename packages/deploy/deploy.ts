@@ -3,8 +3,12 @@ import * as path from 'path';
 import { requireEnv } from '../utils/env';
 import { getArg } from '../utils/cli';
 
-const VERCEL_TOKEN = requireEnv('VERCEL_TOKEN');
 const VERCEL_API = 'https://api.vercel.com';
+
+/** Lazy-loaded token — only evaluated when deployToVercel() is actually called. */
+function getVercelToken(): string {
+  return requireEnv('VERCEL_TOKEN');
+}
 
 const EXCLUDE_DIRS = new Set(['.next', 'node_modules', '.git', 'screenshots', 'src', '.vercel']);
 const EXCLUDE_FILES = new Set(['.env', '.env.local', '.DS_Store', 'package-lock.json']);
@@ -48,6 +52,8 @@ function resolveDeploymentUrl(
 }
 
 export async function deployToVercel(buildDir: string, slug: string): Promise<DeployResult> {
+  const token = getVercelToken(); // lazy — only throws when actually deploying
+
   if (!fs.existsSync(buildDir)) {
     throw new Error(`Build directory not found: ${buildDir}`);
   }
@@ -86,7 +92,7 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   const res = await fetch(`${VERCEL_API}/v13/deployments`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${VERCEL_TOKEN}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -111,12 +117,33 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   const POLL_TIMEOUT_MS = 120_000;
   const maxPolls = Math.ceil(POLL_TIMEOUT_MS / POLL_INTERVAL_MS);
 
+  const MAX_CONSECUTIVE_FAILURES = 3;
+  let consecutiveFailures = 0;
+
   for (let i = 0; i < maxPolls; i++) {
     await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
-    const check = await fetch(`${VERCEL_API}/v13/deployments/${deployment.id}`, {
-      headers: { 'Authorization': `Bearer ${VERCEL_TOKEN}` },
-    });
-    const status = await check.json() as DeploymentState;
+
+    let status: DeploymentState;
+    try {
+      const check = await fetch(`${VERCEL_API}/v13/deployments/${deployment.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!check.ok) {
+        throw new Error(`HTTP ${check.status}: ${await check.text()}`);
+      }
+      status = await check.json() as DeploymentState;
+      consecutiveFailures = 0; // reset on success
+    } catch (err) {
+      consecutiveFailures++;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[deploy] Poll attempt ${i + 1} failed (${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}): ${msg}`);
+      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+        // Deployment was created — return expected URL rather than crashing
+        console.warn('[deploy] Polling failed repeatedly, but deployment was created. Returning expected URL.');
+        return { url: `https://${slug}.vercel.app`, projectId: slug, deploymentId: deployment.id };
+      }
+      continue;
+    }
 
     if (status.readyState === 'ERROR') {
       throw new Error(`Vercel deployment failed (id=${deployment.id}, state=${status.readyState})`);
@@ -141,7 +168,7 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
     const aliasRes = await fetch(`${VERCEL_API}/v2/deployments/${deployment.id}/aliases`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${VERCEL_TOKEN}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ alias: expectedAlias }),

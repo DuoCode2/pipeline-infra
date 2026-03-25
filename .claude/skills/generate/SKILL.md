@@ -1,6 +1,6 @@
 ---
 name: generate
-description: "End-to-end website generation for a business lead. One sentence → live site. Supports 15 industries and 8 website archetypes with region-aware content. Use when user says 'generate', 'build a site', 'create website', or provides a business lead."
+description: "End-to-end website generation for a business lead. One sentence → live site. Region-agnostic, industry-agnostic — Claude makes all design decisions. Use when user says 'generate', 'build a site', 'create website', or provides a business lead."
 allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion]
 user-invocable: true
 ---
@@ -11,49 +11,88 @@ Three steps: **prepare** (mechanical) → **design** (creative) → **finalize**
 
 ## Input
 - Lead data from discover or user-provided
-- Industry (auto-detected from Google Maps `primaryType` if not specified)
-- Region (default: `my` for Malaysia; pass `--region` to override)
+- Region auto-detected from address (any country supported)
+
+## CRITICAL: Photos Rule
+**ALWAYS use `--lead-file` from search.ts output.** NEVER hand-write inline PlaceResult JSON.
+
+Why: search.ts output includes the `photos` field (Google Maps photo resource names). Hand-crafted JSON misses this, causing fallback to generic stock photos.
+
+If the business has a website and gets filtered out, use `--include-all`:
+```bash
+npx tsx packages/discover/search.ts --city "City" --category "business name" --include-all --out data/leads/leads.json
+```
+
+After prepare, check `lead.json → photoSource`:
+- `"maps"` = real business photos (good)
+- `"stock"` = Unsplash fallback (bad — try --include-all)
+- `"mixed"` = some real + some stock
 
 ## Step 1: Discover + Prepare
 
 ```bash
-# Find leads and save to file (--region defaults to 'my')
-npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "food" --limit 1 --out leads.json
+# Find leads (--city and --category are REQUIRED, no defaults)
+npx tsx packages/discover/search.ts --city "Tokyo" --category "food" --limit 1 --out data/leads/leads.json
 
-# Prepare from file
-npx tsx packages/pipeline/prepare.ts --lead-file leads.json --index 0
+# Prepare from file (PREFERRED — ensures photos are included)
+npx tsx packages/pipeline/prepare.ts --lead-file data/leads/leads.json --index 0
 ```
 
-Or inline (PlaceResult JSON format):
-```bash
-npx tsx packages/pipeline/prepare.ts --lead '{"id":"ChIJ...","displayName":{"text":"..."},...}'
-```
+This does mechanical work: download Maps photos → extract WCAG-safe brand colors → optimize images (WebP + AVIF) → scaffold project → generate business.ts skeleton.
 
-This does ALL mechanical work: download photos → extract WCAG-safe brand colors → download fonts → optimize images → scaffold project → generate business.ts skeleton.
+Returns JSON with:
+- `outputDir`, `slug`, `regionId`, `brandColors`, `photos`, `photoCount`
+- `lead` — full PlaceResult (business name, type, address, phone, rating, hours, photos)
+- `hints` — classification suggestions: `{ suggestedIndustry, suggestedArchetype, confidence, source }`
 
-Returns JSON with: `outputDir`, `slug`, `brandColors`, `photos`, `config`, **`industry`**, **`archetype`**, **`regionId`**.
+**Hints are suggestions, not constraints.** You decide the final site structure.
 
 ## Step 2: Design (Claude's creative work)
 
-Read `output/{slug}/brand-colors.json` and photos in `output/{slug}/public/images/`.
+This is where ALL creative decisions happen. You are the designer.
 
-**Read the archetype**: The prepare output includes `archetype` (one of 8 types). Read `references/archetype-guide.md` for the archetype's design brief — what sections to build, what the primary CTA should be, what demo features to include.
+### 2a. Understand the business
+Read the PrepareResult JSON. Look at:
+- `lead.displayName.text` — what's the business name?
+- `lead.primaryType` — what does Google categorize it as?
+- `lead.formattedAddress` — what country/region?
+- `hints.suggestedIndustry` / `hints.suggestedArchetype` — do you agree with the classification?
 
-Then create:
-1. **`src/app/[locale]/page.tsx`** — Unique layout guided by archetype. Every site visually different.
-2. **`src/components/*.tsx`** — Custom components per archetype needs (menu, booking, catalog, etc.).
-3. **`src/data/business.ts`** — Fill all locale content sections with archetype-specific data.
-4. **Interactive demo features** — Per archetype guide (e.g., menu browser, booking calendar, product catalog). All demos are frontend-only; final actions show confirmation message.
+### 2b. Choose your design approach
+Read `references/archetype-guide.md` for validated site patterns. You can:
+- **Use a known archetype** as-is if it fits perfectly
+- **Mix archetypes** (e.g., a pet café → menu-order + booking-services)
+- **Create a custom structure** if no archetype fits
 
-Rules:
-- Make ALL design decisions autonomously — fonts, layout, colors, copy
-- Let the archetype guide WHAT to build; use `frontend-design` skill for HOW to style
-- Use theme tokens: `theme.onPrimary` for text on primary bg, `theme.onPrimaryDark` for dark bg
+Read region reference docs if available (e.g., `references/malaysia-market.md` for region `my`, or `references/generic-market.md` for unknown regions). Check `references/platforms-by-region.md` for local platform integrations.
+
+### 2c. Pick fonts and download them
+Use the `frontend-design` skill for typography guidance. Choose a distinctive display font + body font pair. Then download:
+```bash
+npx tsx packages/assets/download-fonts.ts --fonts "YourDisplayFont,YourBodyFont" --weights "400,500,600,700" --output output/{slug}/public/fonts
+```
+Update `business.ts` with your font choices: `theme.fontDisplay` and `theme.fontBody`.
+
+### 2d. Build the site
+Use shared UI components from `src/components/ui/` (Button, Section, Card, Grid, Accordion, Badge, ResponsiveImage, DemoModal, ReviewStars, HoursTable). Import them — don't recreate.
+
+Create:
+1. **`src/app/[locale]/page.tsx`** — Unique layout. Every site visually different.
+2. **`src/components/*.tsx`** — Custom components for this business's needs.
+3. **`src/data/business.ts`** — Fill all locale content with real business data.
+4. **Interactive demo features** — Frontend-only prototypes; final actions use DemoModal.
+
+### 2e. Use responsive images
+Import from `@/data/images` for srcset data. Use the `ResponsiveImage` UI component or `<picture>` with AVIF and WebP `<source>` elements.
+
+### Design rules:
+- Make ALL design decisions autonomously — no asking "should I...?"
+- Use theme tokens: `theme.onPrimary`, `theme.onPrimaryDark`, `theme.accentText`
 - NEVER hardcode `color: white` or `text-white` on colored backgrounds
 - NEVER use `opacity < 1` on text elements
-- Headings must be sequential (h1 → h2 → h3)
-- Touch targets ≥ 44x44px
-- Read region market rules (e.g. `references/malaysia-market.md`) for formatting
+- Hero image: `fetchPriority="high"`, NOT CSS `background-image` (hurts LCP)
+- Non-hero images: `loading="lazy"` + `decoding="async"`
+- Sequential headings (h1 → h2 → h3), touch targets ≥ 44x44px
 - Read `references/a11y-checklist.md` for accessibility rules
 
 ## Step 3: Finalize (one command)
@@ -62,13 +101,13 @@ Rules:
 npx tsx packages/pipeline/finalize.ts --dir output/{slug}/
 ```
 
-This does: build → Lighthouse audit (auto port) → deploy to Vercel → git push → log.
+Does: build → Lighthouse audit → deploy to Vercel → git push → log.
 
 Returns JSON:
-- **Success**: `{ "status": "deployed", "url": "https://<resolved-vercel-url>", "scores": {...} }`
-- **Failure**: `{ "status": "quality-failed", "failures": [{ "audit": "...", "elements": [...] }] }`
+- **Success**: `{ "status": "deployed", "url": "https://...", "scores": {...} }`
+- **Failure**: `{ "status": "quality-failed", "failures": [...] }`
 
-If quality-failed: fix the specific issues in `failures`, then re-run finalize. Keep retries intentional and capped.
+If quality-failed: fix the specific issues, then re-run finalize.
 
 ## Output
 Report the live URL returned by `finalize`.
