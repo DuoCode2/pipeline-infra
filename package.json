@@ -22,7 +22,10 @@
     "discover": "npx tsx packages/discover/search.ts",
     "batch": "npx tsx packages/batch/orchestrate.ts",
     "batch:fallback": "npx tsx packages/batch/orchestrate.ts",
-    "build:check": "npx tsc --noEmit"
+    "build:check": "npx tsc --noEmit",
+    "n8n:check": "npx tsx packages/utils/n8n.ts health",
+    "n8n:workflows": "npx tsx packages/utils/n8n.ts workflows",
+    "n8n:executions": "npx tsx packages/utils/n8n.ts executions"
   },
   "keywords": [],
   "author": "",

@@ -95,10 +95,10 @@ export async function runLocalQualityGate(options: {
   log(`[serve-and-check] Port      : ${port}`);
   log(`[serve-and-check] Check URL : ${checkUrl}`);
 
-  // 2. Start serve ------------------------------------------------------
-  const serve = spawn('npx', ['serve', buildDir, '-l', String(port)], {
+  // 2. Start serve (exclusive listen to avoid port conflicts in parallel) --
+  const serve = spawn('npx', ['serve', buildDir, '-l', String(port), '--no-clipboard'], {
     stdio: 'pipe',
-    detached: false,
+    detached: true,
   });
 
   // Forward serve stderr for troubleshooting (non-blocking).
@@ -108,13 +108,16 @@ export async function runLocalQualityGate(options: {
   });
 
   // Ensure cleanup on unexpected exit of this process.
+  // Unref so the serve process doesn't prevent Node from exiting
+  serve.unref();
+
   const cleanup = () => {
     try {
-      if (serve.pid && !serve.killed) {
-        serve.kill('SIGTERM');
+      if (serve.pid) {
+        process.kill(-serve.pid, 'SIGTERM');
       }
     } catch {
-      // Already dead — ignore.
+      try { if (serve.pid) process.kill(serve.pid, 'SIGKILL'); } catch { /* dead */ }
     }
   };
   process.on('exit', cleanup);
@@ -184,13 +187,15 @@ export async function runLocalQualityGate(options: {
 
     return { port, lighthouse, failures, allPass };
   } finally {
-    // 5b. Kill serve process by PID ---------------------------------------
+    // 5b. Kill serve process tree by PID ----------------------------------
     log('[serve-and-check] Stopping server...');
-    if (serve.pid && !serve.killed) {
+    if (serve.pid) {
       try {
-        process.kill(serve.pid, 'SIGTERM');
+        // Kill the entire process group (detached) to avoid orphan serve processes
+        process.kill(-serve.pid, 'SIGTERM');
       } catch {
-        // Already exited — ignore.
+        // Fallback: kill just the process
+        try { process.kill(serve.pid, 'SIGKILL'); } catch { /* already dead */ }
       }
     }
     // Remove listeners to avoid double-cleanup.

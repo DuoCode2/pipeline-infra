@@ -201,6 +201,12 @@ export async function prepare(lead: PlaceResult, industry?: string): Promise<Pre
   // 8. Write SVG decorations
   writeSvgDecorations(resolvedIndustry, outputDir);
 
+  // 8b. Generate unique favicon from brand colors + business initial
+  const initial = (lead.displayName?.text || 'B').charAt(0).toUpperCase();
+  const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="${colors.primary}"/><text x="16" y="22" text-anchor="middle" fill="${colors.onPrimary}" font-size="18" font-family="system-ui" font-weight="700">${initial}</text></svg>`;
+  fs.writeFileSync(path.join(outputDir, 'public/favicon.svg'), faviconSvg);
+  console.error(`  Favicon: ${initial} on ${colors.primary}`);
+
   // 9. Generate business.ts skeleton
   console.error('  Generating business.ts skeleton...');
   generateBusinessSkeleton(lead, resolvedIndustry, colors, config, allJpgs, slug, outputDir);
@@ -211,19 +217,8 @@ export async function prepare(lead: PlaceResult, industry?: string): Promise<Pre
   console.error(`  ✓ Ready for design at ${outputDir}`);
 
   // Notify n8n (optional, fire-and-forget)
-  const webhookUrl = process.env.N8N_WEBHOOK_URL;
-  if (webhookUrl) {
-    fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        place_id: lead.id,
-        slug,
-        action: 'prepared',
-        result: outputDir,
-      }),
-    }).catch(() => {});
-  }
+  const { logAction } = require('../utils/n8n') as typeof import('../utils/n8n');
+  logAction({ place_id: lead.id, slug, action: 'prepared', result: outputDir });
 
   const result: PrepareResult = {
     outputDir,

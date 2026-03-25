@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { requireEnv } from '../utils/env';
 import { getArg } from '../utils/cli';
+import { postWebhook } from '../utils/n8n';
 
 const API_KEY = requireEnv('GOOGLE_API_KEY');
 const PLACES_URL = 'https://places.googleapis.com/v1/places:searchText';
@@ -147,6 +148,8 @@ export async function searchPlaces(
     return hasPhone && hasPhotos && hasReviews && decentRating;
   });
 
+  let finalResults: PlaceResult[];
+
   if (filterNoWebsite) {
     // Quick filter: no websiteUri at all
     const noSite = quality.filter((p) => !p.websiteUri);
@@ -167,10 +170,26 @@ export async function searchPlaces(
       console.error(`Found ${deadSites.length} businesses with dead websites — added as leads`);
     }
 
-    return [...noSite, ...deadSites];
+    finalResults = [...noSite, ...deadSites];
+  } else {
+    finalResults = quality;
   }
 
-  return quality;
+  // Log discovered leads to Sheets (fire-and-forget)
+  for (const lead of finalResults) {
+    postWebhook('log-lead', {
+      place_id: lead.id,
+      name: lead.displayName?.text || '',
+      industry: category,
+      address: lead.formattedAddress || '',
+      phone: lead.nationalPhoneNumber || '',
+      rating: lead.rating || 0,
+      reviews_count: lead.userRatingCount || 0,
+      maps_url: lead.googleMapsUri || '',
+    }).catch(() => {});
+  }
+
+  return finalResults;
 }
 
 // CLI usage: npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "restaurant" --limit 1

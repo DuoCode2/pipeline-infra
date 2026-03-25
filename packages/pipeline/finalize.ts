@@ -164,19 +164,9 @@ ${sitemapUrls}
     log(`Git publish warning (non-fatal): ${msg}`);
   }
 
-  const webhookUrl = process.env.N8N_WEBHOOK_URL;
-  if (webhookUrl) {
-    fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        place_id: slug,
-        action: 'deployed',
-        result: deploy.url,
-        qa_score: scores,
-      }),
-    }).catch(() => {}); // fire and forget
-  }
+  // Log to n8n (optional, fire-and-forget)
+  const { logAction } = require('../utils/n8n') as typeof import('../utils/n8n');
+  logAction({ place_id: slug, action: 'deployed', result: deploy.url, url: deploy.url, qa_score: scores });
 
   return { status: 'deployed', url: deploy.url, scores };
 }

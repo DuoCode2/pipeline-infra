@@ -13,12 +13,13 @@ services:
     ports: ["5678:5678"]
     restart: unless-stopped
     stop_grace_period: 30s
-    command: ["/bin/sh", "/workflows/init-workflows.sh"]
+    entrypoint: ["tini", "--"]
+    command: ["/bin/sh", "/scripts/init-workflows.sh"]
     volumes:
       - n8n_data:/home/node/.n8n
       - ../output:/output
-      - ./workflows:/workflows:ro
-      - ./init-workflows.sh:/workflows/init-workflows.sh:ro
+      - ./workflows:/workflows
+      - ./init-workflows.sh:/scripts/init-workflows.sh:ro
     tmpfs:
       - /tmp:size=256m
     env_file:
@@ -27,6 +28,7 @@ services:
       # Static config (not from .env)
       - N8N_DIAGNOSTICS_ENABLED=false
       - N8N_HIRING_BANNER_ENABLED=false
+      - N8N_PUBLIC_API_DISABLED=false
       - N8N_RUNNERS_ENABLED=true
       - EXECUTIONS_DATA_PRUNE=true
       - EXECUTIONS_DATA_MAX_AGE=168

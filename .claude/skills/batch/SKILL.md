@@ -16,6 +16,8 @@ All agents run concurrently. No sequential bottleneck.
 npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "restaurant" --limit 3 --out leads.json
 ```
 
+**IMPORTANT**: search.ts defaults to `--no-website` filter (only businesses WITHOUT a website). Do NOT use `--include-all`. Verify by checking that no `websiteUri` field exists in leads.json.
+
 Read `leads.json` to get the lead count and names.
 
 ## Step 2: Launch Parallel Agents
