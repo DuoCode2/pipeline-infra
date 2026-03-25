@@ -1,66 +1,64 @@
 ---
 name: batch
-description: Process multiple business leads through the full pipeline in parallel where possible. Uses Claude Code Agent tool for concurrent asset preparation.
+description: "Process multiple business leads in parallel. Prepare all → design each → finalize all. Use when user says 'batch', '批量', 'generate N sites', or provides multiple leads."
 allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion]
 user-invocable: true
 ---
 
 # Batch Processing
 
-## Quick Start (Recommended)
-Use the orchestrate script for fully automated E2E pipeline:
+Three phases: **parallel prepare** → **sequential design** → **parallel finalize**.
+
+## Input
+- City + category + count (e.g., "吉隆坡3个餐厅")
+- Or pre-fetched lead list
+
+## Phase 1: Discover + Parallel Prepare
+
 ```bash
-npx tsx packages/batch/orchestrate.ts \
-  --city "Kuala Lumpur" \
-  --categories "restaurant,beauty" \
-  --batch-size 2
-```
-This handles: discover → photos → colors → fonts → optimize → build → deploy → GitHub → log.
-Falls back to the Agent-based workflow below when you need more control (e.g., custom design per site).
-
-## Agent-Based Workflow
-
-Process multiple leads through: discover → prepare → generate → quality gate → deploy.
-
-### Input
-- List of leads (from `/discover` or manual) with place_id, business_name, industry, photos
-
-### Phase 1: Parallel Asset Preparation
-Use the `Agent` tool to launch one agent per lead for concurrent asset preparation:
-
-```
-For each lead, launch an Agent:
-  Agent(prompt="Prepare assets for {business_name}:
-    npx tsx packages/assets/maps-photos.ts --photos '{photos}' --output output/{slug}/public/images
-    npx tsx packages/assets/extract-colors.ts --image output/{slug}/public/images/maps-2.jpg --output output/{slug}
-    npx tsx packages/assets/optimize-images.ts --input output/{slug}/public/images
-  ", mode="bypassPermissions")
+# Get leads
+npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "restaurant" --limit 1
 ```
 
-### Phase 2: Sequential Site Generation
-Generate sites one at a time (each needs full Claude attention for `frontend-design`):
+Launch one Agent per lead for parallel asset preparation:
 ```
 For each lead:
-  1. Copy scaffolding
-  2. Use frontend-design skill to create unique site
-  3. Run Gate 1 (build) + Gate 2 (Lighthouse)
-  4. Run Gate 3 (browser-use visual QA)
+  Agent(prompt="Run: npx tsx packages/pipeline/prepare.ts --lead '{lead_json}' --industry {industry}", mode="bypassPermissions")
 ```
 
-### Phase 3: Sequential Deployment
-Deploy one at a time (avoid Vercel rate limits):
+All agents run concurrently. Each returns JSON with `outputDir`, `slug`, `brandColors`, etc.
+
+## Phase 2: Sequential Design
+
+Claude designs each site one at a time (needs full creative attention):
+
 ```
-For each lead:
-  git init && git add -A && git commit
-  gh repo create DuoCode2/{slug} --private --source=. --push
-  npx tsx packages/deploy/deploy.ts --build-dir out --slug {slug}
+For each prepared lead:
+  1. Read output/{slug}/brand-colors.json and photos
+  2. Create unique page.tsx + components + 4-language content
+  3. Follow /generate Step 2 rules (a11y, theme tokens, no hardcoded white)
 ```
+
+## Phase 3: Parallel Finalize
+
+Launch one Agent per site for parallel build + deploy:
+```
+For each site:
+  Agent(prompt="Run: npx tsx packages/pipeline/finalize.ts --dir output/{slug}/", mode="bypassPermissions")
+```
+
+If any agent returns `quality-failed`: Claude fixes the specific issues, then re-runs finalize.
 
 ## Output
-Append each result to `output/generation-log.jsonl`:
-```json
-{"slug":"xxx","url":"https://xxx.vercel.app","industry":"restaurant","qa_passed":true,"timestamp":"..."}
+Report all live URLs:
+```
+✓ restaurant-a: https://restaurant-a.vercel.app
+✓ restaurant-b: https://restaurant-b.vercel.app
+✗ restaurant-c: quality-failed (fixing...)
 ```
 
-## Summary
-Print final batch report: total processed, passed, failed, deployed URLs.
+## Fallback: Full Automation (no custom design)
+```bash
+npx tsx packages/batch/orchestrate.ts --city "Kuala Lumpur" --categories "restaurant" --batch-size 3
+```
+Uses hardcoded content templates. Good for bulk testing, not for production quality.
