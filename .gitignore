@@ -13,3 +13,11 @@ eval/results/
 eval/backstop/
 .claude/settings.local.json
 n8n/service-account.json
+
+# Data files (generated, not source)
+data/leads/*.json
+data/discoveries/*.json
+data/logs/*.jsonl
+
+# Vitest
+coverage/

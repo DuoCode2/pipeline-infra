@@ -1,0 +1,11 @@
+{
+  "primary": "#2563EB",
+  "primaryDark": "#1E3A5F",
+  "accent": "#F59E0B",
+  "surface": "#FFFFFF",
+  "textTitle": "#111827",
+  "textBody": "#374151",
+  "onPrimary": "#FFFFFF",
+  "onPrimaryDark": "#FFFFFF",
+  "accentText": "#92400E"
+}

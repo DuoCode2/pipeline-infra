@@ -1,0 +1,29 @@
+{
+  "id": "ChIJtest123456789",
+  "displayName": { "text": "Test Restaurant KL", "languageCode": "en" },
+  "primaryType": "restaurant",
+  "formattedAddress": "123 Jalan Test, 50000 Kuala Lumpur, Malaysia",
+  "nationalPhoneNumber": "012-345 6789",
+  "rating": 4.5,
+  "userRatingCount": 150,
+  "googleMapsUri": "https://maps.google.com/?cid=test123",
+  "regularOpeningHours": {
+    "openNow": true,
+    "weekdayDescriptions": [
+      "Monday: 10:00 AM – 10:00 PM",
+      "Tuesday: 10:00 AM – 10:00 PM",
+      "Wednesday: 10:00 AM – 10:00 PM",
+      "Thursday: 10:00 AM – 10:00 PM",
+      "Friday: 10:00 AM – 11:00 PM",
+      "Saturday: 9:00 AM – 11:00 PM",
+      "Sunday: 9:00 AM – 10:00 PM"
+    ]
+  },
+  "photos": [
+    { "name": "places/test/photos/1", "widthPx": 4032, "heightPx": 3024 },
+    { "name": "places/test/photos/2", "widthPx": 4032, "heightPx": 3024 },
+    { "name": "places/test/photos/3", "widthPx": 3024, "heightPx": 4032 }
+  ],
+  "location": { "latitude": 3.1390, "longitude": 101.6869 },
+  "businessStatus": "OPERATIONAL"
+}

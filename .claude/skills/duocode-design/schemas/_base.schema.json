@@ -126,8 +126,63 @@
               }
             }
           }
-        }
+        },
+        "menu": { "$ref": "#/definitions/sectionGroupContainer" },
+        "ordering": {
+          "type": "object",
+          "properties": {
+            "delivery": { "type": "string" },
+            "pickup": { "type": "string" },
+            "platforms": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "url": { "type": "string" } } } }
+          }
+        },
+        "reservations": {
+          "type": "object",
+          "properties": { "url": { "type": "string" }, "phone": { "type": "string" }, "note": { "type": "string" } }
+        },
+        "services": { "type": "array", "items": { "$ref": "#/definitions/sectionGroup" } },
+        "staff": { "type": "array", "items": { "$ref": "#/definitions/staffMember" } },
+        "beforeAfter": { "type": "array", "items": { "type": "object", "properties": { "before": { "type": "string" }, "after": { "type": "string" }, "caption": { "type": "string" } } } },
+        "credentials": { "type": "array", "items": { "type": "object", "properties": { "label": { "type": "string" }, "value": { "type": "string" }, "icon": { "type": "string" } } } },
+        "serviceAreas": { "type": "object", "properties": { "areas": { "type": "array", "items": { "type": "string" } }, "mapNote": { "type": "string" } } },
+        "caseStudies": { "type": "array", "items": { "type": "object", "properties": { "title": { "type": "string" }, "summary": { "type": "string" }, "result": { "type": "string" }, "image": { "type": "string" } } } },
+        "faq": { "type": "array", "items": { "type": "object", "required": ["question", "answer"], "properties": { "question": { "type": "string" }, "answer": { "type": "string" } } } },
+        "products": { "$ref": "#/definitions/sectionGroupContainer" },
+        "portfolio": { "type": "object", "properties": { "categories": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "images": { "type": "array", "items": { "type": "object", "properties": { "src": { "type": "string" }, "caption": { "type": "string" } } } } } } } } },
+        "packages": { "type": "array", "items": { "$ref": "#/definitions/pricingTier" } },
+        "classes": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "day": { "type": "string" }, "time": { "type": "string" }, "instructor": { "type": "string" }, "level": { "type": "string" } } } },
+        "memberships": { "type": "array", "items": { "$ref": "#/definitions/pricingTier" } },
+        "trainers": { "type": "array", "items": { "$ref": "#/definitions/staffMember" } },
+        "listings": { "type": "array", "items": { "type": "object", "properties": { "title": { "type": "string" }, "price": { "type": "string" }, "image": { "type": "string" }, "features": { "type": "array", "items": { "type": "string" } }, "url": { "type": "string" } } } },
+        "events": { "type": "array", "items": { "type": "object", "properties": { "title": { "type": "string" }, "date": { "type": "string" }, "time": { "type": "string" }, "description": { "type": "string" }, "location": { "type": "string" } } } },
+        "programs": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "description": { "type": "string" }, "schedule": { "type": "string" } } } },
+        "donations": { "type": "object", "properties": { "url": { "type": "string" }, "note": { "type": "string" }, "tiers": { "type": "array", "items": { "type": "object", "properties": { "amount": { "type": "string" }, "label": { "type": "string" } } } } } },
+        "announcements": { "type": "array", "items": { "type": "object", "properties": { "title": { "type": "string" }, "date": { "type": "string" }, "content": { "type": "string" } } } },
+        "sectionHeadings": { "type": "object", "additionalProperties": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "sectionGroup": {
+      "type": "object",
+      "required": ["category", "items"],
+      "properties": {
+        "category": { "type": "string" },
+        "items": { "type": "array", "items": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "description": { "type": "string" }, "price": { "type": "string" }, "image": { "type": "string" }, "popular": { "type": "boolean" }, "tags": { "type": "array", "items": { "type": "string" } } } } }
       }
+    },
+    "sectionGroupContainer": {
+      "type": "object",
+      "properties": { "categories": { "type": "array", "items": { "$ref": "#/definitions/sectionGroup" } } }
+    },
+    "staffMember": {
+      "type": "object",
+      "required": ["name", "role"],
+      "properties": { "name": { "type": "string" }, "role": { "type": "string" }, "image": { "type": "string" }, "bio": { "type": "string" }, "specialties": { "type": "array", "items": { "type": "string" } } }
+    },
+    "pricingTier": {
+      "type": "object",
+      "required": ["name", "price", "features"],
+      "properties": { "name": { "type": "string" }, "price": { "type": "string" }, "period": { "type": "string" }, "features": { "type": "array", "items": { "type": "string" } }, "popular": { "type": "boolean" } }
     }
   }
 }

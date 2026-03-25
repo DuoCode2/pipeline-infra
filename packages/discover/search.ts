@@ -155,10 +155,19 @@ export async function searchPlaces(
   return finalResults;
 }
 
-// CLI usage: npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "food" --limit 1
+// CLI usage: npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "food" --limit 1 [--region my]
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const city = getArg(args, 'city', 'Kuala Lumpur');
+  const regionId = getArg(args, 'region', 'my');
+
+  // Load region config for default city
+  let defaultCity = 'Kuala Lumpur';
+  try {
+    const { loadRegion } = require('../regions/loader');
+    defaultCity = loadRegion(regionId).discovery.defaultCity;
+  } catch { /* fallback to hardcoded default */ }
+
+  const city = getArg(args, 'city', defaultCity);
   const category = getArg(args, 'category', 'food');
   const limit = parseInt(getArg(args, 'limit', '1'), 10);
   // Default: filter out businesses WITH websites (we only want leads without sites)

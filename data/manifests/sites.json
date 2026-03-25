@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "generatedAt": "2026-03-26T00:00:00Z",
+  "sites": [
+    {
+      "slug": "autocare-pro",
+      "placeId": "car-demo-autocare-pro",
+      "industry": "service",
+      "status": "deployed",
+      "qaScores": {
+        "performance": 84,
+        "accessibility": 96,
+        "best-practices": 96,
+        "seo": 100
+      },
+      "createdAt": "2026-03-25T04:29:00Z"
+    },
+    {
+      "slug": "bananabro-sri-petaling",
+      "placeId": "ChIJ_3O7FKdLzDERPluiP3IlnTk",
+      "industry": "south_indian_restaurant",
+      "status": "deployed",
+      "qaScores": {
+        "performance": 95,
+        "accessibility": 97,
+        "best-practices": 96,
+        "seo": 100
+      },
+      "createdAt": "2026-03-25T03:26:17Z"
+    },
+    {
+      "slug": "dahlia-beauty-house",
+      "placeId": "ChIJ07vOlS1KzDERL1RNtH006Mc",
+      "industry": "beauty_salon",
+      "status": "deployed",
+      "qaScores": null,
+      "createdAt": "2026-03-24T10:41:08Z"
+    },
+    {
+      "slug": "geekfix-klang-smartphone-repair-shop",
+      "placeId": "ChIJP557fJ6tzTER58RXpr9HJrA",
+      "industry": "generic",
+      "status": "deployed",
+      "qaScores": {
+        "performance": 100,
+        "accessibility": 96,
+        "best-practices": 96,
+        "seo": 100
+      },
+      "createdAt": "2026-03-25T06:40:49Z"
+    },
+    {
+      "slug": "jm-beauty-studio",
+      "placeId": "ChIJGX9aFgBJzDERh-eQtZP0dEg",
+      "industry": "beauty_salon",
+      "status": "deployed",
+      "qaScores": null,
+      "createdAt": "2026-03-24T10:41:08Z"
+    },
+    {
+      "slug": "k-studio",
+      "placeId": "ChIJKUZxmI9JzDERxt0PBbXN9gc",
+      "industry": "beauty_salon",
+      "status": "deployed",
+      "qaScores": null,
+      "createdAt": "2026-03-24T10:41:08Z"
+    },
+    {
+      "slug": "looks-salon-kuala-lumpur",
+      "placeId": "ChIJC7gG_QZJzDERRdaks00Rfn4",
+      "industry": "beauty",
+      "status": "deployed",
+      "qaScores": null,
+      "createdAt": "2026-03-25T01:51:22Z"
+    },
+    {
+      "slug": "luckee",
+      "placeId": "ChIJvZtL6jFLzDERgslRIZ1WeN8",
+      "industry": "restaurant",
+      "status": "deployed",
+      "qaScores": {
+        "performance": 90,
+        "accessibility": 96,
+        "best-practices": 96,
+        "seo": 100
+      },
+      "createdAt": "2026-03-25T03:11:55Z"
+    },
+    {
+      "slug": "one-stop-phone-repair-centre-bukit-tinggi",
+      "placeId": "ChIJkRmqZdetzTER4lp5aotp6T4",
+      "industry": "generic",
+      "status": "deployed",
+      "qaScores": {
+        "performance": 98,
+        "accessibility": 96,
+        "best-practices": 96,
+        "seo": 100
+      },
+      "createdAt": "2026-03-25T06:34:09Z"
+    },
+    {
+      "slug": "power-fix-mobile-repair-bukit-tinggi-2",
+      "placeId": "ChIJoUYal8WtzTERg8od5uUHwjg",
+      "industry": "generic",
+      "status": "deployed",
+      "qaScores": {
+        "performance": 100,
+        "accessibility": 96,
+        "best-practices": 96,
+        "seo": 100
+      },
+      "createdAt": "2026-03-25T06:57:10Z"
+    },
+    {
+      "slug": "sri-petaling-ye-wen-klang-bak-kut-teh",
+      "placeId": "ChIJP5LdcwBLzDERheKdff50cLA",
+      "industry": "chinese_restaurant",
+      "status": "deployed",
+      "qaScores": {
+        "performance": 93,
+        "accessibility": 95,
+        "best-practices": 96,
+        "seo": 100
+      },
+      "createdAt": "2026-03-25T03:10:53Z"
+    },
+    {
+      "slug": "yitcha-kawkaw-kopitiam-sri-petaling",
+      "placeId": "ChIJx8dNqTBLzDERA1Kle0TeLQY",
+      "industry": "chinese_restaurant",
+      "status": "deployed",
+      "qaScores": {
+        "performance": 95,
+        "accessibility": 95,
+        "best-practices": 96,
+        "seo": 100
+      },
+      "createdAt": "2026-03-25T03:26:16Z"
+    }
+  ]
+}

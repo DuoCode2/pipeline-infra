@@ -15,7 +15,7 @@ import { deployToVercel } from '../deploy/deploy';
 import { publishGeneratedSite } from '../deploy/publish';
 import { runLocalQualityGate } from '../quality/serve-and-check';
 import { getArg, hasFlag } from '../utils/cli';
-import { SUPPORTED_LOCALES } from '../utils/env';
+import { getLocalesForRegion } from '../utils/env';
 import { logAction } from '../utils/n8n';
 
 // ---------------------------------------------------------------------------
@@ -87,21 +87,38 @@ export async function finalize(options: {
   }
 
   // ------------------------------------------------------------------
-  // 2. Ensure root vercel.json exists for Vercel REST config
+  // 2. Read region from lead.json for locale-aware generation
+  // ------------------------------------------------------------------
+  let regionId = 'my';
+  const leadJsonPath2 = path.join(dir, 'lead.json');
+  if (fs.existsSync(leadJsonPath2)) {
+    try {
+      const leadData = JSON.parse(fs.readFileSync(leadJsonPath2, 'utf8'));
+      if (leadData.regionId) regionId = leadData.regionId;
+    } catch { /* ignore */ }
+  }
+  let defaultLocale = 'en';
+  try {
+    const { loadRegion } = require('../regions/loader');
+    defaultLocale = loadRegion(regionId).defaultLocale;
+  } catch { /* fallback */ }
+
+  // ------------------------------------------------------------------
+  // 3. Ensure root vercel.json exists for Vercel REST config
   // ------------------------------------------------------------------
   const vercelConfigPath = path.join(dir, 'vercel.json');
   if (!fs.existsSync(vercelConfigPath)) {
     const vercelConfig = {
-      redirects: [{ source: '/', destination: '/en', statusCode: 301 }],
+      redirects: [{ source: '/', destination: `/${defaultLocale}`, statusCode: 301 }],
     };
     fs.writeFileSync(vercelConfigPath, JSON.stringify(vercelConfig, null, 2));
     log('vercel.json created');
   }
 
   // ------------------------------------------------------------------
-  // 3. Generate sitemap.xml
+  // 4. Generate sitemap.xml
   // ------------------------------------------------------------------
-  const locales = SUPPORTED_LOCALES;
+  const locales = getLocalesForRegion(regionId);
   const sitemapUrls = locales
     .map((l) => `  <url><loc>https://${slug}.vercel.app/${l}</loc></url>`)
     .join('\n');

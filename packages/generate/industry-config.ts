@@ -72,6 +72,54 @@ export const INDUSTRY_CONFIG: Record<string, IndustryDesign> = {
     heroStyle: 'overlay',
     ctaStyle: 'rounded',
   },
+  education: {
+    fontDisplay: 'Nunito',
+    fontBody: 'Open Sans',
+    svgStyle: 'modern',
+    colorWarmth: 'warm',
+    heroStyle: 'split',
+    ctaStyle: 'rounded',
+  },
+  pet: {
+    fontDisplay: 'Quicksand',
+    fontBody: 'Nunito',
+    svgStyle: 'organic',
+    colorWarmth: 'warm',
+    heroStyle: 'full-bleed',
+    ctaStyle: 'rounded',
+  },
+  events: {
+    fontDisplay: 'Playfair Display',
+    fontBody: 'Lato',
+    svgStyle: 'elegant',
+    colorWarmth: 'soft',
+    heroStyle: 'full-bleed',
+    ctaStyle: 'pill',
+  },
+  hospitality: {
+    fontDisplay: 'Cormorant Garamond',
+    fontBody: 'Lato',
+    svgStyle: 'elegant',
+    colorWarmth: 'warm',
+    heroStyle: 'full-bleed',
+    ctaStyle: 'pill',
+  },
+  realestate: {
+    fontDisplay: 'Montserrat',
+    fontBody: 'Open Sans',
+    svgStyle: 'modern',
+    colorWarmth: 'neutral',
+    heroStyle: 'overlay',
+    ctaStyle: 'square',
+  },
+  community: {
+    fontDisplay: 'Merriweather',
+    fontBody: 'Source Sans 3',
+    svgStyle: 'organic',
+    colorWarmth: 'warm',
+    heroStyle: 'overlay',
+    ctaStyle: 'rounded',
+  },
   generic: {
     fontDisplay: 'Playfair Display',
     fontBody: 'Source Sans 3',
@@ -91,6 +139,12 @@ export const SCHEMA_ORG_TYPE: Record<string, string> = {
   retail: 'Store',
   fitness: 'SportsActivityLocation',
   service: 'LocalBusiness',
+  education: 'EducationalOrganization',
+  pet: 'LocalBusiness',
+  events: 'EventVenue',
+  hospitality: 'LodgingBusiness',
+  realestate: 'RealEstateAgent',
+  community: 'CivicStructure',
   generic: 'LocalBusiness',
 };
 
@@ -102,7 +156,7 @@ export const SCHEMA_ORG_TYPE: Record<string, string> = {
  * @param mapsType - Google Places primaryType (e.g. "cell_phone_store", "service")
  * @param businessName - optional display name for keyword-based fallback
  */
-export function classifyIndustry(mapsType: string | undefined, businessName?: string): string {
+export function classifyIndustry(mapsType: string | undefined, businessName?: string, regionNameKeywords?: Record<string, RegExp>): string {
   const t = mapsType || '';
 
   // Exact matches first
@@ -117,7 +171,7 @@ export function classifyIndustry(mapsType: string | undefined, businessName?: st
     beauty_salon: 'beauty', hair_care: 'beauty', spa: 'beauty',
     hair_salon: 'beauty', nail_salon: 'beauty',
     dentist: 'clinic', doctor: 'clinic', hospital: 'clinic',
-    pharmacy: 'clinic', physiotherapist: 'clinic', veterinary_care: 'clinic',
+    pharmacy: 'clinic', physiotherapist: 'clinic',
     dental_clinic: 'clinic', medical_lab: 'clinic',
     clothing_store: 'retail', shoe_store: 'retail', jewelry_store: 'retail',
     furniture_store: 'retail', book_store: 'retail',
@@ -129,6 +183,23 @@ export function classifyIndustry(mapsType: string | undefined, businessName?: st
     plumber: 'service', electrician: 'service', painter: 'service',
     locksmith: 'service', moving_company: 'service',
     laundry: 'service',
+    // Education
+    school: 'education', driving_school: 'education', language_school: 'education',
+    preschool: 'education', university: 'education', tutor: 'education',
+    // Pet
+    pet_store: 'pet', pet_groomer: 'pet', veterinary_care: 'pet',
+    // Events
+    event_venue: 'events', wedding_planner: 'events',
+    // Hospitality
+    hotel: 'hospitality', hostel: 'hospitality', resort: 'hospitality',
+    motel: 'hospitality', guest_house: 'hospitality', lodging: 'hospitality',
+    campground: 'hospitality',
+    // Real Estate
+    real_estate_agency: 'realestate',
+    // Community
+    mosque: 'community', church: 'community', hindu_temple: 'community',
+    synagogue: 'community', buddhist_temple: 'community',
+    community_center: 'community',
   };
   if (typeMap[t]) return typeMap[t];
 
@@ -149,7 +220,11 @@ export function classifyIndustry(mapsType: string | undefined, businessName?: st
     ['_gym', 'fitness'],
     ['_studio', 'fitness'],
     ['_center', 'service'],
-    ['_school', 'service'],
+    ['_school', 'education'],
+    ['_temple', 'community'],
+    ['_church', 'community'],
+    ['_hotel', 'hospitality'],
+    ['_hostel', 'hospitality'],
   ];
   for (const [suffix, industry] of suffixMap) {
     if (t.endsWith(suffix)) return industry;
@@ -162,6 +237,20 @@ export function classifyIndustry(mapsType: string | undefined, businessName?: st
   if (t.includes('beauty') || t.includes('hair') || t.includes('nail')) return 'beauty';
   if (t.includes('doctor') || t.includes('dent') || t.includes('medical') || t.includes('health')) return 'clinic';
   if (t.includes('sport') || t.includes('fitness') || t.includes('athletic')) return 'fitness';
+  if (t.includes('school') || t.includes('tutor') || t.includes('education') || t.includes('training')) return 'education';
+  if (t.includes('pet') || t.includes('animal') || t.includes('vet')) return 'pet';
+  if (t.includes('event') || t.includes('wedding') || t.includes('photo')) return 'events';
+  if (t.includes('hotel') || t.includes('hostel') || t.includes('resort') || t.includes('lodge')) return 'hospitality';
+  if (t.includes('real_estate') || t.includes('property')) return 'realestate';
+  if (t.includes('mosque') || t.includes('church') || t.includes('temple') || t.includes('community')) return 'community';
+
+  // Region-specific name keyword matching
+  if (regionNameKeywords && businessName) {
+    const n = businessName.toLowerCase();
+    for (const [industry, pattern] of Object.entries(regionNameKeywords)) {
+      if (pattern.test(n)) return industry;
+    }
+  }
 
   // Level 2: Name-based fallback when primaryType is too generic (e.g. "service", "store")
   if (businessName) {

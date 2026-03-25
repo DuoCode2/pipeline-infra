@@ -1,0 +1,22 @@
+{
+  "categories": {
+    "performance": { "score": 0.95 },
+    "accessibility": { "score": 0.98 },
+    "best-practices": { "score": 0.96 },
+    "seo": { "score": 1.0 }
+  },
+  "audits": {
+    "color-contrast": {
+      "id": "color-contrast",
+      "title": "Background and foreground colors have a sufficient contrast ratio",
+      "score": 1,
+      "details": { "items": [] }
+    },
+    "heading-order": {
+      "id": "heading-order",
+      "title": "Heading elements appear in a sequentially-descending order",
+      "score": 1,
+      "details": { "items": [] }
+    }
+  }
+}

@@ -14,6 +14,7 @@ import {
   slugify,
   type IndustryDesign,
 } from '../generate/industry-config';
+import { resolveArchetype, type Archetype, type ArchetypeMapping } from '../generate/archetype-config';
 import { type PlaceResult } from '../discover/search';
 import { getArg } from '../utils/cli';
 import { logAction } from '../utils/n8n';
@@ -37,6 +38,18 @@ const INDUSTRY_FAVICON: Record<string, (bg: string, fg: string) => string> = {
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M16 7a9 9 0 110 18 9 9 0 010-18zm0 3a6 6 0 100 12 6 6 0 000-12zm0 2.5a1 1 0 011 1v1.8l1.3.7a1 1 0 01-.9 1.8L16 17v-3.5a1 1 0 011-1z" fill="${fg}" fill-rule="evenodd"/></svg>`,
   tech: (bg, fg) =>
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><rect x="10" y="6" width="12" height="20" rx="2" stroke="${fg}" stroke-width="2" fill="none"/><circle cx="16" cy="22" r="1.5" fill="${fg}"/></svg>`,
+  education: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M16 6l10 5-10 5-10-5zm-7 7v6l7 3.5 7-3.5v-6" fill="none" stroke="${fg}" stroke-width="2"/></svg>`,
+  pet: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M16 20c-2 0-4 2-4 4s2 2 4 2 4 0 4-2-2-4-4-4zm-5-6a2 2 0 100-4 2 2 0 000 4zm10 0a2 2 0 100-4 2 2 0 000 4zm-7-4a2 2 0 100-4 2 2 0 000 4zm4 0a2 2 0 100-4 2 2 0 000 4z" fill="${fg}"/></svg>`,
+  events: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M9 10h14a2 2 0 012 2v10a2 2 0 01-2 2H9a2 2 0 01-2-2V12a2 2 0 012-2zm3-3v3m8-3v3m-12 4h16" stroke="${fg}" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+  hospitality: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M7 24V14l9-6 9 6v10H7z" fill="none" stroke="${fg}" stroke-width="2"/><path d="M13 24v-5h6v5M12 8v2m8-2v2" stroke="${fg}" stroke-width="2" fill="none"/></svg>`,
+  realestate: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M6 24V14l10-7 10 7v10H6zm5-7v4h4v-4zm7 0v4h4v-4z" fill="${fg}"/></svg>`,
+  community: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M16 6c-3 0-6 4-6 8 0 5 6 12 6 12s6-7 6-12c0-4-3-8-6-8zm0 5a3 3 0 110 6 3 3 0 010-6z" fill="${fg}"/></svg>`,
   generic: (bg, fg) =>
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M7 24V14l9-6 9 6v10H7zm4-8v5h4v-5zm7 0v5h4v-5z" fill="${fg}"/></svg>`,
 };
@@ -45,6 +58,9 @@ export interface PrepareResult {
   outputDir: string;
   slug: string;
   industry: string;
+  archetype: Archetype;
+  archetypeMapping: ArchetypeMapping;
+  regionId: string;
   brandColors: BrandColors;
   photos: string[];
   photoCount: number;
@@ -149,7 +165,7 @@ export const business: BusinessData = {
 // ── Save lead.json for traceability ──────────────────────────────
 
 /** Extract search keywords from lead data for stock photo queries */
-function extractPhotoKeywords(lead: PlaceResult, industry: string): string[] {
+function extractPhotoKeywords(lead: PlaceResult, industry: string, regionSkipWords: string[] = []): string[] {
   const keywords: string[] = [];
 
   // Use primaryType as keyword (replace underscores with spaces)
@@ -158,10 +174,11 @@ function extractPhotoKeywords(lead: PlaceResult, industry: string): string[] {
   }
 
   // Extract relevant words from business name
-  const skipWords = new Set(['sdn', 'bhd', 'enterprise', 'trading', 'the', 'and', 'or', 'di', 'dan']);
+  const defaultSkip = ['sdn', 'bhd', 'enterprise', 'trading', 'the', 'and', 'or', 'di', 'dan'];
+  const skipWordsSet = new Set([...defaultSkip, ...regionSkipWords]);
   const nameWords = lead.displayName.text.toLowerCase()
     .split(/\s+/)
-    .filter(w => w.length > 2 && !skipWords.has(w));
+    .filter(w => w.length > 2 && !skipWordsSet.has(w));
   if (nameWords.length > 0) {
     keywords.push(nameWords.slice(0, 3).join(' '));
   }
@@ -169,11 +186,13 @@ function extractPhotoKeywords(lead: PlaceResult, industry: string): string[] {
   return keywords.length > 0 ? keywords : [industry];
 }
 
-function saveLeadJson(lead: PlaceResult, industry: string, outputDir: string) {
+function saveLeadJson(lead: PlaceResult, industry: string, archetype: Archetype, regionId: string, outputDir: string) {
   fs.writeFileSync(path.join(outputDir, 'lead.json'), JSON.stringify({
     place_id: lead.id,
     name: lead.displayName.text,
     industry,
+    archetype,
+    regionId,
     address: lead.formattedAddress,
     phone: lead.nationalPhoneNumber,
     rating: lead.rating,
@@ -185,8 +204,20 @@ function saveLeadJson(lead: PlaceResult, industry: string, outputDir: string) {
 
 // ── Main pipeline ────────────────────────────────────────────────
 
-export async function prepare(lead: PlaceResult, industry?: string): Promise<PrepareResult> {
-  const resolvedIndustry = industry || classifyIndustry(lead.primaryType, lead.displayName.text);
+export async function prepare(lead: PlaceResult, industry?: string, regionId: string = 'my'): Promise<PrepareResult> {
+  // Load region config for name-based classification keywords
+  let regionNameKeywords: Record<string, RegExp> | undefined;
+  let locationHint = 'malaysia';
+  let skipWords: string[] = [];
+  try {
+    const { loadRegion } = require('../regions/loader');
+    const region = loadRegion(regionId);
+    regionNameKeywords = region.discovery.nameKeywords;
+    locationHint = region.photos.locationHint;
+    skipWords = region.discovery.skipWords;
+  } catch { /* fallback to defaults */ }
+
+  const resolvedIndustry = industry || classifyIndustry(lead.primaryType, lead.displayName.text, regionNameKeywords);
   const config = INDUSTRY_CONFIG[resolvedIndustry] || INDUSTRY_CONFIG.generic;
   const schemaOrgType = SCHEMA_ORG_TYPE[resolvedIndustry] || 'LocalBusiness';
   const slug = slugify(lead.displayName.text);
@@ -210,10 +241,10 @@ export async function prepare(lead: PlaceResult, industry?: string): Promise<Pre
   const imgDir = path.join(outputDir, 'public/images');
   const jpgs = fs.readdirSync(imgDir).filter(f => f.endsWith('.jpg'));
   if (jpgs.length < 3) {
-    const photoKeywords = extractPhotoKeywords(lead, resolvedIndustry);
+    const photoKeywords = extractPhotoKeywords(lead, resolvedIndustry, skipWords);
     console.error(`  Only ${jpgs.length} photos, fetching stock...`);
     console.error(`  Stock photo keywords: ${photoKeywords.join(', ')}`);
-    await downloadStockPhotos(resolvedIndustry, imgDir, 3 - jpgs.length, photoKeywords);
+    await downloadStockPhotos(resolvedIndustry, imgDir, 3 - jpgs.length, photoKeywords, locationHint);
   }
 
   // 4. Extract brand colors (WCAG-safe)
@@ -258,8 +289,13 @@ export async function prepare(lead: PlaceResult, industry?: string): Promise<Pre
   console.error('  Generating business.ts skeleton...');
   generateBusinessSkeleton(lead, resolvedIndustry, colors, config, allJpgs, slug, outputDir);
 
-  // 10. Save lead.json for traceability
-  saveLeadJson(lead, resolvedIndustry, outputDir);
+  // 10. Resolve archetype
+  const archetypeMapping = resolveArchetype(resolvedIndustry);
+  const archetype = archetypeMapping.primary;
+  console.error(`  Archetype: ${archetype}${archetypeMapping.secondary ? ` (secondary: ${archetypeMapping.secondary})` : ''}`);
+
+  // 11. Save lead.json for traceability
+  saveLeadJson(lead, resolvedIndustry, archetype, regionId, outputDir);
 
   console.error(`  ✓ Ready for design at ${outputDir}`);
 
@@ -270,6 +306,9 @@ export async function prepare(lead: PlaceResult, industry?: string): Promise<Pre
     outputDir,
     slug,
     industry: resolvedIndustry,
+    archetype,
+    archetypeMapping,
+    regionId,
     brandColors: colors,
     photos: allJpgs,
     photoCount: allJpgs.length,
@@ -301,6 +340,7 @@ if (require.main === module) {
   const leadJson = getArg(args, 'lead', '');
   const leadFile = getArg(args, 'lead-file', '');
   const industry = getArg(args, 'industry', '');
+  const regionId = getArg(args, 'region', 'my');
   const index = parseInt(getArg(args, 'index', '0'), 10);
 
   if (!leadJson && !leadFile) {
@@ -349,7 +389,7 @@ if (require.main === module) {
     process.exit(1);
   }
 
-  prepare(lead, industry || undefined)
+  prepare(lead, industry || undefined, regionId)
     .then((result) => {
       // stdout: clean JSON for Claude to consume
       console.log(JSON.stringify(result, null, 2));

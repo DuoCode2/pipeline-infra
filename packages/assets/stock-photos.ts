@@ -35,6 +35,12 @@ const INDUSTRY_PHOTO_KEYWORDS: Record<string, string[]> = {
   service: ['professional office interior', 'workshop workspace', 'service counter'],
   automotive: ['auto repair shop garage', 'car service mechanic', 'automotive workshop tools'],
   tech: ['phone repair shop', 'electronics workshop tools', 'computer repair store'],
+  education: ['classroom interior modern', 'tuition center study', 'school learning environment'],
+  pet: ['pet grooming salon', 'veterinary clinic interior', 'pet shop display'],
+  events: ['wedding venue decoration', 'event photography studio', 'party venue setup'],
+  hospitality: ['hotel lobby interior', 'resort room luxury', 'homestay cozy bedroom'],
+  realestate: ['modern house exterior', 'property office interior', 'apartment building'],
+  community: ['community center gathering', 'mosque interior', 'temple architecture'],
   generic: ['small business storefront', 'modern office interior', 'workspace professional'],
 };
 
@@ -49,7 +55,8 @@ export async function downloadStockPhotos(
   industry: string,
   outputDir: string,
   count: number = 3,
-  keywords?: string[]
+  keywords?: string[],
+  locationHint: string = 'malaysia'
 ): Promise<{ files: string[]; attribution: Attribution }> {
   fs.mkdirSync(outputDir, { recursive: true });
 
@@ -57,15 +64,16 @@ export async function downloadStockPhotos(
   const searchTerms = keywords?.length
     ? keywords.join(' ')
     : (INDUSTRY_PHOTO_KEYWORDS[industry] || INDUSTRY_PHOTO_KEYWORDS.generic)[0];
-  const query = `${searchTerms} malaysia`;
+  const query = locationHint ? `${searchTerms} ${locationHint}` : searchTerms;
 
   let data = await fetchUnsplash(query, count);
 
   // Retry with broadened query if no results
   if (data.results.length === 0 && keywords?.length) {
     const fallback = (INDUSTRY_PHOTO_KEYWORDS[industry] || INDUSTRY_PHOTO_KEYWORDS.generic)[0];
-    console.warn(`  No Unsplash results for "${query}", retrying with "${fallback} malaysia"...`);
-    data = await fetchUnsplash(`${fallback} malaysia`, count);
+    const retryQuery = locationHint ? `${fallback} ${locationHint}` : fallback;
+    console.warn(`  No Unsplash results for "${query}", retrying with "${retryQuery}"...`);
+    data = await fetchUnsplash(retryQuery, count);
   }
 
   // Second fallback: just industry name

@@ -1,7 +1,42 @@
+// Locales are set dynamically per region during scaffolding.
+// Default: ['en', 'ms', 'zh-CN', 'zh-TW'] for Malaysia.
 export const locales = ['en', 'ms', 'zh-CN', 'zh-TW'] as const;
 export type Locale = (typeof locales)[number];
 
+// ── Shared sub-types ────────────────────────────────────────────
+
+interface SectionGroup {
+  category: string;
+  items: Array<{
+    name: string;
+    description?: string;
+    price?: string;
+    image?: string;
+    tags?: string[];
+    popular?: boolean;
+  }>;
+}
+
+interface StaffMember {
+  name: string;
+  role: string;
+  image?: string;
+  bio?: string;
+  specialties?: string[];
+}
+
+interface PricingTier {
+  name: string;
+  price: string;
+  period?: string;
+  features: string[];
+  popular?: boolean;
+}
+
+// ── BusinessContent ─────────────────────────────────────────────
+
 export interface BusinessContent {
+  // --- Core (all archetypes) ---
   meta: { title: string; description: string; ogImage?: string };
   hero: {
     title: string;
@@ -25,6 +60,52 @@ export interface BusinessContent {
   trustBar?: {
     items: Array<{ icon: string; label: string; value: string }>;
   };
+
+  // --- MENU + ORDER archetype ---
+  menu?: { categories: SectionGroup[] };
+  ordering?: {
+    delivery?: string;
+    pickup?: string;
+    platforms?: Array<{ name: string; url: string }>;
+  };
+  reservations?: { url?: string; phone?: string; note?: string };
+
+  // --- BOOKING + SERVICES archetype ---
+  services?: SectionGroup[];
+  staff?: StaffMember[];
+  beforeAfter?: Array<{ before: string; after: string; caption?: string }>;
+
+  // --- LEAD GENERATION + TRUST archetype ---
+  credentials?: Array<{ label: string; value: string; icon?: string }>;
+  serviceAreas?: { areas: string[]; mapNote?: string };
+  caseStudies?: Array<{ title: string; summary: string; result?: string; image?: string }>;
+  faq?: Array<{ question: string; answer: string }>;
+
+  // --- E-COMMERCE + CATALOG archetype ---
+  products?: { categories: SectionGroup[] };
+
+  // --- PORTFOLIO + GALLERY archetype ---
+  portfolio?: { categories: Array<{ name: string; images: Array<{ src: string; caption?: string }> }> };
+  packages?: PricingTier[];
+
+  // --- MEMBERSHIP + SCHEDULE archetype ---
+  classes?: Array<{ name: string; day: string; time: string; instructor?: string; level?: string }>;
+  memberships?: PricingTier[];
+  trainers?: StaffMember[];
+
+  // --- PROPERTY + LISTING archetype ---
+  listings?: Array<{ title: string; price: string; image?: string; features?: string[]; url?: string }>;
+
+  // --- COMMUNITY + INFORMATION archetype ---
+  events?: Array<{ title: string; date: string; time?: string; description?: string; location?: string }>;
+  programs?: Array<{ name: string; description: string; schedule?: string }>;
+  donations?: { url?: string; note?: string; tiers?: Array<{ amount: string; label: string }> };
+  announcements?: Array<{ title: string; date: string; content: string }>;
+
+  // Generic section headings
+  sectionHeadings?: Record<string, string>;
+
+  // Escape hatch for custom sections
   [key: string]: any;
 }
 

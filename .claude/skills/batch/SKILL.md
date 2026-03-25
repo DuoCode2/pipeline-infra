@@ -1,6 +1,6 @@
 ---
 name: batch
-description: "Process multiple business leads in parallel. Each lead runs the full generate pipeline (prepare→design→finalize) as an independent agent. Use when user says 'batch', '批量', 'generate N sites', or provides multiple leads."
+description: "Process multiple business leads in parallel. Each lead runs the full generate pipeline (prepare→design→finalize) as an independent agent with archetype-aware design. Use when user says 'batch', '批量', 'generate N sites', or provides multiple leads."
 allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion]
 user-invocable: true
 ---
@@ -33,23 +33,27 @@ For each lead [i] in leads.json:
 
       ## Step 1: Prepare
       Run: npx tsx packages/pipeline/prepare.ts --lead-file leads.json --index {i}
-      Read the JSON output to get outputDir, slug, brandColors, photos, config.
+      Read the JSON output to get outputDir, slug, brandColors, photos, config, industry, archetype, regionId.
 
       ## Step 2: Design
       Read output/{slug}/brand-colors.json and photos in output/{slug}/public/images/.
+      Read .claude/skills/duocode-design/references/archetype-guide.md for the archetype design brief.
+      The prepare output includes 'archetype' — use it to determine what sections and demo features to build.
+
       Create:
-      1. src/app/[locale]/page.tsx — unique layout, visually distinct
-      2. src/components/*.tsx — custom components as needed
-      3. src/data/business.ts — fill all 4 locale content (en, ms, zh-CN, zh-TW)
+      1. src/app/[locale]/page.tsx — unique layout guided by archetype
+      2. src/components/*.tsx — archetype-specific components (menu, booking, catalog, etc.)
+      3. src/data/business.ts — fill all locale content with archetype-specific sections
+      4. Interactive demo features per archetype guide (frontend-only prototypes)
 
       Design rules:
       - Make ALL design decisions autonomously (fonts, layout, colors, copy)
+      - Archetype determines WHAT to build; frontend-design skill determines HOW to style
       - Use theme tokens: theme.onPrimary for text on primary bg, theme.onPrimaryDark for dark bg
       - NEVER hardcode color: white or text-white on colored backgrounds
       - NEVER use opacity < 1 on text elements
       - Headings sequential (h1 → h2 → h3), touch targets ≥ 44px
-      - Malaysia market: RM prices, +60 phone format, bilingual menus
-      - Read .claude/skills/duocode-design/references/malaysia-market.md for locale rules
+      - Read region market rules for formatting
       - Read .claude/skills/duocode-design/references/a11y-checklist.md for a11y rules
 
       ## Step 3: Finalize
@@ -57,7 +61,7 @@ For each lead [i] in leads.json:
       If quality-failed: fix the specific issues in the failures array, then re-run finalize (max 3 retries).
 
       ## Output
-      Return JSON: { slug, status, url, scores }
+      Return JSON: { slug, status, url, scores, industry, archetype }
     ",
     mode="bypassPermissions"
   )
@@ -69,9 +73,9 @@ For each lead [i] in leads.json:
 
 When all agents complete, report:
 ```
-✓ food-a: https://food-a.vercel.app (perf:95 a11y:100 seo:100)
-✓ food-b: https://food-b.vercel.app (perf:92 a11y:98 seo:97)
-✗ food-c: quality-failed after 3 retries
+✓ food-a (menu-order): https://food-a.vercel.app (perf:95 a11y:100 seo:100)
+✓ salon-b (booking-services): https://salon-b.vercel.app (perf:92 a11y:98 seo:97)
+✗ shop-c (ecommerce-catalog): quality-failed after 3 retries
 ```
 
 ## Fallback: CLI Automation (no Claude design)

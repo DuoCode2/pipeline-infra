@@ -7,10 +7,15 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "npx tsx tests/api-keys.test.ts && npx tsx tests/env.test.ts && npx tsx tests/discover.test.ts && npx tsx tests/deploy.test.ts",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit/",
+    "test:integration": "vitest run tests/integration/",
+    "test:e2e": "vitest run tests/e2e/",
+    "test:coverage": "vitest run --coverage",
+    "test:all": "vitest run && bash eval/run-all-evals.sh",
+    "test:legacy": "npx tsx tests/api-keys.test.ts && npx tsx tests/env.test.ts && npx tsx tests/discover.test.ts && npx tsx tests/deploy.test.ts",
     "test:keys": "npx tsx tests/api-keys.test.ts",
     "test:discover": "npx tsx tests/discover.test.ts",
-    "test:all": "bash tests/run-all.sh",
     "test:env": "npx tsx tests/env.test.ts",
     "test:deploy": "npx tsx tests/deploy.test.ts",
     "test:assets": "npx tsx tests/assets.test.ts",
@@ -48,9 +53,11 @@
     "@types/culori": "^4.0.1",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
+    "@vitest/coverage-v8": "^4.1.1",
     "lighthouse": "^13.0.0",
     "svgo": "^4.0.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.1"
   }
 }
