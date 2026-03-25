@@ -94,7 +94,15 @@ export const SCHEMA_ORG_TYPE: Record<string, string> = {
   generic: 'LocalBusiness',
 };
 
-export function classifyIndustry(mapsType: string | undefined): string {
+/**
+ * Classify a business into an industry. Two-level strategy:
+ * 1. Google Places primaryType → industry (most reliable)
+ * 2. Business name keywords → industry (fallback when primaryType is too generic)
+ *
+ * @param mapsType - Google Places primaryType (e.g. "cell_phone_store", "service")
+ * @param businessName - optional display name for keyword-based fallback
+ */
+export function classifyIndustry(mapsType: string | undefined, businessName?: string): string {
   const t = mapsType || '';
 
   // Exact matches first
@@ -154,6 +162,17 @@ export function classifyIndustry(mapsType: string | undefined): string {
   if (t.includes('beauty') || t.includes('hair') || t.includes('nail')) return 'beauty';
   if (t.includes('doctor') || t.includes('dent') || t.includes('medical') || t.includes('health')) return 'clinic';
   if (t.includes('sport') || t.includes('fitness') || t.includes('athletic')) return 'fitness';
+
+  // Level 2: Name-based fallback when primaryType is too generic (e.g. "service", "store")
+  if (businessName) {
+    const n = businessName.toLowerCase();
+    if (/phone|handphone|hp\b|smartphone|iphone|samsung|screen.?repair|gadget|mobile.?repair|device.?repair/i.test(n)) return 'tech';
+    if (/car\b|auto|motor|tyre|tire|brake|engine|mechanic|bengkel/i.test(n)) return 'automotive';
+    if (/salon|beauty|spa|hair|nail|barber|wax/i.test(n)) return 'beauty';
+    if (/restaurant|cafe|kopitiam|mamak|nasi|mee|bakery|kitchen|food|catering/i.test(n)) return 'food';
+    if (/clinic|dental|medical|hospital|pharmacy|farmasi/i.test(n)) return 'clinic';
+    if (/gym|fitness|yoga|martial|sport|swimming/i.test(n)) return 'fitness';
+  }
 
   return 'generic';
 }

@@ -956,7 +956,7 @@ async function processLead(
   lead: PlaceResult,
   config: Pick<BatchConfig, 'dryRun'>,
 ): Promise<BatchResult> {
-  const industry = classifyIndustry(lead.primaryType);
+  const industry = classifyIndustry(lead.primaryType, lead.displayName?.text);
   const name = lead.displayName?.text || 'unknown';
   const slug = slugify(name);
 

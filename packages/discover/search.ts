@@ -46,26 +46,6 @@ export interface PlaceResult {
   businessStatus?: string; // OPERATIONAL | CLOSED_TEMPORARILY | CLOSED_PERMANENTLY
 }
 
-/**
- * Check if a website URL is actually reachable (not a dead link).
- * Returns true if the site responds with 2xx/3xx within 5 seconds.
- */
-async function isWebsiteReachable(url: string): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(url, {
-      method: 'HEAD',
-      signal: controller.signal,
-      redirect: 'follow',
-    });
-    clearTimeout(timeout);
-    return res.ok || (res.status >= 300 && res.status < 400);
-  } catch {
-    return false; // timeout, DNS error, connection refused, etc.
-  }
-}
-
 interface SearchResponse {
   places?: PlaceResult[];
   nextPageToken?: string;
@@ -151,26 +131,9 @@ export async function searchPlaces(
   let finalResults: PlaceResult[];
 
   if (filterNoWebsite) {
-    // Quick filter: no websiteUri at all
-    const noSite = quality.filter((p) => !p.websiteUri);
-
-    // Also check: businesses whose listed website is unreachable (dead sites = good leads)
-    const withSite = quality.filter((p) => !!p.websiteUri);
-    const deadSites: PlaceResult[] = [];
-
-    for (const place of withSite) {
-      const alive = await isWebsiteReachable(place.websiteUri!);
-      if (!alive) {
-        console.error(`  Dead site: ${place.displayName.text} → ${place.websiteUri}`);
-        deadSites.push({ ...place, websiteUri: undefined }); // treat as no website
-      }
-    }
-
-    if (deadSites.length > 0) {
-      console.error(`Found ${deadSites.length} businesses with dead websites — added as leads`);
-    }
-
-    finalResults = [...noSite, ...deadSites];
+    // Simple rule: if Google Maps has ANY websiteUri, the business has
+    // web presence — skip it. Only generate for truly website-less businesses.
+    finalResults = quality.filter((p) => !p.websiteUri);
   } else {
     finalResults = quality;
   }

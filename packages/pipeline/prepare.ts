@@ -16,6 +16,30 @@ import {
 } from '../generate/industry-config';
 import { type PlaceResult } from '../discover/search';
 import { getArg } from '../utils/cli';
+import { logAction } from '../utils/n8n';
+
+// ── Industry-specific favicon SVGs ──────────────────────────────
+// Each returns a 32x32 SVG with rounded-rect background + icon path.
+const INDUSTRY_FAVICON: Record<string, (bg: string, fg: string) => string> = {
+  food: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M10 8v6c0 1.7 1.3 3 3 3v7h1V17c1.7 0 3-1.3 3-3V8h-1v5h-1V8h-1v5h-1V8h-1v5h-1V8zm10 0c-1.1 0-2 1.3-2 3v5h2v8h1V8z" fill="${fg}"/></svg>`,
+  beauty: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M16 6l1.8 5.5H23l-4.2 3 1.6 5.1L16 16.5l-4.4 3.1 1.6-5.1-4.2-3h5.2z" fill="${fg}"/></svg>`,
+  clinic: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M14 8h4v6h6v4h-6v6h-4v-6H8v-4h6z" fill="${fg}"/></svg>`,
+  retail: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M10 10h12l-1.5 10h-9zM13 8v2M19 8v2" stroke="${fg}" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`,
+  fitness: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M6 16h2v-4h3v-2h2v12h-2v-2H8v-4H6zm20 0h-2v-4h-3v-2h-2v12h2v-2h3v-4h2z" fill="${fg}"/><rect x="13" y="14" width="6" height="4" rx="1" fill="${fg}"/></svg>`,
+  service: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M12.5 7a5 5 0 014.9 6l6.6 6.6a2 2 0 01-2.8 2.8L14.6 16A5 5 0 1112.5 7zm0 2a3 3 0 100 6 3 3 0 000-6z" fill="${fg}"/></svg>`,
+  automotive: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M16 7a9 9 0 110 18 9 9 0 010-18zm0 3a6 6 0 100 12 6 6 0 000-12zm0 2.5a1 1 0 011 1v1.8l1.3.7a1 1 0 01-.9 1.8L16 17v-3.5a1 1 0 011-1z" fill="${fg}" fill-rule="evenodd"/></svg>`,
+  tech: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><rect x="10" y="6" width="12" height="20" rx="2" stroke="${fg}" stroke-width="2" fill="none"/><circle cx="16" cy="22" r="1.5" fill="${fg}"/></svg>`,
+  generic: (bg, fg) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="${bg}"/><path d="M7 24V14l9-6 9 6v10H7zm4-8v5h4v-5zm7 0v5h4v-5z" fill="${fg}"/></svg>`,
+};
 
 export interface PrepareResult {
   outputDir: string;
@@ -76,7 +100,7 @@ function generateBusinessSkeleton(
       meta: { title: ${JSON.stringify(name)}, description: "" },
       hero: { title: "", subtitle: "", cta: "", image: ${JSON.stringify(hero)} },
       hours: ${JSON.stringify(hours)},
-      location: { address: ${JSON.stringify(address)}, mapsUrl: ${JSON.stringify(mapsUrl)} },
+      location: { address: ${JSON.stringify(address)}, mapsUrl: ${JSON.stringify(mapsUrl)}${lead.location ? `, coordinates: { lat: ${lead.location.latitude}, lng: ${lead.location.longitude} }` : ''} },
       contact: { phone: ${JSON.stringify(phone)}${whatsapp ? `, whatsapp: ${JSON.stringify(whatsapp)}` : ''} },
       reviews: { rating: ${rating}, count: ${reviewCount}, featured: [] },
       trustBar: {
@@ -162,7 +186,7 @@ function saveLeadJson(lead: PlaceResult, industry: string, outputDir: string) {
 // ── Main pipeline ────────────────────────────────────────────────
 
 export async function prepare(lead: PlaceResult, industry?: string): Promise<PrepareResult> {
-  const resolvedIndustry = industry || classifyIndustry(lead.primaryType);
+  const resolvedIndustry = industry || classifyIndustry(lead.primaryType, lead.displayName.text);
   const config = INDUSTRY_CONFIG[resolvedIndustry] || INDUSTRY_CONFIG.generic;
   const schemaOrgType = SCHEMA_ORG_TYPE[resolvedIndustry] || 'LocalBusiness';
   const slug = slugify(lead.displayName.text);
@@ -224,11 +248,11 @@ export async function prepare(lead: PlaceResult, industry?: string): Promise<Pre
   // 8. Write SVG decorations
   writeSvgDecorations(resolvedIndustry, outputDir);
 
-  // 8b. Generate unique favicon from brand colors + business initial
-  const initial = (lead.displayName?.text || 'B').charAt(0).toUpperCase();
-  const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="${colors.primary}"/><text x="16" y="22" text-anchor="middle" fill="${colors.onPrimary}" font-size="18" font-family="system-ui" font-weight="700">${initial}</text></svg>`;
+  // 8b. Generate industry-specific favicon from brand colors
+  const faviconFn = INDUSTRY_FAVICON[resolvedIndustry] || INDUSTRY_FAVICON.generic;
+  const faviconSvg = faviconFn(colors.primary, colors.onPrimary);
   fs.writeFileSync(path.join(outputDir, 'public/favicon.svg'), faviconSvg);
-  console.error(`  Favicon: ${initial} on ${colors.primary}`);
+  console.error(`  Favicon: ${resolvedIndustry} icon on ${colors.primary}`);
 
   // 9. Generate business.ts skeleton
   console.error('  Generating business.ts skeleton...');
@@ -240,8 +264,7 @@ export async function prepare(lead: PlaceResult, industry?: string): Promise<Pre
   console.error(`  ✓ Ready for design at ${outputDir}`);
 
   // Notify n8n (optional, fire-and-forget)
-  const { logAction } = require('../utils/n8n') as typeof import('../utils/n8n');
-  logAction({ place_id: lead.id, slug, action: 'prepared', result: outputDir });
+  logAction({ place_id: lead.id, slug, action: 'prepared', result: outputDir, industry: resolvedIndustry });
 
   const result: PrepareResult = {
     outputDir,

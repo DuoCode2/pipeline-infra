@@ -15,6 +15,8 @@ import { deployToVercel } from '../deploy/deploy';
 import { publishGeneratedSite } from '../deploy/publish';
 import { runLocalQualityGate } from '../quality/serve-and-check';
 import { getArg, hasFlag } from '../utils/cli';
+import { SUPPORTED_LOCALES } from '../utils/env';
+import { logAction } from '../utils/n8n';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -65,12 +67,13 @@ export async function finalize(options: {
         timeout: 120_000,
       });
     } catch (err: unknown) {
-      const stderr =
-        err && typeof err === 'object' && 'stderr' in err
-          ? (err as { stderr: Buffer }).stderr?.toString()
-          : err instanceof Error
-            ? err.message
-            : String(err);
+      let stderr: string;
+      if (err && typeof err === 'object' && 'stderr' in err) {
+        const buf = (err as Record<string, unknown>).stderr;
+        stderr = buf instanceof Buffer ? buf.toString() : String(buf);
+      } else {
+        stderr = err instanceof Error ? err.message : String(err);
+      }
       log('Build FAILED');
       return { status: 'build-failed', error: stderr };
     }
@@ -98,7 +101,7 @@ export async function finalize(options: {
   // ------------------------------------------------------------------
   // 3. Generate sitemap.xml
   // ------------------------------------------------------------------
-  const locales = ['en', 'ms', 'zh-CN', 'zh-TW'];
+  const locales = SUPPORTED_LOCALES;
   const sitemapUrls = locales
     .map((l) => `  <url><loc>https://${slug}.vercel.app/${l}</loc></url>`)
     .join('\n');
@@ -173,8 +176,17 @@ ${sitemapUrls}
   }
 
   // Log to n8n (optional, fire-and-forget)
-  const { logAction } = require('../utils/n8n') as typeof import('../utils/n8n');
-  logAction({ place_id: slug, action: 'deployed', result: deploy.url, url: deploy.url, qa_score: scores });
+  let placeId = slug;
+  let industry: string | undefined;
+  const leadJsonPath = path.join(dir, 'lead.json');
+  if (fs.existsSync(leadJsonPath)) {
+    try {
+      const leadData = JSON.parse(fs.readFileSync(leadJsonPath, 'utf8'));
+      if (leadData.place_id) placeId = leadData.place_id;
+      if (leadData.industry) industry = leadData.industry;
+    } catch { /* ignore parse errors */ }
+  }
+  logAction({ place_id: placeId, slug, action: 'deployed', result: deploy.url, url: deploy.url, industry, qa_score: scores });
 
   return { status: 'deployed', url: deploy.url, scores };
 }

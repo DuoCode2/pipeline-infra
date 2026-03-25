@@ -12,3 +12,15 @@ export function requireEnv(key: string): string {
   }
   return value;
 }
+
+/**
+ * Get an optional environment variable with a fallback.
+ */
+export function optionalEnv(key: string, fallback: string): string {
+  return process.env[key] || fallback;
+}
+
+// ── Shared pipeline constants ────────────────────────────────────
+
+export const SUPPORTED_LOCALES = ['en', 'ms', 'zh-CN', 'zh-TW'] as const;
+export type Locale = (typeof SUPPORTED_LOCALES)[number];

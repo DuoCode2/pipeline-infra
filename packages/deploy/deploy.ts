@@ -103,30 +103,28 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   const deployment = (await res.json()) as DeploymentState;
   console.log(`Deployment created: ${deployment.url} (${deployment.readyState})`);
 
-  // Wait for READY (max 60s)
-  let lastStatus: DeploymentState | undefined;
-  for (let i = 0; i < 12; i++) {
-    await new Promise(r => setTimeout(r, 5000));
+  // Wait for READY
+  const POLL_INTERVAL_MS = 5_000;
+  const POLL_TIMEOUT_MS = 120_000;
+  const maxPolls = Math.ceil(POLL_TIMEOUT_MS / POLL_INTERVAL_MS);
+
+  for (let i = 0; i < maxPolls; i++) {
+    await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
     const check = await fetch(`${VERCEL_API}/v13/deployments/${deployment.id}`, {
       headers: { 'Authorization': `Bearer ${VERCEL_TOKEN}` },
     });
     const status = await check.json() as DeploymentState;
-    lastStatus = status;
     if (status.readyState === 'READY') {
       const prodUrl = resolveDeploymentUrl(deployment, status);
       console.log(`Deployed: ${prodUrl}`);
       return { url: prodUrl, projectId: slug, deploymentId: deployment.id };
     }
     if (status.readyState === 'ERROR') {
-      throw new Error('Vercel deployment failed');
+      throw new Error(`Vercel deployment failed (id=${deployment.id}, state=${status.readyState})`);
     }
   }
 
-  return {
-    url: resolveDeploymentUrl(deployment, lastStatus),
-    projectId: slug,
-    deploymentId: deployment.id,
-  };
+  throw new Error(`Vercel deployment timed out after ${POLL_TIMEOUT_MS / 1000}s (id=${deployment.id})`);
 }
 
 // CLI

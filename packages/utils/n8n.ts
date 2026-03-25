@@ -9,7 +9,7 @@
  * API mode is optional and enables health checks, execution logs, etc.
  */
 
-const DEFAULT_BASE_URL = 'http://localhost:5678';
+import { optionalEnv } from './env';
 
 export interface N8nConfig {
   baseUrl?: string;
@@ -19,9 +19,9 @@ export interface N8nConfig {
 
 function getConfig(): N8nConfig {
   return {
-    baseUrl: process.env.N8N_BASE_URL || DEFAULT_BASE_URL,
-    apiKey: process.env.N8N_API_KEY || '',
-    webhookUrl: process.env.N8N_WEBHOOK_URL || '',
+    baseUrl: optionalEnv('N8N_BASE_URL', 'http://localhost:5678'),
+    apiKey: optionalEnv('N8N_API_KEY', ''),
+    webhookUrl: optionalEnv('N8N_WEBHOOK_URL', ''),
   };
 }
 
@@ -108,11 +108,29 @@ export async function logAction(data: {
   action: string;
   result?: string;
   url?: string;
+  industry?: string;
   qa_score?: Record<string, number>;
 }): Promise<void> {
   const { webhookUrl } = getConfig();
   if (!webhookUrl) return; // silently skip if not configured
-  await postWebhook(webhookUrl, data).catch(() => {}); // fire and forget
+
+  const payload = { ...data, timestamp: new Date().toISOString() };
+  const MAX_RETRIES = 1;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await postWebhook(webhookUrl, payload).catch((err) => {
+      return { ok: false, status: 0, body: String(err) };
+    });
+
+    if (res.ok) return;
+
+    if (attempt < MAX_RETRIES) {
+      console.warn(`[n8n] logAction failed (attempt ${attempt + 1}), retrying in 2s... status=${res.status}`);
+      await new Promise((r) => setTimeout(r, 2000));
+    } else {
+      console.warn(`[n8n] logAction failed after ${MAX_RETRIES + 1} attempts: status=${res.status} body=${JSON.stringify(res.body)}`);
+    }
+  }
 }
 
 // ── CLI ───────────────────────────────────────────────────────────
@@ -127,6 +145,7 @@ if (require.main === module) {
         const running = await isN8nRunning();
         console.log(running ? 'n8n is running' : 'n8n is NOT running');
         process.exit(running ? 0 : 1);
+        break;
       }
       case 'workflows': {
         const { data } = await listWorkflows();

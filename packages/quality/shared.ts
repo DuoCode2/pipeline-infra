@@ -39,20 +39,7 @@ export interface QualityFailure {
 }
 
 // ── Load thresholds from .lighthouserc.json (single source of truth) ──
-
-const FALLBACK_THRESHOLDS: Record<string, number> = {
-  performance: 90,
-  accessibility: 95,
-  seo: 95,
-  'best-practices': 90,
-};
-
-const FALLBACK_LEVELS: Record<string, 'error' | 'warn'> = {
-  performance: 'warn',
-  accessibility: 'error',
-  seo: 'error',
-  'best-practices': 'error',
-};
+// No fallbacks — if the config is missing or malformed, fail fast.
 
 interface LighthouseRcAssertion {
   minScore?: number;
@@ -72,28 +59,31 @@ function loadThresholds(): {
   levels: Record<string, 'error' | 'warn'>;
 } {
   const rcPath = path.resolve(__dirname, '../../.lighthouserc.json');
-  try {
-    const rc: LighthouseRc = JSON.parse(fs.readFileSync(rcPath, 'utf8'));
-    const assertions = rc.ci?.assert?.assertions ?? {};
-    const thresholds: Record<string, number> = {};
-    const levels: Record<string, 'error' | 'warn'> = {};
+  const raw = fs.readFileSync(rcPath, 'utf8');
+  const rc: LighthouseRc = JSON.parse(raw);
+  const assertions = rc.ci?.assert?.assertions;
 
-    for (const [key, value] of Object.entries(assertions)) {
-      // Only extract category thresholds (categories:performance → performance)
-      const match = key.match(/^categories:(.+)$/);
-      if (match && Array.isArray(value) && value[1]?.minScore != null) {
-        const categoryName = match[1];
-        thresholds[categoryName] = Math.round(value[1].minScore * 100);
-        levels[categoryName] = value[0] === 'warn' ? 'warn' : 'error';
-      }
-    }
-
-    return Object.keys(thresholds).length > 0
-      ? { thresholds, levels }
-      : { thresholds: FALLBACK_THRESHOLDS, levels: FALLBACK_LEVELS };
-  } catch {
-    return { thresholds: FALLBACK_THRESHOLDS, levels: FALLBACK_LEVELS };
+  if (!assertions) {
+    throw new Error(`.lighthouserc.json missing ci.assert.assertions`);
   }
+
+  const thresholds: Record<string, number> = {};
+  const levels: Record<string, 'error' | 'warn'> = {};
+
+  for (const [key, value] of Object.entries(assertions)) {
+    const match = key.match(/^categories:(.+)$/);
+    if (match && Array.isArray(value) && value[1]?.minScore != null) {
+      const categoryName = match[1];
+      thresholds[categoryName] = Math.round(value[1].minScore * 100);
+      levels[categoryName] = value[0] === 'warn' ? 'warn' : 'error';
+    }
+  }
+
+  if (Object.keys(thresholds).length === 0) {
+    throw new Error(`.lighthouserc.json has no category thresholds`);
+  }
+
+  return { thresholds, levels };
 }
 
 const loaded = loadThresholds();
@@ -137,7 +127,9 @@ export function evaluateLighthouseReport(
 
     for (const ref of category.auditRefs ?? []) {
       const audit = audits[ref.id];
-      if (!audit || audit.score === null || (audit.score ?? 1) >= 0.9) {
+      // Only surface audits scoring below the category's own threshold
+      const auditThreshold = (threshold / 100);
+      if (!audit || audit.score === null || (audit.score ?? 1) >= auditThreshold) {
         continue;
       }
 

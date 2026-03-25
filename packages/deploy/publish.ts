@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { optionalEnv } from '../utils/env';
 
 interface PublishOptions {
   dir: string;
@@ -18,9 +19,9 @@ export interface PublishResult {
   repo: string;
 }
 
-const DEFAULT_OWNER = process.env.GIT_OWNER || 'DuoCode2';
-const DEFAULT_USER_NAME = process.env.GIT_USER_NAME || 'LiuWei';
-const DEFAULT_USER_EMAIL = process.env.GIT_USER_EMAIL || 'sunflowers0607@outlook.com';
+const DEFAULT_OWNER = optionalEnv('GIT_OWNER', 'DuoCode2');
+const DEFAULT_USER_NAME = optionalEnv('GIT_USER_NAME', 'LiuWei');
+const DEFAULT_USER_EMAIL = optionalEnv('GIT_USER_EMAIL', 'sunflowers0607@outlook.com');
 const DEFAULT_IGNORE_ENTRIES = ['.next/', 'node_modules/', '.vercel/'];
 
 function run(command: string, cwd: string): string {
