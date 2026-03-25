@@ -17,10 +17,10 @@ Three steps: **prepare** (mechanical) → **design** (creative) → **finalize**
 
 ```bash
 # Find leads and save to file
-npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "restaurant" --limit 1 --out leads.json
+npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "food" --limit 1 --out leads.json
 
 # Prepare from file (takes first lead by default, use --index N for others)
-npx tsx packages/pipeline/prepare.ts --lead-file leads.json --index 0 --industry restaurant
+npx tsx packages/pipeline/prepare.ts --lead-file leads.json --index 0 --industry food
 ```
 
 Or inline (PlaceResult JSON format):

@@ -13,7 +13,7 @@ All agents run concurrently. No sequential bottleneck.
 ## Step 1: Discover
 
 ```bash
-npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "restaurant" --limit 3 --out leads.json
+npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "food" --limit 3 --out leads.json
 ```
 
 **IMPORTANT**: search.ts defaults to `--no-website` filter (only businesses WITHOUT a website). Do NOT use `--include-all`. Verify by checking that no `websiteUri` field exists in leads.json.
@@ -69,13 +69,13 @@ For each lead [i] in leads.json:
 
 When all agents complete, report:
 ```
-✓ restaurant-a: https://restaurant-a.vercel.app (perf:95 a11y:100 seo:100)
-✓ restaurant-b: https://restaurant-b.vercel.app (perf:92 a11y:98 seo:97)
-✗ restaurant-c: quality-failed after 3 retries
+✓ food-a: https://food-a.vercel.app (perf:95 a11y:100 seo:100)
+✓ food-b: https://food-b.vercel.app (perf:92 a11y:98 seo:97)
+✗ food-c: quality-failed after 3 retries
 ```
 
 ## Fallback: CLI Automation (no Claude design)
 ```bash
-npx tsx packages/batch/orchestrate.ts --city "Kuala Lumpur" --categories "restaurant" --batch-size 3
+npx tsx packages/batch/orchestrate.ts --city "Kuala Lumpur" --categories "food" --batch-size 3
 ```
 Uses generic fallback page instead of bespoke design. Good for smoke tests.

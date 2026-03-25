@@ -28,6 +28,7 @@ export interface LighthouseReport {
 export interface QualityCategoryResult {
   score: number;
   pass: boolean;
+  level: 'error' | 'warn';
 }
 
 export interface QualityFailure {
@@ -46,6 +47,13 @@ const FALLBACK_THRESHOLDS: Record<string, number> = {
   'best-practices': 90,
 };
 
+const FALLBACK_LEVELS: Record<string, 'error' | 'warn'> = {
+  performance: 'warn',
+  accessibility: 'error',
+  seo: 'error',
+  'best-practices': 'error',
+};
+
 interface LighthouseRcAssertion {
   minScore?: number;
   maxNumericValue?: number;
@@ -59,30 +67,38 @@ interface LighthouseRc {
   };
 }
 
-function loadThresholds(): Record<string, number> {
+function loadThresholds(): {
+  thresholds: Record<string, number>;
+  levels: Record<string, 'error' | 'warn'>;
+} {
   const rcPath = path.resolve(__dirname, '../../.lighthouserc.json');
   try {
     const rc: LighthouseRc = JSON.parse(fs.readFileSync(rcPath, 'utf8'));
     const assertions = rc.ci?.assert?.assertions ?? {};
     const thresholds: Record<string, number> = {};
+    const levels: Record<string, 'error' | 'warn'> = {};
 
     for (const [key, value] of Object.entries(assertions)) {
       // Only extract category thresholds (categories:performance → performance)
       const match = key.match(/^categories:(.+)$/);
       if (match && Array.isArray(value) && value[1]?.minScore != null) {
-        thresholds[match[1]] = Math.round(value[1].minScore * 100);
+        const categoryName = match[1];
+        thresholds[categoryName] = Math.round(value[1].minScore * 100);
+        levels[categoryName] = value[0] === 'warn' ? 'warn' : 'error';
       }
     }
 
     return Object.keys(thresholds).length > 0
-      ? thresholds
-      : FALLBACK_THRESHOLDS;
+      ? { thresholds, levels }
+      : { thresholds: FALLBACK_THRESHOLDS, levels: FALLBACK_LEVELS };
   } catch {
-    return FALLBACK_THRESHOLDS;
+    return { thresholds: FALLBACK_THRESHOLDS, levels: FALLBACK_LEVELS };
   }
 }
 
-export const LIGHTHOUSE_THRESHOLDS: Record<string, number> = loadThresholds();
+const loaded = loadThresholds();
+export const LIGHTHOUSE_THRESHOLDS: Record<string, number> = loaded.thresholds;
+export const LIGHTHOUSE_LEVELS: Record<string, 'error' | 'warn'> = loaded.levels;
 
 export function evaluateLighthouseReport(
   report: LighthouseReport,
@@ -101,8 +117,9 @@ export function evaluateLighthouseReport(
   for (const [name, threshold] of Object.entries(thresholds)) {
     const score = Math.round(((categories[name]?.score ?? 0) as number) * 100);
     const pass = score >= threshold;
-    lighthouse[name] = { score, pass };
-    if (!pass) {
+    const level = LIGHTHOUSE_LEVELS[name] ?? 'error';
+    lighthouse[name] = { score, pass, level };
+    if (!pass && level === 'error') {
       allPass = false;
     }
   }

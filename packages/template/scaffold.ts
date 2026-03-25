@@ -18,7 +18,7 @@ const SHARED_CONFIG_FILES = [
 ];
 
 const INDUSTRY_SVGS: Record<string, Array<{ name: string; svg: string }>> = {
-  restaurant: [
+  food: [
     {
       name: 'steam',
       svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 60" fill="none"><title>Steam</title><path d="M20 50C20 50 25 30 30 30C35 30 30 50 35 50C40 50 35 30 40 30" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/><path d="M55 50C55 50 60 25 65 25C70 25 65 50 70 50C75 50 70 25 75 25" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.4"/><path d="M90 50C90 50 95 32 100 32C105 32 100 50 105 50" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.3"/></svg>',
@@ -46,6 +46,26 @@ const INDUSTRY_SVGS: Record<string, Array<{ name: string; svg: string }>> = {
     {
       name: 'cross',
       svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="none"><title>Medical</title><rect x="22" y="8" width="16" height="44" rx="3" stroke="currentColor" stroke-width="1.5" opacity="0.25"/><rect x="8" y="22" width="44" height="16" rx="3" stroke="currentColor" stroke-width="1.5" opacity="0.25"/></svg>',
+    },
+  ],
+  automotive: [
+    {
+      name: 'gear',
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none"><title>Gear</title><circle cx="40" cy="40" r="12" stroke="currentColor" stroke-width="2" opacity="0.3"/><circle cx="40" cy="40" r="20" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.2"/><path d="M40 16V8M40 72V64M16 40H8M72 40H64M23 23L17 17M63 63L57 57M23 57L17 63M63 17L57 23" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.25"/></svg>',
+    },
+    {
+      name: 'wrench',
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" fill="none"><title>Wrench</title><path d="M45 15C41 11 35 11 31 14L18 27C15 30 15 35 18 38L22 42C25 45 30 45 33 42L46 29C49 25 49 19 45 15Z" stroke="currentColor" stroke-width="1.5" opacity="0.3"/><path d="M22 42L10 54M38 18L50 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.25"/></svg>',
+    },
+  ],
+  tech: [
+    {
+      name: 'circuit',
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none"><title>Circuit</title><path d="M10 50H30M70 50H90M50 10V30M50 70V90" stroke="currentColor" stroke-width="1.5" opacity="0.25"/><path d="M30 30H70V70H30Z" stroke="currentColor" stroke-width="1.5" opacity="0.2"/><circle cx="30" cy="50" r="3" fill="currentColor" opacity="0.3"/><circle cx="70" cy="50" r="3" fill="currentColor" opacity="0.3"/><circle cx="50" cy="30" r="3" fill="currentColor" opacity="0.3"/><circle cx="50" cy="70" r="3" fill="currentColor" opacity="0.3"/></svg>',
+    },
+    {
+      name: 'chip',
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none"><title>Chip</title><rect x="20" y="20" width="40" height="40" rx="4" stroke="currentColor" stroke-width="1.5" opacity="0.25"/><rect x="30" y="30" width="20" height="20" rx="2" stroke="currentColor" stroke-width="1" opacity="0.3"/><path d="M28 15V20M40 15V20M52 15V20M28 60V65M40 60V65M52 60V65M15 28H20M15 40H20M15 52H20M60 28H65M60 40H65M60 52H65" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.2"/></svg>',
     },
   ],
   generic: [

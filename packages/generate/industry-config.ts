@@ -8,12 +8,28 @@ export interface IndustryDesign {
 }
 
 export const INDUSTRY_CONFIG: Record<string, IndustryDesign> = {
-  restaurant: {
+  food: {
     fontDisplay: 'Playfair Display',
     fontBody: 'Source Serif Pro',
     svgStyle: 'organic',
     colorWarmth: 'warm',
     heroStyle: 'full-bleed',
+    ctaStyle: 'rounded',
+  },
+  automotive: {
+    fontDisplay: 'Montserrat',
+    fontBody: 'Source Sans 3',
+    svgStyle: 'geometric',
+    colorWarmth: 'bold',
+    heroStyle: 'full-bleed',
+    ctaStyle: 'square',
+  },
+  tech: {
+    fontDisplay: 'Space Grotesk',
+    fontBody: 'Inter',
+    svgStyle: 'modern',
+    colorWarmth: 'cool',
+    heroStyle: 'split',
     ctaStyle: 'rounded',
   },
   beauty: {
@@ -67,7 +83,9 @@ export const INDUSTRY_CONFIG: Record<string, IndustryDesign> = {
 };
 
 export const SCHEMA_ORG_TYPE: Record<string, string> = {
-  restaurant: 'Restaurant',
+  food: 'Restaurant',
+  automotive: 'AutoRepair',
+  tech: 'Store',
   beauty: 'BeautySalon',
   clinic: 'Dentist',
   retail: 'Store',
@@ -81,34 +99,39 @@ export function classifyIndustry(mapsType: string | undefined): string {
 
   // Exact matches first
   const typeMap: Record<string, string> = {
-    restaurant: 'restaurant', cafe: 'restaurant', bakery: 'restaurant',
-    bar: 'restaurant', meal_delivery: 'restaurant', meal_takeaway: 'restaurant',
-    coffee_shop: 'restaurant', food_court: 'restaurant', ice_cream_shop: 'restaurant',
-    pizza_restaurant: 'restaurant', steak_house: 'restaurant', sushi_restaurant: 'restaurant',
+    restaurant: 'food', cafe: 'food', bakery: 'food',
+    bar: 'food', meal_delivery: 'food', meal_takeaway: 'food',
+    coffee_shop: 'food', food_court: 'food', ice_cream_shop: 'food',
+    pizza_restaurant: 'food', steak_house: 'food', sushi_restaurant: 'food',
+    car_repair: 'automotive', car_dealer: 'automotive', car_wash: 'automotive',
+    auto_parts_store: 'automotive', gas_station: 'automotive',
+    cell_phone_store: 'tech', electronics_store: 'tech', computer_store: 'tech',
     beauty_salon: 'beauty', hair_care: 'beauty', spa: 'beauty',
     hair_salon: 'beauty', nail_salon: 'beauty',
     dentist: 'clinic', doctor: 'clinic', hospital: 'clinic',
     pharmacy: 'clinic', physiotherapist: 'clinic', veterinary_care: 'clinic',
     dental_clinic: 'clinic', medical_lab: 'clinic',
     clothing_store: 'retail', shoe_store: 'retail', jewelry_store: 'retail',
-    electronics_store: 'retail', furniture_store: 'retail', book_store: 'retail',
+    furniture_store: 'retail', book_store: 'retail',
     shopping_mall: 'retail', supermarket: 'retail', convenience_store: 'retail',
     gym: 'fitness', stadium: 'fitness', sporting_goods_store: 'retail',
     sports_complex: 'fitness', athletic_field: 'fitness', swimming_pool: 'fitness',
     yoga_studio: 'fitness', martial_arts_school: 'fitness', dance_school: 'fitness',
     bowling_alley: 'fitness', sports_club: 'fitness', recreation_center: 'fitness',
     plumber: 'service', electrician: 'service', painter: 'service',
-    locksmith: 'service', moving_company: 'service', car_repair: 'service',
-    laundry: 'service', car_wash: 'service',
+    locksmith: 'service', moving_company: 'service',
+    laundry: 'service',
   };
   if (typeMap[t]) return typeMap[t];
 
   // Suffix matching: Google Maps returns compound types like "latin_american_restaurant"
   const suffixMap: [string, string][] = [
-    ['_restaurant', 'restaurant'],
-    ['_cafe', 'restaurant'],
-    ['_bakery', 'restaurant'],
-    ['_bar', 'restaurant'],
+    ['_restaurant', 'food'],
+    ['_cafe', 'food'],
+    ['_bakery', 'food'],
+    ['_bar', 'food'],
+    ['_repair', 'tech'],
+    ['_dealer', 'automotive'],
     ['_salon', 'beauty'],
     ['_spa', 'beauty'],
     ['_clinic', 'clinic'],
@@ -125,7 +148,9 @@ export function classifyIndustry(mapsType: string | undefined): string {
   }
 
   // Substring matching for remaining edge cases
-  if (t.includes('restaurant') || t.includes('food') || t.includes('eat')) return 'restaurant';
+  if (t.includes('auto') || t.includes('car') || t.includes('vehicle') || t.includes('motor')) return 'automotive';
+  if (t.includes('phone') || t.includes('computer') || t.includes('electron') || t.includes('tech')) return 'tech';
+  if (t.includes('restaurant') || t.includes('food') || t.includes('eat')) return 'food';
   if (t.includes('beauty') || t.includes('hair') || t.includes('nail')) return 'beauty';
   if (t.includes('doctor') || t.includes('dent') || t.includes('medical') || t.includes('health')) return 'clinic';
   if (t.includes('sport') || t.includes('fitness') || t.includes('athletic')) return 'fitness';

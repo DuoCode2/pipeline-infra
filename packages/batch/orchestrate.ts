@@ -56,7 +56,7 @@ interface IndustryContent {
 }
 
 const INDUSTRY_CONTENT: Record<string, IndustryContent> = {
-  restaurant: {
+  food: {
     taglines: [
       {
         en: 'Fresh flavours and neighborhood hospitality in every plate.',
@@ -1034,7 +1034,7 @@ if (require.main === module) {
 
   batch({
     city: getArg(args, 'city', 'Kuala Lumpur'),
-    categories: getArg(args, 'categories', 'restaurant').split(','),
+    categories: getArg(args, 'categories', 'food').split(','),
     batchSize: parseInt(getArg(args, 'batch-size', '2'), 10),
     dryRun: args.includes('--dry-run'),
   }).catch((err) => {

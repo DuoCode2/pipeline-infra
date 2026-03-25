@@ -105,7 +105,7 @@ async function fetchPage(
 
 /**
  * Search Google Maps Places API (New) for businesses.
- * @param category - business type (e.g., "restaurant")
+ * @param category - business type (e.g., "food")
  * @param city - city name (e.g., "Kuala Lumpur")
  * @param maxPages - max pages to fetch (1 page = up to 20 results, max 3)
  * @param filterNoWebsite - if true, only return places without a website
@@ -192,11 +192,11 @@ export async function searchPlaces(
   return finalResults;
 }
 
-// CLI usage: npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "restaurant" --limit 1
+// CLI usage: npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "food" --limit 1
 if (require.main === module) {
   const args = process.argv.slice(2);
   const city = getArg(args, 'city', 'Kuala Lumpur');
-  const category = getArg(args, 'category', 'restaurant');
+  const category = getArg(args, 'category', 'food');
   const limit = parseInt(getArg(args, 'limit', '1'), 10);
   // Default: filter out businesses WITH websites (we only want leads without sites)
   const includeAll = args.includes('--include-all');

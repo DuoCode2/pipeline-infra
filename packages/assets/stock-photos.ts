@@ -25,38 +25,61 @@ interface Attribution {
   }>;
 }
 
+/** Industry → search terms for stock photos (first term is primary) */
+const INDUSTRY_PHOTO_KEYWORDS: Record<string, string[]> = {
+  food: ['restaurant interior dining', 'cafe food plating', 'kitchen cooking'],
+  beauty: ['beauty salon interior', 'spa treatment room', 'hairdresser styling'],
+  clinic: ['medical clinic modern', 'dental office clean', 'healthcare interior'],
+  retail: ['retail store display', 'shop interior shelves', 'boutique storefront'],
+  fitness: ['gym interior equipment', 'fitness center modern', 'yoga studio'],
+  service: ['professional office interior', 'workshop workspace', 'service counter'],
+  automotive: ['auto repair shop garage', 'car service mechanic', 'automotive workshop tools'],
+  tech: ['phone repair shop', 'electronics workshop tools', 'computer repair store'],
+  generic: ['small business storefront', 'modern office interior', 'workspace professional'],
+};
+
 /**
  * Search and download stock photos from Unsplash.
  * @param industry - business industry for search query
  * @param outputDir - directory to save photos
  * @param count - number of photos (default 3)
+ * @param keywords - optional specific search keywords (overrides industry default)
  */
 export async function downloadStockPhotos(
   industry: string,
   outputDir: string,
-  count: number = 3
+  count: number = 3,
+  keywords?: string[]
 ): Promise<{ files: string[]; attribution: Attribution }> {
   fs.mkdirSync(outputDir, { recursive: true });
 
-  const query = `${industry} interior malaysia`;
-  const url = `${UNSPLASH_URL}?query=${encodeURIComponent(query)}&per_page=${count}`;
+  // Build query: prefer explicit keywords, else use industry map
+  const searchTerms = keywords?.length
+    ? keywords.join(' ')
+    : (INDUSTRY_PHOTO_KEYWORDS[industry] || INDUSTRY_PHOTO_KEYWORDS.generic)[0];
+  const query = `${searchTerms} malaysia`;
 
-  const res = await fetch(url, {
-    headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
-  });
+  let data = await fetchUnsplash(query, count);
 
-  if (!res.ok) {
-    throw new Error(`Unsplash API ${res.status}: ${await res.text()}`);
+  // Retry with broadened query if no results
+  if (data.results.length === 0 && keywords?.length) {
+    const fallback = (INDUSTRY_PHOTO_KEYWORDS[industry] || INDUSTRY_PHOTO_KEYWORDS.generic)[0];
+    console.warn(`  No Unsplash results for "${query}", retrying with "${fallback} malaysia"...`);
+    data = await fetchUnsplash(`${fallback} malaysia`, count);
   }
 
-  const data = (await res.json()) as { results: UnsplashPhoto[] };
+  // Second fallback: just industry name
+  if (data.results.length === 0) {
+    console.warn(`  Still no results, trying "${industry} business"...`);
+    data = await fetchUnsplash(`${industry} business`, count);
+  }
+
   const files: string[] = [];
   const attribution: Attribution = { source: 'unsplash', photos: [] };
 
   for (let i = 0; i < data.results.length; i++) {
     const photo = data.results[i];
 
-    // Download the regular size image
     const imgRes = await fetch(photo.urls.regular);
     if (!imgRes.ok) {
       console.warn(`Failed to download stock photo ${i}: ${imgRes.status}`);
@@ -88,10 +111,25 @@ export async function downloadStockPhotos(
   return { files, attribution };
 }
 
+/** Fetch from Unsplash API with orientation=landscape and content_filter=high */
+async function fetchUnsplash(query: string, count: number) {
+  const url = `${UNSPLASH_URL}?query=${encodeURIComponent(query)}&per_page=${count}&orientation=landscape&content_filter=high`;
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Unsplash API ${res.status}: ${await res.text()}`);
+  }
+
+  return (await res.json()) as { results: UnsplashPhoto[] };
+}
+
 // CLI usage
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const industry = getArg(args, 'industry', 'restaurant');
+  const industry = getArg(args, 'industry', 'food');
   const outputDir = getArg(args, 'output', 'output/test/public/images');
 
   downloadStockPhotos(industry, outputDir)

@@ -124,6 +124,27 @@ export const business: BusinessData = {
 
 // ── Save lead.json for traceability ──────────────────────────────
 
+/** Extract search keywords from lead data for stock photo queries */
+function extractPhotoKeywords(lead: PlaceResult, industry: string): string[] {
+  const keywords: string[] = [];
+
+  // Use primaryType as keyword (replace underscores with spaces)
+  if (lead.primaryType) {
+    keywords.push(lead.primaryType.replace(/_/g, ' '));
+  }
+
+  // Extract relevant words from business name
+  const skipWords = new Set(['sdn', 'bhd', 'enterprise', 'trading', 'the', 'and', 'or', 'di', 'dan']);
+  const nameWords = lead.displayName.text.toLowerCase()
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !skipWords.has(w));
+  if (nameWords.length > 0) {
+    keywords.push(nameWords.slice(0, 3).join(' '));
+  }
+
+  return keywords.length > 0 ? keywords : [industry];
+}
+
 function saveLeadJson(lead: PlaceResult, industry: string, outputDir: string) {
   fs.writeFileSync(path.join(outputDir, 'lead.json'), JSON.stringify({
     place_id: lead.id,
@@ -161,12 +182,14 @@ export async function prepare(lead: PlaceResult, industry?: string): Promise<Pre
     await downloadMapsPhotos(photoNames, path.join(outputDir, 'public/images'), 3);
   }
 
-  // 3. Stock photos if needed
+  // 3. Stock photos if needed (with keywords from lead)
   const imgDir = path.join(outputDir, 'public/images');
   const jpgs = fs.readdirSync(imgDir).filter(f => f.endsWith('.jpg'));
   if (jpgs.length < 3) {
+    const photoKeywords = extractPhotoKeywords(lead, resolvedIndustry);
     console.error(`  Only ${jpgs.length} photos, fetching stock...`);
-    await downloadStockPhotos(resolvedIndustry, imgDir, 3 - jpgs.length);
+    console.error(`  Stock photo keywords: ${photoKeywords.join(', ')}`);
+    await downloadStockPhotos(resolvedIndustry, imgDir, 3 - jpgs.length, photoKeywords);
   }
 
   // 4. Extract brand colors (WCAG-safe)
@@ -260,10 +283,10 @@ if (require.main === module) {
   if (!leadJson && !leadFile) {
     console.error(
       'Usage:\n' +
-      '  npx tsx packages/pipeline/prepare.ts --lead-file leads.json [--index 0] [--industry restaurant]\n' +
-      '  npx tsx packages/pipeline/prepare.ts --lead \'{"id":"...","displayName":{"text":"..."},...}\' [--industry restaurant]\n\n' +
+      '  npx tsx packages/pipeline/prepare.ts --lead-file leads.json [--index 0] [--industry food]\n' +
+      '  npx tsx packages/pipeline/prepare.ts --lead \'{"id":"...","displayName":{"text":"..."},...}\' [--industry food]\n\n' +
       'Typical workflow:\n' +
-      '  npx tsx packages/discover/search.ts --city "KL" --category "restaurant" --out leads.json\n' +
+      '  npx tsx packages/discover/search.ts --city "KL" --category "food" --out leads.json\n' +
       '  npx tsx packages/pipeline/prepare.ts --lead-file leads.json --index 0'
     );
     process.exit(1);

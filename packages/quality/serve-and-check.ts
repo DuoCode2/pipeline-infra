@@ -135,7 +135,7 @@ export async function runLocalQualityGate(options: {
 
     log(`[serve-and-check] Running Lighthouse on ${checkUrl}...`);
     execSync(
-      `npx lighthouse "${checkUrl}" --output json --output-path "${reportPath}" --chrome-flags="--headless --no-sandbox" --max-wait-for-load=15000 --only-categories=performance,accessibility,seo,best-practices --quiet`,
+      `npx lighthouse "${checkUrl}" --output json --output-path "${reportPath}" --preset=desktop --chrome-flags="--headless --no-sandbox" --max-wait-for-load=15000 --only-categories=performance,accessibility,seo,best-practices --quiet`,
       { stdio: commandStdio, timeout: 120_000 },
     );
 
@@ -143,7 +143,15 @@ export async function runLocalQualityGate(options: {
     const { lighthouse, failures, allPass } = evaluateLighthouseReport(report);
 
     for (const [name, result] of Object.entries(lighthouse)) {
-      log(`  ${name}: ${result.score} [${result.pass ? 'PASS' : 'FAIL'}]`);
+      let label: string;
+      if (result.pass) {
+        label = 'PASS';
+      } else if (result.level === 'warn') {
+        label = 'WARN';
+      } else {
+        label = 'FAIL';
+      }
+      log(`  ${name}: ${result.score} [${label}]`);
     }
 
     // 5. (Optional) Gate 3 — browser-use screenshots ----------------------

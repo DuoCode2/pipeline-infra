@@ -32,7 +32,9 @@
 ## Schema.org Types
 | Industry | @type |
 |----------|-------|
-| restaurant | Restaurant |
+| food | Restaurant |
+| automotive | AutoRepair |
+| tech | Store |
 | beauty | BeautySalon |
 | clinic | Dentist |
 | retail | Store |
