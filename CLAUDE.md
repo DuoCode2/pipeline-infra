@@ -6,7 +6,7 @@ Claude Code drives the full pipeline. Use `frontend-design` skill for all design
 - Use **AskUserQuestion tool** for user input — never plain text questions
 - Pipeline runs **end-to-end without pausing** — only stop if a gate fails after max retries
 - **ONLY generate sites for businesses WITHOUT a website** — discover defaults to no-website filter
-- All sites need **all region locales** (default Malaysia: en, ms, zh-CN, zh-TW)
+- Default locale is **English only** — multi-locale support is opt-in via `--locales en,ms,zh-CN`
 - Region market rules: see `.claude/skills/duocode-design/references/` (e.g. `malaysia-market.md`)
 - A11y rules: see `.claude/skills/duocode-design/references/a11y-checklist.md`
 - Archetype guide: see `.claude/skills/duocode-design/references/archetype-guide.md`
@@ -33,7 +33,7 @@ When running /generate or /batch, Claude must:
 | `npx tsx packages/pipeline/prepare.ts --lead '{"id":"...","displayName":{"text":"..."},...}'` | Prepare from inline JSON (PlaceResult format) |
 | `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/` | After design (build + quality + deploy) |
 
-All commands accept `--region` (default: `my` for Malaysia). Data flow: `search.ts` → `PlaceResult[]` → `prepare.ts` (via `--lead-file`).
+Data flow: `search.ts` → `PlaceResult[]` → `prepare.ts` (via `--lead-file`). Zero-config: any country auto-detected from address, English by default.
 
 ## Industries (15 types)
 `food` | `beauty` | `clinic` | `retail` | `fitness` | `service` | `automotive` | `tech` | `education` | `pet` | `events` | `hospitality` | `realestate` | `community` | `generic`

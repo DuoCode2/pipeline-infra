@@ -1,0 +1,221 @@
+[
+  {
+    "id": "ChIJp7_1-amxEmsRjNiguYfGdS0",
+    "nationalPhoneNumber": "(02) 8338 8580",
+    "formattedAddress": "155 Coward St, Mascot NSW 2020, Australia",
+    "location": {
+      "latitude": -33.9253873,
+      "longitude": 151.1931327
+    },
+    "rating": 4.3,
+    "googleMapsUri": "https://maps.google.com/?cid=3275742590219114636&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgEIAA",
+    "regularOpeningHours": {
+      "openNow": false,
+      "periods": [
+        {
+          "open": {
+            "day": 1,
+            "hour": 8,
+            "minute": 0
+          },
+          "close": {
+            "day": 1,
+            "hour": 18,
+            "minute": 0
+          }
+        },
+        {
+          "open": {
+            "day": 2,
+            "hour": 8,
+            "minute": 0
+          },
+          "close": {
+            "day": 2,
+            "hour": 18,
+            "minute": 0
+          }
+        },
+        {
+          "open": {
+            "day": 3,
+            "hour": 8,
+            "minute": 0
+          },
+          "close": {
+            "day": 3,
+            "hour": 18,
+            "minute": 0
+          }
+        },
+        {
+          "open": {
+            "day": 4,
+            "hour": 8,
+            "minute": 0
+          },
+          "close": {
+            "day": 4,
+            "hour": 18,
+            "minute": 0
+          }
+        },
+        {
+          "open": {
+            "day": 5,
+            "hour": 8,
+            "minute": 0
+          },
+          "close": {
+            "day": 5,
+            "hour": 18,
+            "minute": 0
+          }
+        },
+        {
+          "open": {
+            "day": 6,
+            "hour": 9,
+            "minute": 0
+          },
+          "close": {
+            "day": 6,
+            "hour": 15,
+            "minute": 0
+          }
+        }
+      ],
+      "weekdayDescriptions": [
+        "Monday: 8:00 AM – 6:00 PM",
+        "Tuesday: 8:00 AM – 6:00 PM",
+        "Wednesday: 8:00 AM – 6:00 PM",
+        "Thursday: 8:00 AM – 6:00 PM",
+        "Friday: 8:00 AM – 6:00 PM",
+        "Saturday: 9:00 AM – 3:00 PM",
+        "Sunday: Closed"
+      ],
+      "nextOpenTime": "2026-03-25T21:00:00Z"
+    },
+    "businessStatus": "OPERATIONAL",
+    "userRatingCount": 109,
+    "displayName": {
+      "text": "Mascot Auto Repairs",
+      "languageCode": "en"
+    },
+    "primaryType": "car_repair",
+    "photos": [
+      {
+        "name": "places/ChIJp7_1-amxEmsRjNiguYfGdS0/photos/AU_ZVEECTx6s1hvVvnJdPnr9hNQ_qbCyTON4vXt2nP0zzigWI1TmrMPd1PfPePNlj5kGf-vKzawg9ZQzT7qRfABEpJ8hnJldFFXb6EaHywPG2etzAL1KrTZNJhfeQwGJuc4zSgax_hIpOLEEcFeGNrRssazr6hfZMxhXxZ3aS6EHG0SVFeWGZlP0rybEFWAGcPRyvTs3YYKEG98Yz9-jhbNwOBu7Ju0BQZuoZA2ModXhWfDBok7wfh51VQxPYqNoxWR_zj2G_GFrLBxmdpIOZaGiGggsM1mtfR4KksXCU6KAfs3NbA",
+        "widthPx": 720,
+        "heightPx": 960,
+        "authorAttributions": [
+          {
+            "displayName": "Mascot Auto Repairs",
+            "uri": "https://maps.google.com/maps/contrib/117463589100160876030",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjXIxkQ-Hif-tpVSQbGcNk56yNaZLW_kxScuws35edfaE-GHXWY=s100-p-k-no-mo"
+          }
+        ],
+        "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipPvhz6uXzjeA6gd8u8AsKDLwpdViHO1aKK6u0cN&hl=en-US",
+        "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipPvhz6uXzjeA6gd8u8AsKDLwpdViHO1aKK6u0cN!2e10!4m2!3m1!1s0x6b12b1a9f9f5bfa7:0x2d75c687b9a0d88c"
+      },
+      {
+        "name": "places/ChIJp7_1-amxEmsRjNiguYfGdS0/photos/AU_ZVEEw1BtI1XGCTsWzwpfDqBDri-0jbb7SxX8iwMyFizFS4gWWt8VA_tgHI7RowZGi3nDIfipLpHPHNYPoEtQVtNWA0KX-np8YWDcKtgeAC-40BbISkj7TfEM20SMiib011Hao3siKrgT7l0luFbCvUA_s9e2NNKc-sp_wPi_kpBmcDxK1R4k4j6I7FZAeDkjTFr-uexSNZaABH7vvCTNpSVJtTkzxp9kM7gaDB8ylIw7ML4RxmKLgNGeXgOXBrBXlwJsXOzQCool8pnS8PloM73UaWIm1mD1SpCOXRDJ0gZtzHdxAQzqX62Dn-M4BEYwQrBIz5rj724XSIk7oJdZbvvMZQvV5EeZG4lJQvW6v0QrUnMHMy00EEiHMrqAfZqKMEhgmmVNjNs-GU0bFhfcAKHRkMTBVyGqfCEFwQln0lFs",
+        "widthPx": 3824,
+        "heightPx": 2782,
+        "authorAttributions": [
+          {
+            "displayName": "Sun Wuyuan孙午元",
+            "uri": "https://maps.google.com/maps/contrib/107707534641413214736",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjVJW-7GGoL1zdvHP8c3_YWN7rgenDSnSDObwmx2bnVpphGWdR5M-w=s100-p-k-no-mo"
+          }
+        ],
+        "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sCIHM0ogKEICAgIDhvufhWQ&hl=en-US",
+        "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sCIHM0ogKEICAgIDhvufhWQ!2e10!4m2!3m1!1s0x6b12b1a9f9f5bfa7:0x2d75c687b9a0d88c"
+      },
+      {
+        "name": "places/ChIJp7_1-amxEmsRjNiguYfGdS0/photos/AU_ZVEEHSMyYZ44HuB7u9Xzov1dNQEKctJcVcXwsYLdUaJ1s-naUAArTsId6tUMZ_4J3AGeCKkE1_17cyWeh3-ZWPbfA8upLQjYCguzk6hhkJrUEbLLFue2AeMTvLMD2Pv5A5Lv_XWrw-wSYkFpmO40CMuMnr-iK57WEdNXLd9dmkiTc6L5w7ZblQxiehu43oPA6OYsjsaw_pnt1Dwg1upOavx8EdkDqUKGK791g_VJsvoGiovkkbr47kmei6ASt2z12i59c8XhDTmF4OafB-bKxMROZiB6rU2FOa7sRKrT2U7JgyB6fwX1lVNc-YYbZGUqiXtutPKn8hhwcC6kvl0-sHwVWUOovioxMCemLMC69p5CrzMvzkbbPT-190VwKnvPgiBD7NAB8Zzzpb_RZcssroZkMWrRDsDW_x20az8oahH7NYar-",
+        "widthPx": 2448,
+        "heightPx": 3264,
+        "authorAttributions": [
+          {
+            "displayName": "Steve Mavin",
+            "uri": "https://maps.google.com/maps/contrib/118103386380436701353",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjXhyJCXAbfNwtlLD9u_4gHvUSbDjDJ70LwWzJY2PIg8DXsG2RY=s100-p-k-no-mo"
+          }
+        ],
+        "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sCIHM0ogKEICAgIDE6oy-4gE&hl=en-US",
+        "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sCIHM0ogKEICAgIDE6oy-4gE!2e10!4m2!3m1!1s0x6b12b1a9f9f5bfa7:0x2d75c687b9a0d88c"
+      },
+      {
+        "name": "places/ChIJp7_1-amxEmsRjNiguYfGdS0/photos/AU_ZVEGrSS-W3oQeqH2lTgwEnVsHefKmyjvqGz4Clvx3s2wmz91SRbCWn8pBbuCFWp_OZ4Mp8DfXOco5GlmWAqypEUbGaxJzjHBBij9ra2iWZRhOCOLanrEAgRUrPwZpXzz4FlmmA80Wu-d3gmTwMcwjFDukRj5mzoG9NlF6q4NCGLBr6nKgKxU9QlENr8soCRO4cKDA5gkoFzytF4Po1b3nawSmkuJRR0fnT_K-o6kLMzKK2hkG_BWigxCLod-eWdF7OhVj--gEFVAlECEnF6T-R-lRs3oM69A5E9tsZelGjdIMp0-uEyswQ3VqoRjyquqPspdw94XW6Q2f54PpOzY3fpKS1YrOQRB3SxKP-natMQGN6GkiogisDDR3LzAU1ybSslT0crX6kUW027BytDZ9fZxciaKQOrh9NcB5BGwarY6fcA",
+        "widthPx": 1080,
+        "heightPx": 1920,
+        "authorAttributions": [
+          {
+            "displayName": "danny coles",
+            "uri": "https://maps.google.com/maps/contrib/115755545054592622472",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjVUmKrb2AvI6cXTSws1X8VRxguxV5f6yer63zru4NX1aTy36-1wDw=s100-p-k-no-mo"
+          }
+        ],
+        "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sCIHM0ogKEICAgIC40LvYOQ&hl=en-US",
+        "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sCIHM0ogKEICAgIC40LvYOQ!2e10!4m2!3m1!1s0x6b12b1a9f9f5bfa7:0x2d75c687b9a0d88c"
+      },
+      {
+        "name": "places/ChIJp7_1-amxEmsRjNiguYfGdS0/photos/AU_ZVEGfYLhFMt6kby6OvHboHOZWKIvhzCJCWSdWX7vx3sODhfVhjvMkypsUiA8U_uR5nHZUfbbahvRpNEOkDBYyB0sG4_Irzriao22fRvc7bdNORB8Uq2HBOvSWidHEy3rtBWU5MN22hIW8PfjKQyio5DLwjPGVk4agtxtrYyOJEt3qvZSq4vuH2GXMYeAuvFD9S0u0TPT_wLX55P68GtZsGpO9BEe2xPASUf_xtzv_zgzY2a5ZXQ6O827Qg8wJcdJskJmdOj3AmyCywyydQ_eIqynzpam7y819EltakNE--DaiuQ",
+        "widthPx": 960,
+        "heightPx": 720,
+        "authorAttributions": [
+          {
+            "displayName": "Mascot Auto Repairs",
+            "uri": "https://maps.google.com/maps/contrib/117463589100160876030",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjXIxkQ-Hif-tpVSQbGcNk56yNaZLW_kxScuws35edfaE-GHXWY=s100-p-k-no-mo"
+          }
+        ],
+        "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipMPCdOhiuCYYHst3UXxPjN3Q7uc_fCOR8fPj4b7&hl=en-US",
+        "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipMPCdOhiuCYYHst3UXxPjN3Q7uc_fCOR8fPj4b7!2e10!4m2!3m1!1s0x6b12b1a9f9f5bfa7:0x2d75c687b9a0d88c"
+      },
+      {
+        "name": "places/ChIJp7_1-amxEmsRjNiguYfGdS0/photos/AU_ZVEEYgDbN-dDJHlh37VJ842hlw-OnOpcZjvv11P7oNO6jNiPWR7AHgt7Y_p300e-gB86s-FcY2_pK2P3y6RIwHBQz7H6yytB_hCd93BQIfkTj0R0X2_TdKLGlOqO5CJkAHOKTNnMBrP2Vke1bPLNR9lLyEGgcVYXe2tsiETphqaV_MuuYyzfeh0w6B-eBkhLngfcxjrUBpP-7cyiC2g51nJ0tbr5K6GOjQG33jooK_Up_9AQjn2qwugZ6J0wsWV83AxpASZRzgk-eCBFPXHf9RbHHCRLoUcE7t4vHukKMbLzPjA",
+        "widthPx": 720,
+        "heightPx": 960,
+        "authorAttributions": [
+          {
+            "displayName": "Mascot Auto Repairs",
+            "uri": "https://maps.google.com/maps/contrib/117463589100160876030",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjXIxkQ-Hif-tpVSQbGcNk56yNaZLW_kxScuws35edfaE-GHXWY=s100-p-k-no-mo"
+          }
+        ],
+        "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipNL-sMchCzWlUKFpWv1iPlYlc5353riBGXQELxx&hl=en-US",
+        "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipNL-sMchCzWlUKFpWv1iPlYlc5353riBGXQELxx!2e10!4m2!3m1!1s0x6b12b1a9f9f5bfa7:0x2d75c687b9a0d88c"
+      },
+      {
+        "name": "places/ChIJp7_1-amxEmsRjNiguYfGdS0/photos/AU_ZVEHS2Gi6OHpo79qUL0ov8G-4_bMSoJn9MQkt9-gmuxMHPgI0Vbzv_cEtNnXSNPMEwOy3gAX3sE36j9u9SPCGQRlHBgvTKCpckP2lF0qNaNR_vZHFgg0j1IVrltAWfn-saErDCIKf6lBdJDL9j712-XtS341C6ASAQlss0Og4ANt2rUqrXtDO6KjqtegkWlQ-MCFe0SVFJQ2kQEJu0FRWEh33-zjXdIZRg_DimFET3viGRpcpXisQm5HfSutzkBwdDaprQPr0Ak6fobfySsrheVmv3-WJsIaV0AlhST_ZgvXmuQ",
+        "widthPx": 547,
+        "heightPx": 402,
+        "authorAttributions": [
+          {
+            "displayName": "Mascot Auto Repairs",
+            "uri": "https://maps.google.com/maps/contrib/117463589100160876030",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjXIxkQ-Hif-tpVSQbGcNk56yNaZLW_kxScuws35edfaE-GHXWY=s100-p-k-no-mo"
+          }
+        ],
+        "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipNXhjmtvJ0QH06EIjkT5J38riv7WrVSL2T7yhsm&hl=en-US",
+        "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipNXhjmtvJ0QH06EIjkT5J38riv7WrVSL2T7yhsm!2e10!4m2!3m1!1s0x6b12b1a9f9f5bfa7:0x2d75c687b9a0d88c"
+      },
+      {
+        "name": "places/ChIJp7_1-amxEmsRjNiguYfGdS0/photos/AU_ZVEEPHgUmZKk8Pa2JRKM8607hY3ThYoYTpYKVpeO6uYLjQRCZCu7-7i7yUjzCtaWdZOZW4Lqwdlrna5cz48TMKKAzfpRlKWC-GAZJ6uS9iDRfZwgCnLsVg3WfKrahnAvrpzk3CXpDNHfzOjfKcAWLhnLcYvFfyED4qEBoeK2ZHFss_kwRjBoR87m754CXNQNYOS_i35dy1-CEP4Wudvz5pm4D7VIkPuJDtgHmUtFDLNor7obldvmUlqvtybwmcaeAPwQcJ6ViQgAYDwVJGe2JaGkzn3QwtOOWlLugHZqUa--_xQ",
+        "widthPx": 640,
+        "heightPx": 308,
+        "authorAttributions": [
+          {
+            "displayName": "Mascot Auto Repairs",
+            "uri": "https://maps.google.com/maps/contrib/117463589100160876030",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjXIxkQ-Hif-tpVSQbGcNk56yNaZLW_kxScuws35edfaE-GHXWY=s100-p-k-no-mo"
+          }
+        ],
+        "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipNxv8F5gSod5pRcchAQTInrtfw642iIPg1E8cpW&hl=en-US",
+        "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipNxv8F5gSod5pRcchAQTInrtfw642iIPg1E8cpW!2e10!4m2!3m1!1s0x6b12b1a9f9f5bfa7:0x2d75c687b9a0d88c"
+      }
+    ]
+  }
+]

@@ -77,18 +77,14 @@ describe('optionalEnv', () => {
 // getLocalesForRegion
 // ---------------------------------------------------------------------------
 describe('getLocalesForRegion', () => {
-  it('returns MY locales by default (no argument)', () => {
-    expect(getLocalesForRegion()).toEqual(['en', 'ms', 'zh-CN', 'zh-TW']);
+  it('returns English-only by default (zero-config)', () => {
+    expect(getLocalesForRegion()).toEqual(['en']);
   });
 
-  it('returns MY locales when "my" is passed', () => {
-    expect(getLocalesForRegion('my')).toEqual(['en', 'ms', 'zh-CN', 'zh-TW']);
-  });
-
-  it('returns fallback locales for unknown region', () => {
-    // The implementation catches errors and returns the default MY locales
-    const result = getLocalesForRegion('xx');
-    expect(result).toEqual(['en', 'ms', 'zh-CN', 'zh-TW']);
+  it('returns English-only regardless of region argument', () => {
+    expect(getLocalesForRegion('my')).toEqual(['en']);
+    expect(getLocalesForRegion('au')).toEqual(['en']);
+    expect(getLocalesForRegion('xx')).toEqual(['en']);
   });
 
   it('returns an array of strings', () => {
@@ -99,12 +95,8 @@ describe('getLocalesForRegion', () => {
     }
   });
 
-  it('includes all 4 MY locales', () => {
-    const locales = getLocalesForRegion('my');
-    expect(locales).toHaveLength(4);
+  it('always includes en', () => {
+    const locales = getLocalesForRegion();
     expect(locales).toContain('en');
-    expect(locales).toContain('ms');
-    expect(locales).toContain('zh-CN');
-    expect(locales).toContain('zh-TW');
   });
 });

@@ -1,0 +1,46 @@
+{
+  "slug": "sample-restaurant",
+  "businessName": "Sample Restaurant",
+  "archetype": "menu-order",
+  "industry": "food",
+  "region": {
+    "country": "Australia",
+    "locales": ["en"],
+    "defaultLocale": "en",
+    "currency": { "symbol": "$", "code": "AUD" },
+    "phone": { "countryCode": "+61" }
+  },
+  "theme": {
+    "primary": "#B91C1C",
+    "primaryDark": "#7F1D1D",
+    "accent": "#F59E0B",
+    "surface": "#FFFBEB",
+    "textTitle": "#1C1917",
+    "textBody": "#44403C",
+    "onPrimary": "#FFFFFF",
+    "onPrimaryDark": "#FFFFFF",
+    "accentText": "#92400E",
+    "fontDisplay": "Playfair Display",
+    "fontBody": "Source Sans 3"
+  },
+  "assets": {
+    "heroImage": "/sites/sample-restaurant/images/hero.jpg",
+    "galleryImages": []
+  },
+  "content": {
+    "en": {
+      "meta": { "title": "Sample Restaurant", "description": "A great place to eat in Mascot, Sydney" },
+      "hero": { "title": "Welcome to Sample Restaurant", "subtitle": "Fresh flavours and welcoming hospitality", "cta": "View Menu" },
+      "hours": { "Monday": "11:00 AM - 9:00 PM", "Tuesday": "11:00 AM - 9:00 PM", "Wednesday": "11:00 AM - 9:00 PM" },
+      "location": { "address": "123 Botany Rd, Mascot NSW 2020, Australia", "mapsUrl": "https://maps.google.com" },
+      "contact": { "phone": "+61 2 1234 5678", "whatsapp": "61212345678" },
+      "reviews": { "rating": 4.5, "count": 120, "featured": [{ "author": "Sarah M.", "text": "Great food and service!", "rating": 5 }] }
+    }
+  },
+  "lead": {
+    "placeId": "sample-123",
+    "rating": 4.5,
+    "reviewCount": 120,
+    "discoveredAt": "2026-03-26T00:00:00Z"
+  }
+}

@@ -158,14 +158,8 @@ export async function searchPlaces(
 // CLI usage: npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "food" --limit 1 [--region my]
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const regionId = getArg(args, 'region', 'my');
 
-  // Load region config for default city
-  let defaultCity = 'Kuala Lumpur';
-  try {
-    const { loadRegion } = require('../regions/loader');
-    defaultCity = loadRegion(regionId).discovery.defaultCity;
-  } catch { /* fallback to hardcoded default */ }
+  const defaultCity = 'Kuala Lumpur';
 
   const city = getArg(args, 'city', defaultCity);
   const category = getArg(args, 'category', 'food');

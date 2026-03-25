@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'Source Sans 3', sans-serif;
+  --color-primary: #2563EB;
+  --color-primary-dark: #1E3A5F;
+  --color-accent: #F59E0B;
+  --color-surface: #FFFFFF;
+  --color-text-title: #111827;
+  --color-text-body: #374151;
+  --color-on-primary: #FFFFFF;
+  --color-on-primary-dark: #FFFFFF;
+  --color-accent-text: #92400E;
+}
+
+* { box-sizing: border-box; }
+body { font-family: var(--font-body); color: var(--color-text-body); }
+h1, h2, h3, h4, h5, h6 { font-family: var(--font-display); color: var(--color-text-title); }

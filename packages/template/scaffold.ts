@@ -95,7 +95,7 @@ function copyTree(sourceDir: string, targetDir: string): void {
   }
 }
 
-export function copyTemplates(industry: string, outputDir: string): void {
+export function copyTemplates(industry: string, outputDir: string, locales: string[] = ['en'], defaultLocale: string = 'en'): void {
   const industryDir = path.join(TEMPLATE_ROOT, industry);
 
   for (const fileName of SHARED_CONFIG_FILES) {
@@ -121,6 +121,41 @@ export function copyTemplates(industry: string, outputDir: string): void {
     path.join(industryDir, 'components'),
     path.join(outputDir, 'src/components'),
   );
+
+  // Rewrite i18n.ts with the provided locales
+  const i18nContent = `export const locales = ${JSON.stringify(locales)} as const;
+export type Locale = (typeof locales)[number];
+
+export function isValidLocale(locale: string): locale is Locale {
+  return (locales as readonly string[]).includes(locale);
+}
+`;
+  fs.writeFileSync(path.join(outputDir, 'src/lib/i18n.ts'), i18nContent);
+
+  // Rewrite business.d.ts with the provided locales
+  const businessDtsPath = path.join(outputDir, 'src/types/business.d.ts');
+  if (fs.existsSync(businessDtsPath)) {
+    let dtsContent = fs.readFileSync(businessDtsPath, 'utf8');
+    dtsContent = dtsContent.replace(
+      /export const locales = \[.*?\] as const;\nexport type Locale = \(typeof locales\)\[number\];/,
+      `export const locales = ${JSON.stringify(locales)} as const;\nexport type Locale = (typeof locales)[number];`,
+    );
+    fs.writeFileSync(businessDtsPath, dtsContent);
+  }
+
+  // Rewrite vercel.json redirect with default locale
+  const vercelJsonPath = path.join(outputDir, 'vercel.json');
+  if (fs.existsSync(vercelJsonPath)) {
+    const vercelConfig = JSON.parse(fs.readFileSync(vercelJsonPath, 'utf8'));
+    if (vercelConfig.redirects) {
+      for (const r of vercelConfig.redirects) {
+        if (r.source === '/') {
+          r.destination = `/${defaultLocale}`;
+        }
+      }
+      fs.writeFileSync(vercelJsonPath, JSON.stringify(vercelConfig, null, 2));
+    }
+  }
 }
 
 export function writeSvgDecorations(industry: string, outputDir: string): void {

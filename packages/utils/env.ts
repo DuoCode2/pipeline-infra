@@ -22,18 +22,12 @@ export function optionalEnv(key: string, fallback: string): string {
 
 // ── Shared pipeline constants ────────────────────────────────────
 
-/** @deprecated Use getLocalesForRegion(regionId) instead */
-export const SUPPORTED_LOCALES = ['en', 'ms', 'zh-CN', 'zh-TW'] as const;
 export type Locale = string;
 
 /**
- * Get locales for a region. Defaults to Malaysia locales for backward compat.
+ * Get locales for a site. Zero-config: defaults to English only.
+ * Multi-locale support is opt-in via CLI --locales flag.
  */
-export function getLocalesForRegion(regionId?: string): string[] {
-  try {
-    const { loadRegion } = require('../regions/loader');
-    return loadRegion(regionId || 'my').locales;
-  } catch {
-    return ['en', 'ms', 'zh-CN', 'zh-TW'];
-  }
+export function getLocalesForRegion(_regionId?: string): string[] {
+  return ['en'];
 }

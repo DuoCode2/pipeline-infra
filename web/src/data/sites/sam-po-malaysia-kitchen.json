@@ -1,0 +1,101 @@
+{
+  "slug": "sam-po-malaysia-kitchen",
+  "businessName": "Sam Po Malaysia Kitchen",
+  "archetype": "menu-order",
+  "industry": "food",
+  "region": {
+    "country": "Australia",
+    "locales": [
+      "en"
+    ],
+    "defaultLocale": "en",
+    "currency": {
+      "symbol": "$",
+      "code": "AUD"
+    },
+    "phone": {
+      "countryCode": "+61"
+    }
+  },
+  "theme": {
+    "primary": "#985b00",
+    "primaryDark": "#7B6107",
+    "accent": "#856419",
+    "surface": "#D2BE99",
+    "textTitle": "#4d422c",
+    "textBody": "#634b21",
+    "onPrimary": "#ffffff",
+    "onPrimaryDark": "#ffffff",
+    "accentText": "#674a00",
+    "fontDisplay": "Playfair Display",
+    "fontBody": "Source Serif Pro"
+  },
+  "assets": {
+    "heroImage": "/sites/sam-po-malaysia-kitchen/images/maps-2-960.webp",
+    "galleryImages": [
+      "/sites/sam-po-malaysia-kitchen/images/maps-3-960.webp"
+    ]
+  },
+  "content": {
+    "en": {
+      "meta": {
+        "title": "Sam Po Malaysia Kitchen",
+        "description": ""
+      },
+      "hero": {
+        "title": "",
+        "subtitle": "",
+        "cta": "",
+        "image": "/sites/sam-po-malaysia-kitchen/images/maps-2-960.webp"
+      },
+      "hours": {
+        "Monday": "Closed",
+        "Tuesday": "11:30 AM – 2:30 PM, 5:00 – 9:30 PM",
+        "Wednesday": "11:30 AM – 2:30 PM, 5:00 – 9:30 PM",
+        "Thursday": "11:30 AM – 2:30 PM, 5:00 – 9:30 PM",
+        "Friday": "11:30 AM – 2:30 PM, 3:00 – 9:30 PM",
+        "Saturday": "11:30 AM – 2:30 PM, 5:00 – 9:30 PM",
+        "Sunday": "11:30 AM – 2:30 PM, 5:00 – 9:00 PM"
+      },
+      "location": {
+        "address": "1 Jackson Dr, Mascot NSW 2020, Australia",
+        "mapsUrl": "https://maps.google.com/?cid=6242796054826610378&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgEIAA",
+        "coordinates": {
+          "lat": -33.9230419,
+          "lng": 151.1851213
+        }
+      },
+      "contact": {
+        "phone": "(02) 8817 2899",
+        "whatsapp": "0288172899"
+      },
+      "reviews": {
+        "rating": 4.8,
+        "count": 1109,
+        "featured": []
+      },
+      "trustBar": {
+        "items": [
+          {
+            "icon": "star",
+            "label": "Rating",
+            "value": "4.8/5"
+          },
+          {
+            "icon": "users",
+            "label": "Reviews",
+            "value": "1109+"
+          }
+        ]
+      }
+    }
+  },
+  "lead": {
+    "placeId": "ChIJzW6Ezm6xEmsRym4mpe_dolY",
+    "primaryType": "malaysian_restaurant",
+    "googleMapsUri": "https://maps.google.com/?cid=6242796054826610378&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgEIAA",
+    "rating": 4.8,
+    "reviewCount": 1109,
+    "discoveredAt": "2026-03-25T15:03:03.139Z"
+  }
+}

@@ -87,7 +87,8 @@ function generateBusinessSkeleton(
   config: IndustryDesign,
   photos: string[],
   slug: string,
-  outputDir: string
+  outputDir: string,
+  _locales: string[] = ['en']
 ) {
   const schemaType = SCHEMA_ORG_TYPE[industry] || 'LocalBusiness';
   const hero = pickHeroPhoto(photos);
@@ -128,6 +129,11 @@ function generateBusinessSkeleton(
       },
     }`;
 
+  const locales = _locales;
+  const contentEntries = locales
+    .map((locale: string) => `    ${JSON.stringify(locale)}: ${localeBlock(locale)}`)
+    .join(',\n');
+
   const ts = `import type { BusinessData } from '@/types/business';
 
 export const business: BusinessData = {
@@ -151,10 +157,7 @@ export const business: BusinessData = {
     galleryImages: ${JSON.stringify(gallery)},
   },
   content: {
-    en: ${localeBlock('en')},
-    ms: ${localeBlock('ms')},
-    "zh-CN": ${localeBlock('zh-CN')},
-    "zh-TW": ${localeBlock('zh-TW')},
+${contentEntries}
   },
 };
 `;
@@ -205,17 +208,10 @@ function saveLeadJson(lead: PlaceResult, industry: string, archetype: Archetype,
 // ── Main pipeline ────────────────────────────────────────────────
 
 export async function prepare(lead: PlaceResult, industry?: string, regionId: string = 'my'): Promise<PrepareResult> {
-  // Load region config for name-based classification keywords
+  // Zero-config: derive location hint from lead address, no region config needed
   let regionNameKeywords: Record<string, RegExp> | undefined;
-  let locationHint = 'malaysia';
-  let skipWords: string[] = [];
-  try {
-    const { loadRegion } = require('../regions/loader');
-    const region = loadRegion(regionId);
-    regionNameKeywords = region.discovery.nameKeywords;
-    locationHint = region.photos.locationHint;
-    skipWords = region.discovery.skipWords;
-  } catch { /* fallback to defaults */ }
+  const locationHint = lead.formattedAddress.split(',').pop()?.trim().toLowerCase() || 'local';
+  const skipWords: string[] = [];
 
   const resolvedIndustry = industry || classifyIndustry(lead.primaryType, lead.displayName.text, regionNameKeywords);
   const config = INDUSTRY_CONFIG[resolvedIndustry] || INDUSTRY_CONFIG.generic;
@@ -274,7 +270,7 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId: st
 
   // 7. Copy template scaffolding
   console.error('  Copying template scaffolding...');
-  copyTemplates(resolvedIndustry, outputDir);
+  copyTemplates(resolvedIndustry, outputDir, ['en'], 'en');
 
   // 8. Write SVG decorations
   writeSvgDecorations(resolvedIndustry, outputDir);
@@ -287,7 +283,7 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId: st
 
   // 9. Generate business.ts skeleton
   console.error('  Generating business.ts skeleton...');
-  generateBusinessSkeleton(lead, resolvedIndustry, colors, config, allJpgs, slug, outputDir);
+  generateBusinessSkeleton(lead, resolvedIndustry, colors, config, allJpgs, slug, outputDir, ['en']);
 
   // 10. Resolve archetype
   const archetypeMapping = resolveArchetype(resolvedIndustry);

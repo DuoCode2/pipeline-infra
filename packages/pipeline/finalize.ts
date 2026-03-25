@@ -97,11 +97,14 @@ export async function finalize(options: {
       if (leadData.regionId) regionId = leadData.regionId;
     } catch { /* ignore */ }
   }
+  // Zero-config: read locales from lead.json if available, otherwise default to 'en'
   let defaultLocale = 'en';
-  try {
-    const { loadRegion } = require('../regions/loader');
-    defaultLocale = loadRegion(regionId).defaultLocale;
-  } catch { /* fallback */ }
+  if (fs.existsSync(leadJsonPath2)) {
+    try {
+      const ld = JSON.parse(fs.readFileSync(leadJsonPath2, 'utf8'));
+      if (ld.defaultLocale) defaultLocale = ld.defaultLocale;
+    } catch { /* ignore */ }
+  }
 
   // ------------------------------------------------------------------
   // 3. Ensure root vercel.json exists for Vercel REST config
