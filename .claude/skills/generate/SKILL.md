@@ -95,6 +95,26 @@ Import from `@/data/images` for srcset data. Use the `ResponsiveImage` UI compon
 - Sequential headings (h1 → h2 → h3), touch targets ≥ 44x44px
 - Read `references/a11y-checklist.md` for accessibility rules
 
+### 2f. Multi-locale content
+Write the EN locale content first, then generate other locales. For multi-locale sites:
+```bash
+npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN,zh-TW
+```
+This extracts EN strings into a translation template. Use it as a reference to write other locale blocks in business.ts.
+
+## Step 2.5: Dev Preview (catch issues before finalize)
+
+Before running finalize (which takes 1-2 min), do a quick visual check:
+```bash
+cd output/{slug} && npm install --silent && npm run dev &
+# Wait for dev server, then screenshot
+npx browser-use screenshot "http://localhost:3000/en/" --output screenshots/preview-desktop.png --width 1440 --height 900
+npx browser-use screenshot "http://localhost:3000/en/" --output screenshots/preview-mobile.png --width 375 --height 812
+```
+Read the screenshots to catch layout/style issues BEFORE the full build cycle. Kill the dev server when done.
+
+This step is optional but recommended — it saves time by catching issues early instead of after a full Lighthouse audit cycle.
+
 ## Step 3: Finalize (one command)
 
 ```bash

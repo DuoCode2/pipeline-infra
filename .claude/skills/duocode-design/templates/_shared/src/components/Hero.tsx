@@ -20,7 +20,7 @@ export default function Hero({ locale }: { locale: Locale }) {
   const hasResponsive = Boolean(basePath);
 
   return (
-    <section className="relative flex min-h-[60vh] items-center justify-center overflow-hidden text-white">
+    <section className="relative flex min-h-[60vh] items-center justify-center overflow-hidden" style={{ color: 'var(--color-on-primary-dark)' }}>
       {/* Hero image — uses <picture> for AVIF/WebP with responsive srcset */}
       {hasResponsive ? (
         <picture>
@@ -60,7 +60,7 @@ export default function Hero({ locale }: { locale: Locale }) {
         <h1 className="font-display text-4xl font-bold md:text-5xl">
           {content.hero.title}
         </h1>
-        <p className="mt-4 text-lg md:text-xl opacity-90">
+        <p className="mt-4 text-lg md:text-xl">
           {content.hero.subtitle}
         </p>
         <a

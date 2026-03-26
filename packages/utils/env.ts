@@ -94,3 +94,31 @@ export function detectRegionId(formattedAddress: string): string {
   const country = formattedAddress.split(',').pop()?.trim().toLowerCase() || '';
   return COUNTRY_TO_REGION[country] ?? 'xx';
 }
+
+// ── Phone prefix for WhatsApp / international format ─────────────
+const REGION_PHONE_PREFIX: Record<string, string> = {
+  my: '60', sg: '65', au: '61', id: '62', th: '66', vn: '84',
+  ph: '63', in: '91', us: '1', uk: '44', ca: '1', nz: '64',
+  jp: '81', kr: '82', hk: '852', tw: '886', cn: '86',
+  ae: '971', sa: '966', de: '49', fr: '33', nl: '31', bn: '673',
+};
+
+/**
+ * Convert a local phone number to international format for WhatsApp.
+ * E.g., "012-345 6789" with regionId "my" → "60123456789"
+ * If the phone already starts with '+' or the country code, returns as-is (digits only).
+ */
+export function toInternationalPhone(phone: string, regionId: string): string {
+  const digits = phone.replace(/[^0-9+]/g, '');
+  if (!digits) return '';
+
+  // Already has international prefix
+  if (digits.startsWith('+')) return digits.replace(/\+/, '');
+
+  const prefix = REGION_PHONE_PREFIX[regionId];
+  if (!prefix) return digits;
+
+  // Strip leading 0 (local format) and prepend country code
+  const local = digits.startsWith('0') ? digits.slice(1) : digits;
+  return `${prefix}${local}`;
+}

@@ -89,16 +89,7 @@ export async function optimizeImages(
     fs.unlinkSync(filePath);
   }
 
-  // Write JSON manifest
-  const normalizedInput = inputDir.replace(/\/+$/, '');
-  const manifestPath = path.join(
-    path.dirname(normalizedInput),
-    'image-manifest.json'
-  );
-  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-  console.log(`Manifest saved to ${manifestPath}`);
-
-  // Generate TypeScript module for component consumption
+  // Generate TypeScript module for component consumption (the only consumer of image data)
   if (generateModule) {
     const imagesBasePath = '/images';
     const entries = Object.entries(manifest).map(([name, variants]) => {

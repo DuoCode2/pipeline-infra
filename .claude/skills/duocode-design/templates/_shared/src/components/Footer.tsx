@@ -18,7 +18,7 @@ export default function Footer({ locale }: { locale: Locale }) {
             {content.contact.phone}
           </a>
         </p>
-        <p className="mt-8 text-sm opacity-70">
+        <p className="mt-8 text-sm">
           &copy; {year} {content.meta.title}
         </p>
       </div>

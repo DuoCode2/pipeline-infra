@@ -17,7 +17,7 @@ import {
 import { resolveArchetype, type Archetype, type ArchetypeMapping } from '../generate/archetype-config';
 import { type PlaceResult } from '../discover/search';
 import { getArg } from '../utils/cli';
-import { detectRegionId } from '../utils/env';
+import { detectRegionId, toInternationalPhone } from '../utils/env';
 import { logAction } from '../utils/n8n';
 
 // ── Industry-specific favicon SVGs ──────────────────────────────
@@ -109,7 +109,8 @@ function generateBusinessSkeleton(
   photos: string[],
   slug: string,
   outputDir: string,
-  _locales: string[] = ['en']
+  _locales: string[] = ['en'],
+  regionId: string = 'xx',
 ) {
   const schemaType = SCHEMA_ORG_TYPE[industry] || 'LocalBusiness';
   const hero = pickHeroPhoto(photos);
@@ -121,7 +122,7 @@ function generateBusinessSkeleton(
   const name = lead.displayName.text;
   const address = lead.formattedAddress;
   const phone = lead.nationalPhoneNumber || '';
-  const whatsapp = phone ? phone.replace(/[^+0-9]/g, '') : '';
+  const whatsapp = phone ? toInternationalPhone(phone, regionId) : '';
   const rating = lead.rating || 0;
   const reviewCount = lead.userRatingCount || 0;
   const mapsUrl = lead.googleMapsUri || '';
@@ -336,7 +337,7 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId?: s
 
   // 9. Generate business.ts skeleton
   console.error('  Generating business.ts skeleton...');
-  generateBusinessSkeleton(lead, resolvedIndustry, colors, config, allJpgs, slug, outputDir, ['en']);
+  generateBusinessSkeleton(lead, resolvedIndustry, colors, config, allJpgs, slug, outputDir, ['en'], resolvedRegionId);
 
   // 10. Resolve archetype
   const archetypeMapping = resolveArchetype(resolvedIndustry);
