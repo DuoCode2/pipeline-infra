@@ -46,6 +46,10 @@ export async function finalize(options: {
   dir: string;
   slug?: string;
   dryRun?: boolean;
+  /** Override the URL path for quality gate check (default: auto-detect /en/ or /) */
+  checkPath?: string;
+  /** Skip build step (use existing out/ directory) */
+  skipBuild?: boolean;
 }): Promise<FinalizeResult> {
   const dir = path.resolve(options.dir);
   const slug = options.slug || path.basename(dir);
@@ -57,31 +61,35 @@ export async function finalize(options: {
   log(`Dry  : ${dryRun}`);
 
   // ------------------------------------------------------------------
-  // 1. Build (always rebuild to avoid deploying stale artifacts)
+  // 1. Build (skip if --skip-build and out/ exists)
   // ------------------------------------------------------------------
-  if (fs.existsSync(outDir)) {
-    fs.rmSync(outDir, { recursive: true, force: true });
-    log('Removed stale out/ — rebuilding...');
+  if (options.skipBuild && fs.existsSync(outDir)) {
+    log('Skipping build (--skip-build, using existing out/)');
   } else {
-    log('Building...');
-  }
-
-  try {
-    execSync('npm install --silent && npm run build', {
-      cwd: dir,
-      stdio: 'pipe',
-      timeout: 120_000,
-    });
-  } catch (err: unknown) {
-    let stderr: string;
-    if (err && typeof err === 'object' && 'stderr' in err) {
-      const buf = (err as Record<string, unknown>).stderr;
-      stderr = buf instanceof Buffer ? buf.toString() : String(buf);
+    if (fs.existsSync(outDir)) {
+      fs.rmSync(outDir, { recursive: true, force: true });
+      log('Removed stale out/ — rebuilding...');
     } else {
-      stderr = err instanceof Error ? err.message : String(err);
+      log('Building...');
     }
-    log('Build FAILED');
-    return { status: 'build-failed', error: stderr };
+
+    try {
+      execSync('npm install --silent && npm run build', {
+        cwd: dir,
+        stdio: 'pipe',
+        timeout: 120_000,
+      });
+    } catch (err: unknown) {
+      let stderr: string;
+      if (err && typeof err === 'object' && 'stderr' in err) {
+        const buf = (err as Record<string, unknown>).stderr;
+        stderr = buf instanceof Buffer ? buf.toString() : String(buf);
+      } else {
+        stderr = err instanceof Error ? err.message : String(err);
+      }
+      log('Build FAILED');
+      return { status: 'build-failed', error: stderr };
+    }
   }
 
   if (!fs.existsSync(outDir)) {
@@ -128,11 +136,13 @@ export async function finalize(options: {
   // ------------------------------------------------------------------
   const vercelConfigPath = path.join(dir, 'vercel.json');
   if (!fs.existsSync(vercelConfigPath)) {
-    const vercelConfig = {
-      redirects: [{ source: '/', destination: `/${defaultLocale}`, statusCode: 301 }],
-    };
+    // Only add locale redirect if the build has locale directories
+    const hasLocaleDir = fs.existsSync(path.join(outDir, defaultLocale, 'index.html'));
+    const vercelConfig = hasLocaleDir
+      ? { redirects: [{ source: '/', destination: `/${defaultLocale}`, statusCode: 301 }] }
+      : {}; // no redirect needed for non-locale sites
     fs.writeFileSync(vercelConfigPath, JSON.stringify(vercelConfig, null, 2));
-    log('vercel.json created');
+    log(hasLocaleDir ? `vercel.json created (/ → /${defaultLocale})` : 'vercel.json created (no locale redirect)');
   }
 
   // ------------------------------------------------------------------
@@ -168,6 +178,7 @@ ${sitemapUrls}
       buildDir: outDir,
       outputDir: dir,
       screenshotDir: path.join(dir, 'screenshots'),
+      checkPath: options.checkPath,
       logger: log,
       warn: (msg) => log(`[warn] ${msg}`),
       commandStdio: 'pipe',
@@ -261,11 +272,23 @@ ${sitemapUrls}
 async function main() {
   const args = process.argv.slice(2);
 
+  if (hasFlag(args, 'help') || hasFlag(args, 'h')) {
+    process.stderr.write(`Usage: npx tsx packages/pipeline/finalize.ts --dir <path> [options]
+
+Options:
+  --dir <path>        Site directory (REQUIRED)
+  --slug <name>       Override slug (default: directory name)
+  --dry-run           Build + quality check but skip deploy
+  --skip-build        Use existing out/ directory (skip npm install + build)
+  --check-path <path> Override URL path for Lighthouse (default: auto-detect /en/ or /)
+  --help, -h          Show this help message
+`);
+    process.exit(0);
+  }
+
   const dir = getArg(args, 'dir');
   if (!dir) {
-    process.stderr.write(
-      'Usage: npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ [--slug name] [--dry-run]\n',
-    );
+    process.stderr.write('Error: --dir is required. Use --help for usage info.\n');
     process.exit(1);
   }
 
@@ -276,9 +299,11 @@ async function main() {
 
   const slug = getArg(args, 'slug');
   const dryRun = hasFlag(args, 'dry-run');
+  const skipBuild = hasFlag(args, 'skip-build');
+  const checkPath = getArg(args, 'check-path');
 
   try {
-    const result = await finalize({ dir, slug, dryRun });
+    const result = await finalize({ dir, slug, dryRun, skipBuild, checkPath });
 
     // Output clean JSON to stdout for Claude to consume.
     process.stdout.write(JSON.stringify(result, null, 2) + '\n');

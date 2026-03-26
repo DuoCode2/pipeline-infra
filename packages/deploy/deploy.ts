@@ -86,7 +86,22 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
     }
   }
   collectFiles(buildDir);
-  console.log(`Deploying ${files.length} files to Vercel...`);
+
+  // Check payload size — REST API has ~10MB body limit
+  const totalBytes = files.reduce((sum, f) => sum + Buffer.byteLength(f.data, 'base64') * 0.75, 0);
+  const totalMB = totalBytes / (1024 * 1024);
+  console.log(`Deploying ${files.length} files (${totalMB.toFixed(1)}MB) to Vercel...`);
+
+  if (totalMB > 8) {
+    console.warn(`[deploy] WARNING: Payload is ${totalMB.toFixed(1)}MB — close to Vercel REST API limit (~10MB).`);
+    console.warn(`[deploy] For large sites, use Vercel CLI instead: cd ${buildDir} && npx vercel --prod`);
+    if (totalMB > 10) {
+      throw new Error(
+        `Build output is ${totalMB.toFixed(1)}MB — exceeds Vercel REST API limit (~10MB). ` +
+        `Use Vercel CLI for large deployments: cd ${path.resolve(buildDir, '..')} && npx vercel --prod`
+      );
+    }
+  }
 
   // Create deployment via REST API
   const res = await fetch(`${VERCEL_API}/v13/deployments`, {

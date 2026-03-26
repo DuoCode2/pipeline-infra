@@ -126,9 +126,33 @@ ${entries.join(',\n')},
 }
 
 // CLI usage
+// Standalone CLI: npx tsx packages/assets/optimize-images.ts --input path/to/images [--module path/to/images.ts]
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const inputDir = getArg(args, 'input', 'output/test/public/images');
+
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`Usage: npx tsx packages/assets/optimize-images.ts --input <dir> [--module <path>]
+
+Converts all .jpg/.jpeg/.png images to responsive WebP + AVIF at 4 sizes (320, 640, 960, 1280px).
+Originals are removed after conversion.
+
+Options:
+  --input <dir>     Directory containing images to optimize (REQUIRED)
+  --module <path>   Generate TypeScript srcset module at this path (optional)
+  --help, -h        Show this help message
+
+Examples:
+  npx tsx packages/assets/optimize-images.ts --input output/my-site/public/images
+  npx tsx packages/assets/optimize-images.ts --input ./scraped-images --module ./src/data/images.ts`);
+    process.exit(0);
+  }
+
+  const inputDir = getArg(args, 'input', '');
+  if (!inputDir) {
+    console.error('Error: --input is required. Use --help for usage info.');
+    process.exit(1);
+  }
+
   const tsModule = getArg(args, 'module', '');
 
   optimizeImages(inputDir, tsModule || undefined)

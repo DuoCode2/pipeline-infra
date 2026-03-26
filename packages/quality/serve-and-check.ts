@@ -70,6 +70,8 @@ export async function runLocalQualityGate(options: {
   screenshotDir?: string;
   outputDir?: string;
   port?: number;
+  /** URL path to check (default: auto-detect from build output). */
+  checkPath?: string;
   logger?: (message: string) => void;
   warn?: (message: string) => void;
   commandStdio?: 'inherit' | 'pipe';
@@ -89,7 +91,20 @@ export async function runLocalQualityGate(options: {
   // 1. Determine port ---------------------------------------------------
   const port = options.port ?? (await findFreePort());
   const baseUrl = `http://localhost:${port}`;
-  const checkUrl = `${baseUrl}/en/`;
+
+  // Auto-detect check path: if /en/ exists in build, use it; otherwise use /
+  let checkPath = options.checkPath;
+  if (!checkPath) {
+    const fs = await import('fs');
+    if (fs.existsSync(path.join(buildDir, 'en', 'index.html'))) {
+      checkPath = '/en/';
+    } else if (fs.existsSync(path.join(buildDir, 'index.html'))) {
+      checkPath = '/';
+    } else {
+      checkPath = '/en/'; // fallback to legacy behavior
+    }
+  }
+  const checkUrl = `${baseUrl}${checkPath}`;
 
   log(`\n[serve-and-check] Build dir : ${buildDir}`);
   log(`[serve-and-check] Port      : ${port}`);
