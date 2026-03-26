@@ -32,8 +32,8 @@ export default function ReviewStars({ rating, count, className = '' }: ReviewSta
       <div className="flex" aria-label={`${rating} out of 5 stars`}>
         {stars.map((fill, i) => <Star key={i} fill={fill} />)}
       </div>
-      <span className="font-medium text-[var(--text-title)]">{rating.toFixed(1)}</span>
-      {count !== undefined && <span className="text-[var(--text-body)] text-sm">({count})</span>}
+      <span className="font-medium text-[var(--color-text-title)]">{rating.toFixed(1)}</span>
+      {count !== undefined && <span className="text-[var(--color-text-body)] text-sm">({count})</span>}
     </div>
   );
 }

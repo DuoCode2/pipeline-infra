@@ -112,6 +112,14 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   const deployment = (await res.json()) as DeploymentState;
   console.log(`Deployment created: ${deployment.url} (${deployment.readyState})`);
 
+  // Detect slug collision: if Vercel added a scope suffix, the URL won't match {slug}.vercel.app
+  const expectedHost = `${slug}.vercel.app`;
+  if (deployment.url && !deployment.url.includes(expectedHost)) {
+    console.warn(`[deploy] WARNING: Vercel assigned URL "${deployment.url}" instead of "${expectedHost}".`);
+    console.warn(`[deploy] This usually means the slug "${slug}" was temporarily unavailable (concurrent deploy race).`);
+    console.warn(`[deploy] Will attempt to set alias "${expectedHost}" after deployment is ready.`);
+  }
+
   // Wait for READY + alias assignment
   const POLL_INTERVAL_MS = 5_000;
   const POLL_TIMEOUT_MS = 120_000;

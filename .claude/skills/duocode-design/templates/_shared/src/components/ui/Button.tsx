@@ -1,11 +1,11 @@
 import type { ReactNode, ButtonHTMLAttributes, AnchorHTMLAttributes } from 'react';
 
 const variants = {
-  primary: 'bg-[var(--accent)] text-[var(--accent-text)] hover:opacity-90',
-  secondary: 'bg-[var(--primary)] text-[var(--on-primary)] hover:opacity-90',
-  outline: 'border-2 border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--on-primary)]',
+  primary: 'bg-[var(--color-accent)] text-[var(--color-accent-text)] hover:opacity-90',
+  secondary: 'bg-[var(--color-primary)] text-[var(--color-on-primary)] hover:opacity-90',
+  outline: 'border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-[var(--color-on-primary)]',
   whatsapp: 'bg-[#25D366] text-white hover:bg-[#1DA851]',
-  ghost: 'text-[var(--text-body)] hover:bg-[var(--primary)]/10',
+  ghost: 'text-[var(--color-text-body)] hover:bg-[var(--color-primary)]/10',
 } as const;
 
 const sizes = {

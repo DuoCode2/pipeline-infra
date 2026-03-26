@@ -62,9 +62,31 @@ Read the leads file to get the count and names.
 
 This is a **hard gate** — never launch agents without user confirmation of the count. Each agent costs time and API credits.
 
+## Step 1.5: Generate Diversity Plan (prevent mode collapse)
+
+Before launching agents, create a **diversity plan** that assigns each site a different design direction. Independent agents will converge on the same fonts/layouts without explicit differentiation.
+
+For each confirmed lead, assign:
+- **Font pairing**: NO two sites in the same batch should use the same display font. Draw from diverse families: serif (Fraunces, Bitter, Lora), sans-serif (Outfit, Sora, Manrope), display (Instrument Serif, Cabinet Grotesk, Clash Display), handwritten (Caveat, Kalam), monospace (JetBrains Mono, Space Mono).
+- **Layout direction**: Vary between: full-bleed hero, split hero, minimal/editorial, asymmetric, card-grid-first, gallery-first, testimonial-led.
+- **Color treatment**: Vary between: bold/saturated, muted/earthy, monochrome+accent, dark mode, pastel, high-contrast.
+
+Write the plan as a JSON array and include each lead's assigned direction in the agent prompt.
+
+Example:
+```json
+[
+  { "slug": "delta-hair-studio", "displayFont": "Outfit", "layout": "minimal-editorial", "colorTreatment": "muted-earthy" },
+  { "slug": "xclusive-hair-salon", "displayFont": "Instrument Serif", "layout": "asymmetric", "colorTreatment": "bold-saturated" },
+  { "slug": "johns-mens-hair", "displayFont": "Space Mono", "layout": "card-grid-first", "colorTreatment": "dark-mode" }
+]
+```
+
+This is critical for same-category batches (e.g., 5 hair salons). Without explicit diversity constraints, Claude will default to the same "safe" choices for every site.
+
 ## Step 2: Launch Parallel Agents
 
-After user confirms, spawn **one Agent per lead** in a **SINGLE message**. Each agent runs the full `/generate` pipeline:
+After user confirms and diversity plan is ready, spawn **one Agent per lead** in a **SINGLE message**. Each agent runs the full `/generate` pipeline:
 
 ```
 For each lead [i] in leads.json:
@@ -77,13 +99,19 @@ For each lead [i] in leads.json:
       Run: npx tsx packages/pipeline/prepare.ts --lead-file {leads_file} --index {i}
       Read the JSON output to get outputDir, slug, regionId, brandColors, photos, lead, hints.
 
+      ## DESIGN DIRECTION (from batch diversity plan)
+      Display font: {assignedDisplayFont}
+      Layout approach: {assignedLayout}
+      Color treatment: {assignedColorTreatment}
+      You MUST use these — they were chosen to differentiate this site from others in the same batch.
+
       ## Step 2: Design
       Read output/{slug}/brand-colors.json and photos in output/{slug}/public/images/.
       The PrepareResult includes 'hints' (suggestedIndustry, suggestedArchetype) — use as guidance, not mandate.
       Read references: archetype-guide.md, platforms-by-region.md, generic-market.md (or region-specific if available).
 
-      Pick fonts using frontend-design skill, then download:
-        npx tsx packages/assets/download-fonts.ts --fonts 'Font1,Font2' --weights '400,500,600,700' --output output/{slug}/public/fonts
+      Download your assigned display font + a complementary body font:
+        npx tsx packages/assets/download-fonts.ts --fonts '{assignedDisplayFont},BodyFont' --weights '400,500,600,700' --output output/{slug}/public/fonts
 
       Import shared UI components from @/components/ui — don't recreate them.
 

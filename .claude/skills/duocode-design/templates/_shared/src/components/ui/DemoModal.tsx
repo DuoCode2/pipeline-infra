@@ -21,10 +21,10 @@ export default function DemoModal({ open, onClose, locale = 'en' }: DemoModalPro
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="mx-4 w-full max-w-sm rounded-xl bg-[var(--surface)] p-6 shadow-xl" onClick={e => e.stopPropagation()}>
-        <h3 className="mb-2 text-lg font-semibold text-[var(--text-title)]">{msg.title}</h3>
-        <p className="mb-4 text-[var(--text-body)]">{msg.body}</p>
-        <button type="button" onClick={onClose} className="w-full rounded-lg bg-[var(--accent)] py-2.5 font-medium text-[var(--accent-text)] min-h-[44px]">
+      <div className="mx-4 w-full max-w-sm rounded-xl bg-[var(--color-surface)] p-6 shadow-xl" onClick={e => e.stopPropagation()}>
+        <h3 className="mb-2 text-lg font-semibold text-[var(--color-text-title)]">{msg.title}</h3>
+        <p className="mb-4 text-[var(--color-text-body)]">{msg.body}</p>
+        <button type="button" onClick={onClose} className="w-full rounded-lg bg-[var(--color-accent)] py-2.5 font-medium text-[var(--color-accent-text)] min-h-[44px]">
           {msg.button}
         </button>
       </div>

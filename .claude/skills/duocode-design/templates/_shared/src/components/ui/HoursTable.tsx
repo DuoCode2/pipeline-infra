@@ -11,9 +11,9 @@ export default function HoursTable({ hours, className = '' }: HoursTableProps) {
     <table className={`w-full text-sm ${className}`}>
       <tbody>
         {entries.map(([day, time]) => (
-          <tr key={day} className="border-b border-[var(--primary)]/5 last:border-0">
-            <td className="py-2 font-medium text-[var(--text-title)]">{day}</td>
-            <td className="py-2 text-right text-[var(--text-body)]">{time}</td>
+          <tr key={day} className="border-b border-[var(--color-primary)]/5 last:border-0">
+            <td className="py-2 font-medium text-[var(--color-text-title)]">{day}</td>
+            <td className="py-2 text-right text-[var(--color-text-body)]">{time}</td>
           </tr>
         ))}
       </tbody>

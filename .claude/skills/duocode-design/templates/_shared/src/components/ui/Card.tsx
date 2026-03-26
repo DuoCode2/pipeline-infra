@@ -10,7 +10,7 @@ interface CardProps {
 
 export default function Card({ children, className = '', image, imageAlt = '', horizontal = false }: CardProps) {
   return (
-    <div className={`rounded-xl bg-[var(--surface)] overflow-hidden shadow-sm ${horizontal ? 'flex flex-col sm:flex-row' : ''} ${className}`}>
+    <div className={`rounded-xl bg-[var(--color-surface)] overflow-hidden shadow-sm ${horizontal ? 'flex flex-col sm:flex-row' : ''} ${className}`}>
       {image && (
         <div className={horizontal ? 'sm:w-2/5 flex-shrink-0' : ''}>
           <img src={image} alt={imageAlt} loading="lazy" decoding="async" className="w-full h-48 object-cover" />

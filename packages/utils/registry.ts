@@ -35,13 +35,43 @@ export function readRegistry(): SiteRegistry {
   }
 }
 
-/** Write the registry atomically (write to .tmp, then rename). */
+const LOCK_PATH = REGISTRY_PATH + '.lock';
+const LOCK_TIMEOUT_MS = 5_000;
+const LOCK_RETRY_MS = 50;
+
+/** Acquire a simple file lock (spin-wait with timeout). */
+function acquireLock(): void {
+  const deadline = Date.now() + LOCK_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    try {
+      fs.writeFileSync(LOCK_PATH, String(process.pid), { flag: 'wx' }); // exclusive create
+      return;
+    } catch {
+      // Lock held by another process — wait and retry
+      const start = Date.now();
+      while (Date.now() - start < LOCK_RETRY_MS) { /* spin */ }
+    }
+  }
+  // Timeout — force acquire (stale lock from crashed process)
+  fs.writeFileSync(LOCK_PATH, String(process.pid));
+}
+
+function releaseLock(): void {
+  try { fs.unlinkSync(LOCK_PATH); } catch { /* already released */ }
+}
+
+/** Write the registry atomically with file locking for concurrent agent safety. */
 function writeRegistry(registry: SiteRegistry): void {
   const dir = path.dirname(REGISTRY_PATH);
   fs.mkdirSync(dir, { recursive: true });
-  const tmp = REGISTRY_PATH + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(registry, null, 2));
-  fs.renameSync(tmp, REGISTRY_PATH);
+  acquireLock();
+  try {
+    const tmp = REGISTRY_PATH + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(registry, null, 2));
+    fs.renameSync(tmp, REGISTRY_PATH);
+  } finally {
+    releaseLock();
+  }
 }
 
 /** Check if a place ID is already registered. */
