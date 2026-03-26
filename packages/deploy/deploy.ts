@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 import { requireEnv } from '../utils/env';
 import { getArg } from '../utils/cli';
 
@@ -51,6 +52,69 @@ function resolveDeploymentUrl(
   return `https://${slug}.vercel.app`;
 }
 
+/**
+ * Try deploying via Vercel CLI with --archive=tgz.
+ * This is the preferred method: compresses all files into one .tgz upload,
+ * avoiding per-file API requests, rate limits, and 10MB body limits.
+ */
+function tryDeployViaCLI(projectDir: string, slug: string, token: string): DeployResult | null {
+  try {
+    // Check if vercel CLI is available
+    execSync('npx vercel --version', { stdio: 'pipe', timeout: 10_000 });
+  } catch {
+    console.log('[deploy] Vercel CLI not available, will use REST API');
+    return null;
+  }
+
+  try {
+    console.log(`[deploy] Using Vercel CLI with --archive=tgz (${slug})...`);
+
+    // Link project if not linked
+    const vercelDir = path.join(projectDir, '.vercel');
+    if (!fs.existsSync(vercelDir)) {
+      try {
+        execSync(`npx vercel link --yes --project ${slug}`, {
+          cwd: projectDir,
+          stdio: 'pipe',
+          timeout: 30_000,
+          env: { ...process.env, VERCEL_TOKEN: token },
+        });
+      } catch {
+        // Link failed — project may not exist yet, CLI will create it
+      }
+    }
+
+    // Deploy with --archive=tgz: single compressed upload
+    const output = execSync(
+      `npx vercel deploy --prebuilt --prod --archive=tgz --yes --name ${slug}`,
+      {
+        cwd: projectDir,
+        stdio: 'pipe',
+        timeout: 180_000,
+        env: { ...process.env, VERCEL_TOKEN: token },
+      },
+    ).toString().trim();
+
+    // CLI outputs the deployment URL on the last line
+    const lines = output.split('\n');
+    const deployUrl = lines[lines.length - 1]?.trim();
+
+    if (deployUrl && deployUrl.startsWith('http')) {
+      const prodUrl = `https://${slug}.vercel.app`;
+      console.log(`[deploy] CLI deployed: ${deployUrl}`);
+      console.log(`[deploy] Production URL: ${prodUrl}`);
+      return { url: prodUrl, projectId: slug, deploymentId: deployUrl };
+    }
+
+    console.warn(`[deploy] CLI output unexpected: ${output.slice(0, 200)}`);
+    return null;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[deploy] CLI deploy failed: ${msg.slice(0, 200)}`);
+    return null;
+  }
+}
+
 export async function deployToVercel(buildDir: string, slug: string): Promise<DeployResult> {
   const token = getVercelToken(); // lazy — only throws when actually deploying
 
@@ -58,8 +122,19 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
     throw new Error(`Build directory not found: ${buildDir}`);
   }
 
-  // Read vercel.json from project root (one level up from out/)
-  const vercelConfigPath = path.join(path.resolve(buildDir, '..'), 'vercel.json');
+  const projectDir = path.resolve(buildDir, '..');
+
+  // ── Strategy 1: Vercel CLI with --archive=tgz (preferred) ──────────
+  // Single compressed upload — no file count limits, no 10MB body limit,
+  // no API rate limiting. Works for any size project.
+  const cliResult = tryDeployViaCLI(projectDir, slug, token);
+  if (cliResult) return cliResult;
+
+  // ── Strategy 2: REST API fallback (small sites only) ───────────────
+  console.log('[deploy] CLI deploy failed or unavailable, falling back to REST API...');
+
+  // Read vercel.json from project root
+  const vercelConfigPath = path.join(projectDir, 'vercel.json');
   let vercelConfig: Record<string, unknown> = {};
   if (fs.existsSync(vercelConfigPath)) {
     vercelConfig = JSON.parse(fs.readFileSync(vercelConfigPath, 'utf8'));
@@ -87,20 +162,15 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   }
   collectFiles(buildDir);
 
-  // Check payload size — REST API has ~10MB body limit
   const totalBytes = files.reduce((sum, f) => sum + Buffer.byteLength(f.data, 'base64') * 0.75, 0);
   const totalMB = totalBytes / (1024 * 1024);
-  console.log(`Deploying ${files.length} files (${totalMB.toFixed(1)}MB) to Vercel...`);
+  console.log(`[deploy] REST API: ${files.length} files (${totalMB.toFixed(1)}MB)`);
 
-  if (totalMB > 8) {
-    console.warn(`[deploy] WARNING: Payload is ${totalMB.toFixed(1)}MB — close to Vercel REST API limit (~10MB).`);
-    console.warn(`[deploy] For large sites, use Vercel CLI instead: cd ${buildDir} && npx vercel --prod`);
-    if (totalMB > 10) {
-      throw new Error(
-        `Build output is ${totalMB.toFixed(1)}MB — exceeds Vercel REST API limit (~10MB). ` +
-        `Use Vercel CLI for large deployments: cd ${path.resolve(buildDir, '..')} && npx vercel --prod`
-      );
-    }
+  if (totalMB > 10) {
+    throw new Error(
+      `Build is ${totalMB.toFixed(1)}MB — exceeds REST API limit. ` +
+      `Install Vercel CLI: npm i -g vercel && vercel login`
+    );
   }
 
   // Create deployment via REST API
