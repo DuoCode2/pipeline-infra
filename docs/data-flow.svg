@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 540" fill="none">
+  <defs>
+    <style>
+      text { font-family: 'Inter', -apple-system, sans-serif; }
+      .title { font-size: 16px; font-weight: 700; fill: #0f172a; }
+      .node { font-size: 10px; font-weight: 600; }
+      .data { font-size: 8.5px; font-family: 'SF Mono', monospace; }
+      .desc { font-size: 9px; fill: #64748b; }
+      .type-label { font-size: 7.5px; font-weight: 700; letter-spacing: 1px; }
+    </style>
+    <filter id="sh" x="-3%" y="-5%" width="106%" height="115%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.06"/>
+    </filter>
+    <marker id="arr" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#64748b"/>
+    </marker>
+    <marker id="arr-g" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#10b981"/>
+    </marker>
+    <marker id="arr-v" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#6366f1"/>
+    </marker>
+  </defs>
+
+  <rect width="1000" height="540" rx="10" fill="#fafbfc"/>
+  <text x="32" y="36" class="title">Data Flow — From Search Query to Live Website</text>
+
+  <!-- ROW 1: Input + Discovery + Prepare output -->
+  <text x="32" y="68" class="type-label" fill="#64748b">DISCOVER + PREPARE (mechanical)</text>
+
+  <rect x="32" y="78" width="120" height="50" rx="6" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="48" y="98" class="node" fill="#334155">CLI Arguments</text>
+  <text x="48" y="112" class="data" fill="#64748b">--city "City"</text>
+  <text x="48" y="122" class="data" fill="#64748b">--category "restaurant"</text>
+
+  <line x1="152" y1="103" x2="176" y2="103" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <rect x="180" y="78" width="140" height="50" rx="6" fill="#dbeafe" stroke="#93c5fd" filter="url(#sh)"/>
+  <text x="196" y="98" class="node" fill="#1e40af">Google Maps API</text>
+  <text x="196" y="112" class="data" fill="#3b82f6">POST places:searchText</text>
+  <text x="196" y="122" class="data" fill="#3b82f6">pageSize: 20, maxPages: 3</text>
+
+  <line x1="320" y1="103" x2="344" y2="103" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <rect x="348" y="74" width="200" height="60" rx="6" fill="#ffffff" stroke="#6366f1" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="364" y="94" class="node" fill="#4338ca">PlaceResult[]</text>
+  <text x="364" y="108" class="data" fill="#6366f1">id . displayName . primaryType</text>
+  <text x="364" y="118" class="data" fill="#6366f1">photos[].name . rating . hours</text>
+  <text x="364" y="128" class="data" fill="#6366f1">formattedAddress . phone</text>
+
+  <line x1="548" y1="103" x2="572" y2="103" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <rect x="576" y="74" width="200" height="60" rx="6" fill="#f0f9ff" stroke="#bae6fd" filter="url(#sh)"/>
+  <text x="592" y="94" class="node" fill="#0369a1">Prepare (pipeline/prepare.ts)</text>
+  <text x="592" y="108" class="data" fill="#0284c7">photos + colors + scaffold</text>
+  <text x="592" y="118" class="data" fill="#0284c7">classify hints (suggestions)</text>
+  <text x="592" y="128" class="data" fill="#0284c7">NO design decisions made</text>
+
+  <line x1="776" y1="103" x2="800" y2="103" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <rect x="804" y="74" width="170" height="60" rx="6" fill="#ffffff" stroke="#f59e0b" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="820" y="94" class="node" fill="#a16207">PrepareResult</text>
+  <text x="820" y="108" class="data" fill="#ca8a04">lead: full business data</text>
+  <text x="820" y="118" class="data" fill="#ca8a04">hints: ClassificationHint</text>
+  <text x="820" y="128" class="data" fill="#ca8a04">(suggestedIndustry, archetype)</text>
+
+  <!-- ROW 2: Claude Design phase -->
+  <text x="32" y="168" class="type-label" fill="#6366f1">CLAUDE DESIGN (creative decision-maker)</text>
+
+  <!-- Reference docs input -->
+  <rect x="32" y="178" width="160" height="64" rx="6" fill="#fefce8" stroke="#fde68a" filter="url(#sh)"/>
+  <text x="48" y="198" class="node" fill="#a16207">Reference Docs</text>
+  <text x="48" y="212" class="data" fill="#ca8a04">platforms-by-region.md</text>
+  <text x="48" y="222" class="data" fill="#ca8a04">generic-market.md</text>
+  <text x="48" y="232" class="data" fill="#ca8a04">archetype-guide.md</text>
+
+  <line x1="192" y1="210" x2="216" y2="210" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <!-- Claude decisions -->
+  <rect x="220" y="178" width="200" height="64" rx="6" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="236" y="198" class="node" fill="#4338ca">Claude Reads + Decides</text>
+  <text x="236" y="212" class="data" fill="#6366f1">lead data + hints + references</text>
+  <text x="236" y="222" class="data" fill="#6366f1">picks: fonts, structure, integrations</text>
+  <text x="236" y="232" class="data" fill="#6366f1">may override hint suggestions</text>
+
+  <line x1="420" y1="210" x2="444" y2="210" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <!-- Font download -->
+  <rect x="448" y="178" width="155" height="64" rx="6" fill="#faf5ff" stroke="#d8b4fe" filter="url(#sh)"/>
+  <text x="464" y="198" class="node" fill="#7e22ce">Download Fonts</text>
+  <text x="464" y="212" class="data" fill="#7c3aed">download-fonts.ts</text>
+  <text x="464" y="222" class="data" fill="#7c3aed">Google Fonts API</text>
+  <text x="464" y="232" class="data" fill="#7c3aed">output/{slug}/public/fonts/</text>
+
+  <line x1="603" y1="210" x2="627" y2="210" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <!-- Write components -->
+  <rect x="631" y="178" width="155" height="64" rx="6" fill="#f0fdf4" stroke="#bbf7d0" filter="url(#sh)"/>
+  <text x="647" y="198" class="node" fill="#15803d">Write Components</text>
+  <text x="647" y="212" class="data" fill="#16a34a">shared UI (10 components)</text>
+  <text x="647" y="222" class="data" fill="#16a34a">custom pages + sections</text>
+  <text x="647" y="232" class="data" fill="#16a34a">business.ts (data file)</text>
+
+  <line x1="786" y1="210" x2="810" y2="210" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <!-- Translate -->
+  <rect x="814" y="178" width="155" height="64" rx="6" fill="#fff7ed" stroke="#fed7aa" filter="url(#sh)"/>
+  <text x="830" y="198" class="node" fill="#c2410c">translate.ts</text>
+  <text x="830" y="212" class="data" fill="#ea580c">Multi-locale (opt-in)</text>
+  <text x="830" y="222" class="data" fill="#ea580c">--locales en,ms,zh-CN</text>
+  <text x="830" y="232" class="data" fill="#ea580c">i18n content generation</text>
+
+  <!-- ROW 3: Dev Preview + Build + Quality -->
+  <text x="32" y="278" class="type-label" fill="#64748b">DEV PREVIEW + BUILD + QUALITY</text>
+
+  <rect x="32" y="288" width="155" height="56" rx="6" fill="#eef2ff" stroke="#c7d2fe" filter="url(#sh)"/>
+  <text x="48" y="308" class="node" fill="#4338ca">Dev Preview</text>
+  <text x="48" y="322" class="data" fill="#6366f1">next dev (local server)</text>
+  <text x="48" y="334" class="data" fill="#6366f1">Visual verification step</text>
+
+  <line x1="187" y1="316" x2="211" y2="316" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="215" y="288" width="155" height="56" rx="6" fill="#ffffff" stroke="#93c5fd" filter="url(#sh)"/>
+  <text x="231" y="308" class="node" fill="#1d4ed8">Next.js Build</text>
+  <text x="231" y="322" class="data" fill="#2563eb">npm run build (static)</text>
+  <text x="231" y="334" class="data" fill="#2563eb">out/ directory</text>
+
+  <line x1="370" y1="316" x2="394" y2="316" stroke="#10b981" stroke-width="1.5" marker-end="url(#arr-g)"/>
+
+  <!-- Quality Gates -->
+  <rect x="398" y="284" width="200" height="64" rx="6" fill="#dcfce7" stroke="#4ade80" filter="url(#sh)"/>
+  <text x="414" y="304" class="node" fill="#166534">Quality Gates</text>
+  <text x="414" y="318" class="data" fill="#15803d">Gate 1: build = 0 errors</text>
+  <text x="414" y="330" class="data" fill="#15803d">Gate 2: Lighthouse a11y/SEO/perf</text>
+  <text x="414" y="342" class="data" fill="#15803d">Retry up to 3x on failure</text>
+
+  <line x1="598" y1="316" x2="622" y2="316" stroke="#64748b" stroke-width="1.2" marker-end="url(#arr)"/>
+
+  <rect x="626" y="284" width="100" height="64" rx="6" fill="#f0fdf4" stroke="#4ade80" stroke-width="2"/>
+  <text x="646" y="308" class="node" fill="#166534">PASS</text>
+  <text x="642" y="322" class="data" fill="#15803d">out/</text>
+  <text x="642" y="334" class="data" fill="#15803d">vercel.json</text>
+  <text x="642" y="344" class="data" fill="#15803d">Static files</text>
+
+  <!-- ROW 4: Deploy -->
+  <text x="32" y="384" class="type-label" fill="#64748b">DEPLOY</text>
+
+  <rect x="32" y="394" width="170" height="48" rx="6" fill="#ffffff" stroke="#c4b5fd" filter="url(#sh)"/>
+  <text x="48" y="414" class="node" fill="#5b21b6">Vercel API v13</text>
+  <text x="48" y="428" class="data" fill="#7c3aed">Base64 upload, poll READY</text>
+  <text x="48" y="438" class="data" fill="#7c3aed">routes: / redirect</text>
+
+  <line x1="202" y1="418" x2="223" y2="418" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="227" y="394" width="170" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" filter="url(#sh)"/>
+  <text x="243" y="414" class="node" fill="#1e293b">GitHub Push</text>
+  <text x="243" y="428" class="data" fill="#475569">gh repo create DuoCode2/{slug}</text>
+  <text x="243" y="438" class="data" fill="#475569">--private --source=. --push</text>
+
+  <line x1="397" y1="418" x2="418" y2="418" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="422" y="394" width="160" height="48" rx="6" fill="#ffffff" stroke="#fecdd3" filter="url(#sh)"/>
+  <text x="438" y="414" class="node" fill="#be123c">Link Vercel + GitHub</text>
+  <text x="438" y="428" class="data" fill="#e11d48">PATCH /v9/projects/{slug}</text>
+  <text x="438" y="438" class="data" fill="#e11d48">gitRepository: DuoCode2/{slug}</text>
+
+  <line x1="582" y1="418" x2="603" y2="418" stroke="#64748b" stroke-width="1" marker-end="url(#arr)"/>
+
+  <rect x="607" y="394" width="145" height="48" rx="6" fill="#ffffff" stroke="#fde68a" filter="url(#sh)"/>
+  <text x="623" y="414" class="node" fill="#a16207">Log to n8n</text>
+  <text x="623" y="428" class="data" fill="#ca8a04">POST /webhook/log-work</text>
+  <text x="623" y="438" class="data" fill="#ca8a04">Google Sheets WorkLog</text>
+
+  <line x1="752" y1="418" x2="773" y2="418" stroke="#10b981" stroke-width="2" marker-end="url(#arr-g)"/>
+
+  <!-- Final output -->
+  <rect x="777" y="388" width="200" height="56" rx="8" fill="#6366f1" filter="url(#sh)"/>
+  <text x="800" y="412" style="font-size:12px; font-weight:700; fill:#ffffff;">Live Website</text>
+  <text x="800" y="428" class="data" style="fill:rgba(255,255,255,0.8);">{slug}.vercel.app</text>
+  <text x="800" y="440" class="data" style="fill:rgba(255,255,255,0.6);">github.com/DuoCode2/{slug}</text>
+
+  <!-- Summary annotations -->
+  <rect x="32" y="462" width="940" height="68" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="48" y="482" style="font-size: 10px; font-weight: 700; fill: #475569; letter-spacing: 1px;">KEY ARCHITECTURE CHANGES</text>
+  <text x="48" y="498" class="data" style="fill: #64748b; font-size: 9px;">Prepare outputs raw data (lead) + suggestions (ClassificationHint) — no binding design decisions like IndustryDesign</text>
+  <text x="48" y="512" class="data" style="fill: #64748b; font-size: 9px;">Claude Design is the sole decision-maker — picks fonts, structure, integrations based on lead + hints + reference docs</text>
+  <text x="48" y="524" class="data" style="fill: #64748b; font-size: 9px;">Font download moved to Design phase | translate.ts for multi-locale | Dev preview between Design and Finalize</text>
+</svg>

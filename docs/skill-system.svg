@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" fill="none">
+  <defs>
+    <style>
+      text { font-family: 'Inter', -apple-system, sans-serif; }
+      .title { font-size: 16px; font-weight: 700; fill: #0f172a; }
+      .label { font-size: 11px; font-weight: 600; }
+      .sub { font-size: 9px; fill: #64748b; }
+      .mono { font-size: 8.5px; font-family: 'SF Mono', monospace; fill: #94a3b8; }
+      .layer { font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+    </style>
+    <filter id="ds" x="-3%" y="-5%" width="106%" height="115%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <rect width="900" height="540" rx="10" fill="#fafbfc"/>
+  <text x="32" y="36" class="title">Skill Architecture — 6 Skills (Flat Structure)</text>
+  <text x="32" y="52" class="sub" style="font-size:10px;">.claude/skills/{name}/SKILL.md — pipeline commands + auto-load references + utility</text>
+
+  <!-- PIPELINE SKILLS -->
+  <rect x="20" y="72" width="430" height="456" rx="10" fill="#f0f9ff" stroke="#bae6fd" stroke-width="1.5"/>
+  <text x="36" y="96" class="layer" fill="#0369a1">PIPELINE SKILLS (slash commands)</text>
+  <text x="36" y="112" class="sub">disable-model-invocation: true — user invokes explicitly</text>
+
+  <!-- Generate -->
+  <rect x="36" y="126" width="190" height="48" rx="6" fill="#ffffff" stroke="#d1fae5" filter="url(#ds)"/>
+  <text x="48" y="146" class="label" fill="#059669">/generate</text>
+  <text x="48" y="160" class="mono">generate/SKILL.md</text>
+  <text x="48" y="170" class="sub">prepare + design + finalize (one site)</text>
+
+  <!-- Batch -->
+  <rect x="240" y="126" width="196" height="48" rx="6" fill="#ffffff" stroke="#c7d2fe" filter="url(#ds)"/>
+  <text x="252" y="146" class="label" fill="#4338ca">/batch</text>
+  <text x="252" y="160" class="mono">batch/SKILL.md</text>
+  <text x="252" y="170" class="sub">Fully parallel — one Agent per lead</text>
+
+  <!-- Fix-site -->
+  <rect x="36" y="186" width="190" height="48" rx="6" fill="#ffffff" stroke="#e2e8f0" filter="url(#ds)"/>
+  <text x="48" y="206" class="label" fill="#a16207">/fix-site</text>
+  <text x="48" y="220" class="mono">fix-site/SKILL.md</text>
+  <text x="48" y="230" class="sub">Fix visual issues + rebuild + redeploy</text>
+
+  <!-- Deploy -->
+  <rect x="240" y="186" width="196" height="48" rx="6" fill="#ffffff" stroke="#c4b5fd" filter="url(#ds)"/>
+  <text x="252" y="206" class="label" fill="#5b21b6">/deploy</text>
+  <text x="252" y="220" class="mono">deploy/SKILL.md + resources/</text>
+  <text x="252" y="230" class="sub">Vercel deployment</text>
+
+  <!-- Auto-load design skills -->
+  <rect x="36" y="252" width="400" height="48" rx="6" fill="#ffffff" stroke="#fde68a" filter="url(#ds)"/>
+  <text x="48" y="272" class="label" fill="#a16207">frontend-design (auto-load)</text>
+  <text x="48" y="286" class="mono">Anthropic skill — typography, color, layout, motion</text>
+
+  <rect x="36" y="312" width="400" height="48" rx="6" fill="#ffffff" stroke="#fde68a" filter="url(#ds)"/>
+  <text x="48" y="332" class="label" fill="#a16207">duocode-design (auto-load)</text>
+  <text x="48" y="346" class="mono">Design references + archetype guide + a11y + scaffolding</text>
+
+  <!-- Hub skills -->
+  <rect x="36" y="376" width="400" height="56" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="50" y="396" class="label" fill="#475569">Auto-load Hubs (user-invocable: false)</text>
+  <text x="50" y="412" class="sub">toolchain/ — browser-use, lighthouse, n8n, github, sheets, svg, tailwind, favicon</text>
+  <text x="50" y="424" class="sub">quality-standards/ — a11y, seo, perf, CWV, visual testing, schema markup, best practices</text>
+
+  <!-- Project Standards -->
+  <rect x="36" y="444" width="400" height="40" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="50" y="464" class="label" fill="#475569">project-standards/SKILL.md</text>
+  <text x="50" y="476" class="sub">TypeScript conventions + data schema standards (auto-loaded)</text>
+
+  <!-- DESIGN SYSTEM -->
+  <rect x="464" y="72" width="420" height="456" rx="10" fill="#fefce8" stroke="#fde68a" stroke-width="1.5"/>
+  <text x="480" y="96" class="layer" fill="#a16207">DESIGN SYSTEM (auto-load)</text>
+  <text x="480" y="112" class="sub">duocode-design/ — user-invocable: false, loaded when generating sites</text>
+
+  <!-- Core design skill -->
+  <rect x="480" y="126" width="390" height="76" rx="8" fill="#ffffff" stroke="#fde68a" filter="url(#ds)"/>
+  <text x="492" y="148" class="label" fill="#a16207">duocode-design/SKILL.md (Core)</text>
+  <text x="492" y="164" class="sub">Shared design principles, anti-AI aesthetics, color, typography, SVG rules</text>
+  <text x="492" y="178" class="mono">references/_foundations.md + _copy-foundations.md</text>
+  <text x="492" y="190" class="mono">references/brand-identity.md + landing-page-patterns.md + copy-frameworks.md</text>
+
+  <!-- Reference Docs (updated) -->
+  <rect x="480" y="214" width="390" height="80" rx="8" fill="#ffffff" stroke="#fed7aa" filter="url(#ds)"/>
+  <text x="492" y="236" class="label" fill="#c2410c">Region + Platform References</text>
+  <text x="492" y="254" class="sub">Region market rules + platform integration guide (any country)</text>
+
+  <rect x="494" y="264" width="120" height="24" rx="4" fill="#fff7ed" stroke="#fed7aa"/>
+  <text x="506" y="280" class="mono" style="font-weight:600; fill:#c2410c;">platforms-by-region.md</text>
+
+  <rect x="624" y="264" width="120" height="24" rx="4" fill="#fff7ed" stroke="#fed7aa"/>
+  <text x="636" y="280" class="mono" style="font-weight:600; fill:#c2410c;">generic-market.md</text>
+
+  <rect x="754" y="264" width="100" height="24" rx="4" fill="#fff7ed" stroke="#fed7aa"/>
+  <text x="766" y="280" class="mono" style="font-weight:600; fill:#c2410c;">archetype-guide.md</text>
+
+  <!-- Archetype patterns (replaces industry-specific boxes) -->
+  <rect x="480" y="306" width="390" height="80" rx="8" fill="#ffffff" stroke="#c7d2fe" filter="url(#ds)"/>
+  <text x="492" y="328" class="label" fill="#4338ca">Archetype Patterns (Claude picks, not fixed)</text>
+
+  <rect x="494" y="340" width="85" height="36" rx="4" fill="#eef2ff" stroke="#c7d2fe"/>
+  <text x="506" y="354" class="sub" style="font-weight:600;">menu-order</text>
+  <text x="506" y="368" class="mono">food . cafe</text>
+
+  <rect x="589" y="340" width="85" height="36" rx="4" fill="#fdf4ff" stroke="#e9d5ff"/>
+  <text x="601" y="354" class="sub" style="font-weight:600;">booking</text>
+  <text x="601" y="368" class="mono">clinic . beauty</text>
+
+  <rect x="684" y="340" width="85" height="36" rx="4" fill="#f0fdf4" stroke="#bbf7d0"/>
+  <text x="696" y="354" class="sub" style="font-weight:600;">showcase</text>
+  <text x="696" y="368" class="mono">retail . service</text>
+
+  <rect x="779" y="340" width="77" height="36" rx="4" fill="#fef2f2" stroke="#fecaca"/>
+  <text x="791" y="354" class="sub" style="font-weight:600;">fitness</text>
+  <text x="791" y="368" class="mono">gym . studio</text>
+
+  <!-- Shared UI Components -->
+  <rect x="480" y="398" width="390" height="60" rx="8" fill="#ffffff" stroke="#bbf7d0" stroke-width="1.5" filter="url(#ds)"/>
+  <text x="492" y="418" class="label" fill="#15803d">Shared UI Components (10 pre-built)</text>
+  <text x="492" y="434" class="sub">Import from @/components/ui — don't regenerate</text>
+  <text x="492" y="450" class="mono">Button | Section | Card | Grid | Accordion | Badge | ResponsiveImage | DemoModal | ReviewStars | HoursTable</text>
+
+  <!-- Schemas -->
+  <rect x="480" y="470" width="390" height="48" rx="8" fill="#ffffff" stroke="#e2e8f0" filter="url(#ds)"/>
+  <text x="492" y="490" class="label" fill="#475569">JSON Schemas + Next.js Templates</text>
+  <text x="492" y="506" class="mono">schemas/_base.schema.json | templates/_shared/ + archetype overlays</text>
+
+  <!-- Load order -->
+  <text x="480" y="532" class="sub" style="font-weight:600; fill:#a16207;">Load: SKILL.md > _foundations.md > region refs > archetype > schema > shared UI</text>
+</svg>
