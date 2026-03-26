@@ -10,18 +10,56 @@
     "slug": "autocare-pro",
     "url": "https://autocare-pro.vercel.app",
     "industry": "service",
+    "regionId": null,
     "preparedAt": "2026-03-25T04:29:00.061Z"
   },
   "ChIJ_3O7FKdLzDERPluiP3IlnTk": {
     "slug": "bananabro-sri-petaling",
     "url": "https://bananabro-sri-petaling.vercel.app",
     "industry": "south_indian_restaurant",
+    "regionId": null,
     "preparedAt": "2026-03-25T03:26:17.006Z"
+  },
+  "ChIJwYv6rp-xEmsRf2n09n52Zvk": {
+    "slug": "ck-co-hair-and-beauty-rosebery",
+    "url": "https://ck-co-hair-and-beauty-rosebery.vercel.app",
+    "industry": "beauty",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:08:35.402Z"
+  },
+  "ChIJ07vOlS1KzDERL1RNtH006Mc": {
+    "slug": "dahlia-beauty-house",
+    "url": "https://dahlia-beauty-house.vercel.app",
+    "industry": null,
+    "regionId": null,
+    "preparedAt": null
+  },
+  "ChIJHXzngISxEmsRrLzXFuUgVmg": {
+    "slug": "delta-hair-studio-mascot",
+    "url": "https://delta-hair-studio-mascot.vercel.app",
+    "industry": "beauty",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:08:25.521Z"
+  },
+  "ChIJTZviEACxEmsRs7snYV7XyM8": {
+    "slug": "dynasty-dumplings-house",
+    "url": "https://dynasty-dumplings-house.vercel.app",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:08:18.974Z"
+  },
+  "ChIJI_txLDexEmsRJGo0_olQCJ4": {
+    "slug": "freechoice-tobacconist-mascot",
+    "url": "https://freechoice-tobacconist-mascot.vercel.app",
+    "industry": "generic",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:08:52.517Z"
   },
   "ChIJP557fJ6tzTER58RXpr9HJrA": {
     "slug": "geekfix-klang-smartphone-repair-shop",
     "url": "https://geekfix-klang-smartphone-repair-shop.vercel.app",
     "industry": "generic",
+    "regionId": null,
     "preparedAt": "2026-03-25T06:40:49.259Z"
   },
   "ChIJiwz58WexEmsRiag7qLOkaJ8": {
@@ -31,10 +69,32 @@
     "regionId": "my",
     "preparedAt": "2026-03-25T15:41:35.784Z"
   },
+  "ChIJGX9aFgBJzDERh-eQtZP0dEg": {
+    "slug": "jm-beauty-studio",
+    "url": "https://jm-beauty-studio.vercel.app",
+    "industry": null,
+    "regionId": null,
+    "preparedAt": null
+  },
+  "ChIJkyjYIgqxEmsRQ51KGO7G6uI": {
+    "slug": "john-s-mens-hair-stylist",
+    "url": "https://john-s-mens-hair-stylist.vercel.app",
+    "industry": "beauty",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:08:52.623Z"
+  },
+  "ChIJKUZxmI9JzDERxt0PBbXN9gc": {
+    "slug": "k-studio",
+    "url": "https://k-studio.vercel.app",
+    "industry": null,
+    "regionId": null,
+    "preparedAt": null
+  },
   "ChIJvZtL6jFLzDERgslRIZ1WeN8": {
     "slug": "luckee",
     "url": "https://luckee.vercel.app",
     "industry": "restaurant",
+    "regionId": null,
     "preparedAt": "2026-03-25T03:11:55.146Z"
   },
   "ChIJp7_1-amxEmsRjNiguYfGdS0": {
@@ -50,6 +110,20 @@
     "industry": "food",
     "regionId": "au",
     "preparedAt": "2026-03-26T02:32:24.956Z"
+  },
+  "ChIJCTAayKqxEmsRdI3m-u2wqm8": {
+    "slug": "mascot-dry-cleaner",
+    "url": "https://mascot-dry-cleaner.vercel.app",
+    "industry": "service",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:09:06.553Z"
+  },
+  "ChIJFThEDAexEmsRc_FNrh7W4nI": {
+    "slug": "mascot-laundry",
+    "url": "https://mascot-laundry.vercel.app",
+    "industry": "service",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:09:03.379Z"
   },
   "ChIJhXux0qqxEmsRRuv5kxFpB5A": {
     "slug": "mr-nam",
@@ -69,7 +143,15 @@
     "slug": "one-stop-phone-repair-centre-bukit-tinggi",
     "url": "https://one-stop-phone-repair-centre-bukit-tinggi.vercel.app",
     "industry": "generic",
+    "regionId": null,
     "preparedAt": "2026-03-25T06:34:09.261Z"
+  },
+  "ChIJ0W49DAexEmsRgIn8gico_T0": {
+    "slug": "pasalubong-oriental-foods",
+    "url": "https://pasalubong-oriental-foods.vercel.app",
+    "industry": "retail",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:08:58.460Z"
   },
   "ChIJoyA19pCxEmsRnJMUnzDHVWA": {
     "slug": "pochito",
@@ -82,7 +164,15 @@
     "slug": "power-fix-mobile-repair-bukit-tinggi-2",
     "url": "https://power-fix-mobile-repair-bukit-tinggi-2.vercel.app",
     "industry": "generic",
+    "regionId": null,
     "preparedAt": "2026-03-25T06:57:10.943Z"
+  },
+  "ChIJ_dWIDbmxEmsRlW4asSr4bjM": {
+    "slug": "ra-atelier-hair-studio",
+    "url": "https://ra-atelier-hair-studio.vercel.app",
+    "industry": "beauty",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:08:39.928Z"
   },
   "ChIJuZqNMgBLzDERlj563wgHMKI": {
     "slug": "restoran-bbq-soon-hing-wantan-mee-sri-petaling",
@@ -102,7 +192,15 @@
     "slug": "sri-petaling-ye-wen-klang-bak-kut-teh",
     "url": "https://sri-petaling-ye-wen-klang-bak-kut-teh.vercel.app",
     "industry": "chinese_restaurant",
+    "regionId": null,
     "preparedAt": "2026-03-25T03:10:53.553Z"
+  },
+  "ChIJL8_P-qixEmsR7lZ-jM_Dxc0": {
+    "slug": "steven-s-laundromat",
+    "url": "https://steven-s-laundromat.vercel.app",
+    "industry": "service",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:09:03.916Z"
   },
   "suki-ya-pavilion-kl": {
     "slug": "suki-ya",
@@ -111,10 +209,18 @@
     "regionId": "my",
     "preparedAt": "2026-03-25T16:12:13.045Z"
   },
+  "ChIJl7eiSwaxEmsRiptaHd7NnJc": {
+    "slug": "xclusive-hair-salon",
+    "url": "https://xclusive-hair-salon.vercel.app",
+    "industry": "beauty",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:08:29.250Z"
+  },
   "ChIJx8dNqTBLzDERA1Kle0TeLQY": {
     "slug": "yitcha-kawkaw-kopitiam-sri-petaling",
     "url": "https://yitcha-kawkaw-kopitiam-sri-petaling.vercel.app",
     "industry": "chinese_restaurant",
+    "regionId": null,
     "preparedAt": "2026-03-25T03:26:16.502Z"
   },
   "slug:arena-sukan-kuala-lumpur": {
@@ -125,10 +231,6 @@
     "slug": "bayleaf-kitchen-pj",
     "url": "https://bayleaf-kitchen-pj.vercel.app"
   },
-  "ChIJ07vOlS1KzDERL1RNtH006Mc": {
-    "slug": "dahlia-beauty-house",
-    "url": "https://dahlia-beauty-house.vercel.app"
-  },
   "slug:engine-oil-change": {
     "slug": "engine-oil-change",
     "url": "https://engine-oil-change.vercel.app"
@@ -136,14 +238,6 @@
   "slug:express-beauty-bar": {
     "slug": "express-beauty-bar",
     "url": "https://express-beauty-bar.vercel.app"
-  },
-  "ChIJGX9aFgBJzDERh-eQtZP0dEg": {
-    "slug": "jm-beauty-studio",
-    "url": "https://jm-beauty-studio.vercel.app"
-  },
-  "ChIJKUZxmI9JzDERxt0PBbXN9gc": {
-    "slug": "k-studio",
-    "url": "https://k-studio.vercel.app"
   },
   "slug:lyla-beauty-lounge": {
     "slug": "lyla-beauty-lounge",
@@ -180,45 +274,5 @@
   "slug:wtf-restaurant": {
     "slug": "wtf-restaurant",
     "url": "https://wtf-restaurant.vercel.app"
-  },
-  "ChIJl7eiSwaxEmsRiptaHd7NnJc": {
-    "slug": "",
-    "url": "https://xclusive-hair-salon.vercel.app",
-    "deployedAt": "2026-03-26T03:14:11.006Z"
-  },
-  "ChIJTZviEACxEmsRs7snYV7XyM8": {
-    "slug": "",
-    "url": "https://dynasty-dumplings-house-weiliudev0607-3691s-projects.vercel.app",
-    "deployedAt": "2026-03-26T03:15:03.469Z"
-  },
-  "ChIJ_dWIDbmxEmsRlW4asSr4bjM": {
-    "slug": "",
-    "url": "https://ra-atelier-hair-studio.vercel.app",
-    "deployedAt": "2026-03-26T03:16:11.337Z"
-  },
-  "ChIJHXzngISxEmsRrLzXFuUgVmg": {
-    "slug": "",
-    "url": "https://delta-hair-studio-mascot.vercel.app",
-    "deployedAt": "2026-03-26T03:16:21.750Z"
-  },
-  "ChIJCTAayKqxEmsRdI3m-u2wqm8": {
-    "slug": "",
-    "url": "https://mascot-dry-cleaner-weiliudev0607-3691s-projects.vercel.app",
-    "deployedAt": "2026-03-26T03:16:37.509Z"
-  },
-  "ChIJI_txLDexEmsRJGo0_olQCJ4": {
-    "slug": "",
-    "url": "https://freechoice-tobacconist-mascot.vercel.app",
-    "deployedAt": "2026-03-26T03:16:52.249Z"
-  },
-  "ChIJFThEDAexEmsRc_FNrh7W4nI": {
-    "slug": "",
-    "url": "https://mascot-laundry.vercel.app",
-    "deployedAt": "2026-03-26T03:17:52.962Z"
-  },
-  "ChIJ0W49DAexEmsRgIn8gico_T0": {
-    "slug": "",
-    "url": "https://pasalubong-oriental-foods.vercel.app",
-    "deployedAt": "2026-03-26T03:18:48.439Z"
   }
 }

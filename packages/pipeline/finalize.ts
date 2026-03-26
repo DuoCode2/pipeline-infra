@@ -249,7 +249,7 @@ ${sitemapUrls}
   logAction({ place_id: placeId, slug, action: 'deployed', result: deploy.url, url: deploy.url, industry, qa_score: scores });
 
   // Register in sites registry for deduplication
-  registerDeployed(placeId, deploy.url);
+  registerDeployed(placeId, slug, deploy.url);
 
   return { status: 'deployed', url: deploy.url, scores };
 }

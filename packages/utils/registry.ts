@@ -70,15 +70,16 @@ export function registerPrepared(placeId: string, entry: Omit<SiteEntry, 'prepar
   writeRegistry(registry);
 }
 
-/** Register a site after successful deployment. */
-export function registerDeployed(placeId: string, url: string): void {
+/** Register a site after successful deployment. Requires slug. */
+export function registerDeployed(placeId: string, slug: string, url: string): void {
   const registry = readRegistry();
-  if (!registry[placeId]) {
-    registry[placeId] = { slug: '', url, deployedAt: new Date().toISOString() };
-  } else {
-    registry[placeId].url = url;
-    registry[placeId].deployedAt = new Date().toISOString();
-  }
+  const existing = registry[placeId] ?? {};
+  registry[placeId] = {
+    ...existing,
+    slug: slug || existing.slug || '',
+    url,
+    deployedAt: new Date().toISOString(),
+  };
   writeRegistry(registry);
 }
 
