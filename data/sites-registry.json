@@ -274,5 +274,19 @@
   "slug:wtf-restaurant": {
     "slug": "wtf-restaurant",
     "url": "https://wtf-restaurant.vercel.app"
+  },
+  "ChIJE3BcPCauEmsRXcPcszEn2To": {
+    "slug": "cornerstone-cafe-uts",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:44:49.979Z",
+    "url": "https://cornerstone-cafe-uts.vercel.app",
+    "deployedAt": "2026-03-26T03:52:39.510Z"
+  },
+  "ChIJcTBX6B6vEmsR_Tbad7induY": {
+    "slug": "chef-chen-dumplings",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T03:45:04.990Z"
   }
 }
