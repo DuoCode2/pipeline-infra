@@ -16,5 +16,18 @@
       "TaskUpdate"
     ]
   },
-  "showClearContextOnPlanAccept": true
+  "showClearContextOnPlanAccept": true,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/block-root-images.sh"
+          }
+        ]
+      }
+    ]
+  }
 }

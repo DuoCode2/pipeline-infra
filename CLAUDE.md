@@ -9,9 +9,10 @@ Claude Code drives the full pipeline. Use `frontend-design` skill for all design
 - **NEVER write files to the project root** — all outputs go to their proper directory:
   - Lead JSON → `data/leads/`
   - Exports/CSV → `data/exports/`
-  - Screenshots → `tests/screenshots/`
+  - Screenshots → `output/{slug}/screenshots/` (per-site) or `tests/screenshots/` (general)
   - Site output → `output/{slug}/`
   - Scripts → `scripts/`
+  - **Images/screenshots MUST go to `output/{slug}/screenshots/` or `output/{slug}/public/images/`** — a PreToolUse hook will BLOCK writes to wrong locations
 - Use **AskUserQuestion tool** for user input — never plain text questions
 - Pipeline runs **end-to-end without pausing** — only stop if a gate fails after max retries
 - **ONLY generate sites for businesses WITHOUT a website** — discover defaults to no-website filter
