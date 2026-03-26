@@ -1,6 +1,6 @@
 ---
 name: batch
-description: "Process multiple business leads in parallel. Each lead runs the full generate pipeline (prepare→design→finalize) as an independent agent. Use when user says 'batch', '批量', 'generate N sites', or provides multiple leads."
+description: "Process multiple business leads in parallel. Each lead runs the full generate pipeline (prepare→design→finalize) as an independent agent. Use when user says 'batch', '批量', 'generate N sites', or provides multiple leads. Also triggers for '帮我给...做网站' or 'create sites for businesses in...'."
 allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion, Skill, TeamCreate, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet]
 user-invocable: true
 disable-model-invocation: false
@@ -97,19 +97,33 @@ TeamCreate(
   prompt="
     You are the batch coordinator for {N} sites in {city}.
 
-    Diversity plan: {diversityPlanJSON}
-    Leads file: {leadsFile}
+    ## Your responsibilities
+    1. Create one task per lead with TaskCreate (subject: 'Generate site: {businessName}')
+    2. Set task dependencies: each site has 3 phases (prepare → design → finalize)
+       Use addBlockedBy to ensure finalize waits for design, design waits for prepare.
+    3. Assign each task to a teammate
+    4. Monitor progress via TaskList
+    5. If a teammate reports an issue (CSS bug, build error, API failure),
+       use SendMessage to warn ALL other teammates immediately
+    6. When all teammates complete, collect results and report the summary table
 
-    Create one task per lead, then assign each to a teammate.
-    Monitor progress via TaskList. If a teammate reports a CSS or build issue,
-    use SendMessage to warn other teammates about the same potential problem.
+    ## Diversity plan
+    {diversityPlanJSON}
 
-    When all teammates complete, collect results and report the summary table.
+    ## Leads file
+    {leadsFile}
+
+    ## Issue relay protocol
+    When a teammate sends you a message about a discovered problem:
+    - Categorize: CSS/build/deploy/design issue
+    - If it affects shared code (scaffold, UI components): broadcast to ALL teammates
+    - If it's site-specific: note it but don't broadcast
+    - Track all issues in a task: 'Batch issues log'
   "
 )
 ```
 
-Each teammate runs the full /generate pipeline with its assigned design direction from the diversity plan. The leader monitors progress, relays discovered issues (e.g., "teammate A found that CSS variable `--color-accent-text` was misnamed — all teammates should check this").
+Each teammate runs the full /generate pipeline with `isolation: "worktree"` and its assigned design direction. The leader relays discovered issues between teammates in real time.
 
 ### Option B: Plain Parallel Agents (fallback if Teams unavailable)
 
@@ -168,11 +182,19 @@ For each lead [i] in leads.json:
       Return JSON: { slug, status, url, scores }
     ",
     mode="bypassPermissions",
-    run_in_background=true
+    run_in_background=true,
+    isolation="worktree"
   )
 ```
 
 **Critical**: All Agent calls must be in a **single message** to run concurrently.
+
+**Why `isolation: "worktree"`**: Each agent gets an isolated git worktree copy of the repo. This prevents:
+- Concurrent file collisions (two agents writing to shared files)
+- One agent's CSS fix leaking into another agent's build
+- Registry race conditions (each worktree has its own copy)
+
+After each agent finishes, its changes are on a separate branch. The leader (or parent) merges results back.
 
 ## Step 3: Collect Results
 
