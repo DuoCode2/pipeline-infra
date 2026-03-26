@@ -1,7 +1,7 @@
 ---
 name: generate
 description: "End-to-end website generation for a business lead. One sentence → live site. Region-agnostic, industry-agnostic — Claude makes all design decisions. Use when user says 'generate', 'build a site', 'create website', or provides a business lead."
-allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion]
+allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion, Skill, TaskCreate, TaskUpdate]
 user-invocable: true
 ---
 

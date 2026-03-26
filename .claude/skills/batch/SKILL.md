@@ -1,7 +1,7 @@
 ---
 name: batch
 description: "Process multiple business leads in parallel. Each lead runs the full generate pipeline (prepare→design→finalize) as an independent agent. Use when user says 'batch', '批量', 'generate N sites', or provides multiple leads."
-allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion]
+allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion, Skill, TeamCreate, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet]
 user-invocable: true
 ---
 
@@ -84,7 +84,33 @@ Example:
 
 This is critical for same-category batches (e.g., 5 hair salons). Without explicit diversity constraints, Claude will default to the same "safe" choices for every site.
 
-## Step 2: Launch Parallel Agents
+## Step 2: Launch with Agent Teams (preferred) or Parallel Agents
+
+Agent Teams provides coordination that plain agents lack. Use Teams when available.
+
+### Option A: Agent Teams (preferred — enables coordination)
+
+```
+TeamCreate(
+  name="batch-{city}",
+  prompt="
+    You are the batch coordinator for {N} sites in {city}.
+
+    Diversity plan: {diversityPlanJSON}
+    Leads file: {leadsFile}
+
+    Create one task per lead, then assign each to a teammate.
+    Monitor progress via TaskList. If a teammate reports a CSS or build issue,
+    use SendMessage to warn other teammates about the same potential problem.
+
+    When all teammates complete, collect results and report the summary table.
+  "
+)
+```
+
+Each teammate runs the full /generate pipeline with its assigned design direction from the diversity plan. The leader monitors progress, relays discovered issues (e.g., "teammate A found that CSS variable `--color-accent-text` was misnamed — all teammates should check this").
+
+### Option B: Plain Parallel Agents (fallback if Teams unavailable)
 
 After user confirms and diversity plan is ready, spawn **one Agent per lead** in a **SINGLE message**. Each agent runs the full `/generate` pipeline:
 
