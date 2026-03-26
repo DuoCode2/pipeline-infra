@@ -92,26 +92,42 @@ export function bootstrap(): SiteRegistry {
 
   for (const entry of fs.readdirSync(outputDir, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
-    const leadPath = path.join(outputDir, entry.name, 'lead.json');
-    if (!fs.existsSync(leadPath)) continue;
+    const slug = entry.name;
+    const leadPath = path.join(outputDir, slug, 'lead.json');
 
-    try {
-      const lead = JSON.parse(fs.readFileSync(leadPath, 'utf8'));
-      const placeId = lead.place_id;
-      if (!placeId || registry[placeId]) continue;
+    // Try to read lead.json for place_id
+    let placeId: string | undefined;
+    let industry: string | undefined;
+    let regionId: string | undefined;
+    let timestamp: string | undefined;
 
-      registry[placeId] = {
-        slug: entry.name,
-        url: `https://${entry.name}.vercel.app`,
-        industry: lead.industry,
-        regionId: lead.regionId,
-        preparedAt: lead.timestamp,
-      };
-      added++;
-    } catch { /* skip malformed lead.json */ }
+    if (fs.existsSync(leadPath)) {
+      try {
+        const lead = JSON.parse(fs.readFileSync(leadPath, 'utf8'));
+        // Support both old format (id) and new format (place_id)
+        placeId = lead.place_id || lead.id;
+        industry = lead.industry;
+        regionId = lead.regionId;
+        timestamp = lead.timestamp;
+      } catch { /* skip malformed */ }
+    }
+
+    // Fallback: use slug as ID for dirs without lead.json or without place_id
+    const registryKey = placeId || `slug:${slug}`;
+    if (registry[registryKey]) continue;
+
+    registry[registryKey] = {
+      slug,
+      url: `https://${slug}.vercel.app`,
+      industry,
+      regionId,
+      preparedAt: timestamp,
+    };
+    added++;
   }
 
-  writeRegistry(registry);
+  if (added > 0) writeRegistry(registry);
+  console.error(`  Added ${added} new entries`);
   return registry;
 }
 

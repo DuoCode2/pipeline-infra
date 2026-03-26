@@ -122,5 +122,69 @@
     "url": "https://yitcha-kawkaw-kopitiam-sri-petaling.vercel.app",
     "industry": "chinese_restaurant",
     "preparedAt": "2026-03-25T03:26:16.502Z"
+  },
+  "slug:arena-sukan-kuala-lumpur": {
+    "slug": "arena-sukan-kuala-lumpur",
+    "url": "https://arena-sukan-kuala-lumpur.vercel.app"
+  },
+  "slug:bayleaf-kitchen-pj": {
+    "slug": "bayleaf-kitchen-pj",
+    "url": "https://bayleaf-kitchen-pj.vercel.app"
+  },
+  "ChIJ07vOlS1KzDERL1RNtH006Mc": {
+    "slug": "dahlia-beauty-house",
+    "url": "https://dahlia-beauty-house.vercel.app"
+  },
+  "slug:engine-oil-change": {
+    "slug": "engine-oil-change",
+    "url": "https://engine-oil-change.vercel.app"
+  },
+  "slug:express-beauty-bar": {
+    "slug": "express-beauty-bar",
+    "url": "https://express-beauty-bar.vercel.app"
+  },
+  "ChIJGX9aFgBJzDERh-eQtZP0dEg": {
+    "slug": "jm-beauty-studio",
+    "url": "https://jm-beauty-studio.vercel.app"
+  },
+  "ChIJKUZxmI9JzDERxt0PBbXN9gc": {
+    "slug": "k-studio",
+    "url": "https://k-studio.vercel.app"
+  },
+  "slug:lyla-beauty-lounge": {
+    "slug": "lyla-beauty-lounge",
+    "url": "https://lyla-beauty-lounge.vercel.app"
+  },
+  "slug:panel-beating-ketuk": {
+    "slug": "panel-beating-ketuk",
+    "url": "https://panel-beating-ketuk.vercel.app"
+  },
+  "slug:paradise-beauty-parlour": {
+    "slug": "paradise-beauty-parlour",
+    "url": "https://paradise-beauty-parlour.vercel.app"
+  },
+  "slug:quick-sport": {
+    "slug": "quick-sport",
+    "url": "https://quick-sport.vercel.app"
+  },
+  "slug:sentral-dental-clinic": {
+    "slug": "sentral-dental-clinic",
+    "url": "https://sentral-dental-clinic.vercel.app"
+  },
+  "slug:sports-arena-sentosa": {
+    "slug": "sports-arena-sentosa",
+    "url": "https://sports-arena-sentosa.vercel.app"
+  },
+  "slug:the-dentist-kl": {
+    "slug": "the-dentist-kl",
+    "url": "https://the-dentist-kl.vercel.app"
+  },
+  "slug:tyre-sales-installation": {
+    "slug": "tyre-sales-installation",
+    "url": "https://tyre-sales-installation.vercel.app"
+  },
+  "slug:wtf-restaurant": {
+    "slug": "wtf-restaurant",
+    "url": "https://wtf-restaurant.vercel.app"
   }
 }
