@@ -18,7 +18,7 @@ Use **AskUserQuestion** to collect ANY missing information. NEVER assume or defa
 |-------|-----------|---------|-------------|
 | City/area | YES | "Mascot, Sydney" | "Which city or area should I search in?" |
 | Business categories | YES | "food,beauty,clinic" | "What types of businesses? (e.g., food, beauty, clinic, retail, fitness)" |
-| Count | NO (default 3) | 5 | — |
+| Count | YES | 5 | "How many sites do you want to generate?" |
 
 **If the user says "帮我给悉尼mascot附近没有网站的店铺做网站" — they did NOT specify business types.** You MUST ask:
 > "What types of businesses should I search for? For example: food, beauty, clinic, retail, fitness, service, automotive, tech, education, pet, events, hospitality, realestate, community — or 'all' for mixed."
@@ -48,11 +48,23 @@ npx tsx packages/batch/orchestrate.ts --city "Mascot, Sydney" --categories "food
 - search.ts defaults to no-website filter. Use `--include-all` if needed.
 - **ALWAYS use `--lead-file`** in prepare (never inline `--lead` JSON — it lacks photos).
 
-Read the leads file to get the count and names. Report to user before proceeding.
+Read the leads file to get the count and names.
+
+## RULE: Confirm before launching agents
+
+**ALWAYS use AskUserQuestion to confirm before spawning agents.** Show the user what you found and ask how many to proceed with:
+
+> "Found N businesses without websites:
+> 1. Business A (category)
+> 2. Business B (category)
+> ...
+> How many do you want to generate? All N, or pick specific ones?"
+
+This is a **hard gate** — never launch agents without user confirmation of the count. Each agent costs time and API credits.
 
 ## Step 2: Launch Parallel Agents
 
-Spawn **one Agent per lead** in a **SINGLE message**. Each agent runs the full `/generate` pipeline:
+After user confirms, spawn **one Agent per lead** in a **SINGLE message**. Each agent runs the full `/generate` pipeline:
 
 ```
 For each lead [i] in leads.json:

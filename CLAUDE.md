@@ -23,7 +23,7 @@ Claude Code drives the full pipeline. Use `frontend-design` skill for all design
 When running /generate or /batch, Claude must use **AskUserQuestion** for missing inputs:
 - **City/area** — NEVER default to any city
 - **Business category** — NEVER default to "restaurant" or "food". If user says "shops/stores/店铺" (generic), ASK what types
-- **Count** — can default to 3-5 if not specified
+- **Count** — ALWAYS confirm how many sites to generate before launching agents. Show the list, ask "all N or pick specific ones?"
 
 ## RULE: Self-iterate to deliver
 When running /generate or /batch, Claude must:
