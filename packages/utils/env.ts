@@ -29,6 +29,13 @@ export type Locale = string;
  * Multi-locale support can also be overridden via CLI --locales flag.
  */
 const REGION_LOCALES: Record<string, string[]> = {
+  // English-primary regions
+  au: ['en'],
+  us: ['en'],
+  uk: ['en'],
+  ca: ['en'],
+  nz: ['en'],
+  // Multi-lingual regions
   my: ['en', 'ms', 'zh-CN', 'zh-TW'],
   sg: ['en', 'zh-CN', 'ms'],
   hk: ['en', 'zh-TW', 'zh-CN'],

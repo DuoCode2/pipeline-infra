@@ -37,17 +37,20 @@ async function discover(config: {
   includeAll?: boolean;
 }): Promise<PlaceResult[]> {
   const allLeads: PlaceResult[] = [];
+  // Distribute limit across categories, minimum 1 per category
+  const perCategory = Math.max(1, Math.ceil(config.limit / config.categories.length));
 
   for (const category of config.categories) {
-    console.error(`Searching: ${category} in ${config.city}...`);
-    const leads = await searchPlaces(category, config.city, 1, !config.includeAll);
-    allLeads.push(...leads.slice(0, config.limit));
+    console.error(`Searching: ${category} in ${config.city} (limit ${perCategory})...`);
+    const leads = await searchPlaces(category, config.city, perCategory, !config.includeAll);
+    allLeads.push(...leads);
   }
 
-  // Deduplicate by place ID
+  // Deduplicate by place ID, then enforce total limit
   const deduped = Array.from(new Map(allLeads.map(l => [l.id, l])).values());
-  console.error(`Total unique leads: ${deduped.length}`);
-  return deduped;
+  const limited = deduped.slice(0, config.limit);
+  console.error(`Total unique leads: ${limited.length} (of ${deduped.length} found)`);
+  return limited;
 }
 
 if (require.main === module) {

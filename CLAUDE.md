@@ -19,6 +19,12 @@ Claude Code drives the full pipeline. Use `frontend-design` skill for all design
 - Region market rules: see `.claude/skills/duocode-design/references/`
 - A11y rules: see `.claude/skills/duocode-design/references/a11y-checklist.md`
 
+## RULE: Ask before assuming
+When running /generate or /batch, Claude must use **AskUserQuestion** for missing inputs:
+- **City/area** — NEVER default to any city
+- **Business category** — NEVER default to "restaurant" or "food". If user says "shops/stores/店铺" (generic), ASK what types
+- **Count** — can default to 3-5 if not specified
+
 ## RULE: Self-iterate to deliver
 When running /generate or /batch, Claude must:
 - Make ALL design decisions autonomously (fonts, layout, colors, copy, site structure)

@@ -1,6 +1,6 @@
 ---
 name: batch
-description: "Process multiple business leads in parallel. Each lead runs the full generate pipeline (prepare→design→finalize) as an independent agent with archetype-aware design. Use when user says 'batch', '批量', 'generate N sites', or provides multiple leads."
+description: "Process multiple business leads in parallel. Each lead runs the full generate pipeline (prepare→design→finalize) as an independent agent. Use when user says 'batch', '批量', 'generate N sites', or provides multiple leads."
 allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion]
 user-invocable: true
 ---
@@ -10,22 +10,49 @@ user-invocable: true
 Each lead runs its own complete pipeline (prepare → design → finalize) in a dedicated Agent.
 All agents run concurrently. No sequential bottleneck.
 
+## RULE: Gather required inputs BEFORE running
+
+Use **AskUserQuestion** to collect ANY missing information. NEVER assume or default:
+
+| Input | Required? | Example | What to ask |
+|-------|-----------|---------|-------------|
+| City/area | YES | "Mascot, Sydney" | "Which city or area should I search in?" |
+| Business categories | YES | "food,beauty,clinic" | "What types of businesses? (e.g., food, beauty, clinic, retail, fitness)" |
+| Count | NO (default 3) | 5 | — |
+
+**If the user says "帮我给悉尼mascot附近没有网站的店铺做网站" — they did NOT specify business types.** You MUST ask:
+> "What types of businesses should I search for? For example: food, beauty, clinic, retail, fitness, service, automotive, tech, education, pet, events, hospitality, realestate, community — or 'all' for mixed."
+
+NEVER default to "restaurant" or "food" when the user says "店铺" (shops — generic).
+
 ## Step 1: Discover
 
 ```bash
-npx tsx packages/discover/search.ts --city "Kuala Lumpur" --category "food" --limit 3 --out data/leads/leads.json
+# --city and --category are REQUIRED, --limit is result count (default 5)
+npx tsx packages/discover/search.ts --city "Mascot, Sydney" --category "food" --limit 5 --out data/leads/leads.json
 ```
 
-**IMPORTANT**: search.ts defaults to no-website filter (only businesses WITHOUT a website).
-- If the user specifies businesses that HAVE websites, use `--include-all`.
-- **ALWAYS use `--lead-file`** in prepare, never inline `--lead` JSON (it will lack `photos` → generic stock images).
-- After prepare, check `lead.json → photoSource`: `"maps"` = real photos (good), `"stock"` = fallback (bad).
+For multiple categories, run separate searches and merge:
+```bash
+npx tsx packages/discover/search.ts --city "Mascot, Sydney" --category "food" --limit 3 --out data/leads/food.json
+npx tsx packages/discover/search.ts --city "Mascot, Sydney" --category "beauty" --limit 3 --out data/leads/beauty.json
+```
 
-Read the leads file to get the lead count and names.
+Or use the batch discovery script:
+```bash
+npx tsx packages/batch/orchestrate.ts --city "Mascot, Sydney" --categories "food,beauty" --limit 3 --out data/leads/batch.json
+```
+
+**Notes:**
+- `--limit N` returns at most N qualified results (not API pages)
+- search.ts defaults to no-website filter. Use `--include-all` if needed.
+- **ALWAYS use `--lead-file`** in prepare (never inline `--lead` JSON — it lacks photos).
+
+Read the leads file to get the count and names. Report to user before proceeding.
 
 ## Step 2: Launch Parallel Agents
 
-Spawn **one Agent per lead** in a single message. Each agent runs the full `/generate` pipeline independently:
+Spawn **one Agent per lead** in a **SINGLE message**. Each agent runs the full `/generate` pipeline:
 
 ```
 For each lead [i] in leads.json:
@@ -35,41 +62,46 @@ For each lead [i] in leads.json:
       You are generating a complete website for a business lead.
 
       ## Step 1: Prepare
-      Run: npx tsx packages/pipeline/prepare.ts --lead-file leads.json --index {i}
-      Read the JSON output to get outputDir, slug, brandColors, photos, config, industry, archetype, regionId.
+      Run: npx tsx packages/pipeline/prepare.ts --lead-file {leads_file} --index {i}
+      Read the JSON output to get outputDir, slug, regionId, brandColors, photos, lead, hints.
 
       ## Step 2: Design
       Read output/{slug}/brand-colors.json and photos in output/{slug}/public/images/.
-      Read .claude/skills/duocode-design/references/archetype-guide.md for the archetype design brief.
-      The prepare output includes 'archetype' — use it to determine what sections and demo features to build.
+      The PrepareResult includes 'hints' (suggestedIndustry, suggestedArchetype) — use as guidance, not mandate.
+      Read references: archetype-guide.md, platforms-by-region.md, generic-market.md (or region-specific if available).
+
+      Pick fonts using frontend-design skill, then download:
+        npx tsx packages/assets/download-fonts.ts --fonts 'Font1,Font2' --weights '400,500,600,700' --output output/{slug}/public/fonts
+
+      Import shared UI components from @/components/ui — don't recreate them.
 
       Create:
-      1. src/app/[locale]/page.tsx — unique layout guided by archetype
-      2. src/components/*.tsx — archetype-specific components (menu, booking, catalog, etc.)
-      3. src/data/business.ts — fill all locale content with archetype-specific sections
-      4. Interactive demo features per archetype guide (frontend-only prototypes)
+      1. src/app/[locale]/page.tsx — unique layout
+      2. src/components/*.tsx — business-specific components
+      3. src/data/business.ts — fill all locale content, set theme.fontDisplay and theme.fontBody
 
       Design rules:
-      - Make ALL design decisions autonomously (fonts, layout, colors, copy)
-      - Archetype determines WHAT to build; frontend-design skill determines HOW to style
-      - Use theme tokens: theme.onPrimary for text on primary bg, theme.onPrimaryDark for dark bg
-      - NEVER hardcode color: white or text-white on colored backgrounds
-      - NEVER use opacity < 1 on text elements
-      - Hero: use <img> with fetchPriority="high", NOT CSS background-image
-      - Non-hero images: loading="lazy" decoding="async"
-      - Use <picture> with AVIF/WebP <source> for responsive images (see Hero.tsx template)
-      - Headings sequential (h1 → h2 → h3), touch targets ≥ 44px
-      - Read region market rules for formatting
-      - Read .claude/skills/duocode-design/references/a11y-checklist.md for a11y rules
+      - Make ALL design decisions autonomously
+      - Use theme tokens (onPrimary, onPrimaryDark, accentText) — NEVER hardcode white/colors
+      - NEVER use opacity < 1 on text
+      - Hero: fetchPriority='high', NOT CSS background-image
+      - Non-hero: loading='lazy' decoding='async'
+      - Headings sequential, touch targets ≥ 44px
+
+      ## Step 2.5: Dev Preview (recommended)
+      cd output/{slug} && npm install --silent && npm run dev &
+      npx browser-use screenshot 'http://localhost:3000/en/' --output screenshots/preview.png --width 1440 --height 900
+      Check the screenshot for obvious issues. Kill dev server when done.
 
       ## Step 3: Finalize
       Run: npx tsx packages/pipeline/finalize.ts --dir output/{slug}/
-      If quality-failed: fix the specific issues in the failures array, then re-run finalize (max 3 retries).
+      If quality-failed: fix issues, re-run (max 3 retries).
 
       ## Output
-      Return JSON: { slug, status, url, scores, industry, archetype }
+      Return JSON: { slug, status, url, scores }
     ",
-    mode="bypassPermissions"
+    mode="bypassPermissions",
+    run_in_background=true
   )
 ```
 
@@ -79,13 +111,9 @@ For each lead [i] in leads.json:
 
 When all agents complete, report:
 ```
-✓ food-a (menu-order): https://food-a.vercel.app (perf:95 a11y:100 seo:100)
-✓ salon-b (booking-services): https://salon-b.vercel.app (perf:92 a11y:98 seo:97)
-✗ shop-c (ecommerce-catalog): quality-failed after 3 retries
+| # | Business | Status | URL | Scores |
+|---|----------|--------|-----|--------|
+| 1 | Pochito | deployed | https://pochito.vercel.app | perf:95 a11y:100 seo:100 |
+| 2 | Mr. Nam | deployed | https://mr-nam.vercel.app | perf:92 a11y:98 seo:97 |
+| 3 | Noodle Bar | quality-failed | — | a11y:89 (3 retries exhausted) |
 ```
-
-## Fallback: CLI Automation (no Claude design)
-```bash
-npx tsx packages/batch/orchestrate.ts --city "Kuala Lumpur" --categories "food" --batch-size 3
-```
-Uses generic fallback page instead of bespoke design. Good for smoke tests.

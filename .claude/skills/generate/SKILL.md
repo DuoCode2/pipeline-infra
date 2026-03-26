@@ -13,6 +13,18 @@ Three steps: **prepare** (mechanical) → **design** (creative) → **finalize**
 - Lead data from discover or user-provided
 - Region auto-detected from address (any country supported)
 
+## RULE: Gather required inputs BEFORE running
+
+Use **AskUserQuestion** to collect ANY missing information. NEVER assume or default:
+
+| Input | Required? | What to ask if missing |
+|-------|-----------|------------------------|
+| City/area | YES | "Which city or area?" |
+| Business category | YES | "What type of business? (food, beauty, clinic, retail, etc.)" |
+| Business name | NO | search.ts finds leads automatically |
+
+**NEVER default category to "restaurant" or "food".** If user says "shops" or "stores" without specifying type, ASK.
+
 ## CRITICAL: Photos Rule
 **ALWAYS use `--lead-file` from search.ts output.** NEVER hand-write inline PlaceResult JSON.
 

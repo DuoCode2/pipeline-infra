@@ -93,14 +93,16 @@ async function fetchPage(
 export async function searchPlaces(
   category: string,
   city: string,
-  maxPages: number = 1,
+  limit: number = 5,
   filterNoWebsite: boolean = false
 ): Promise<PlaceResult[]> {
+  // Compute pages needed: 20 results per page, fetch enough to likely get `limit` after filtering
+  const maxPages = Math.min(Math.ceil(limit / 10), 3); // over-fetch since quality filters remove ~50%
   const query = `${category} in ${city}`;
   const allResults: PlaceResult[] = [];
   let pageToken: string | undefined;
 
-  for (let page = 0; page < Math.min(maxPages, 3); page++) {
+  for (let page = 0; page < maxPages; page++) {
     const response = await fetchPage(query, pageToken);
     const places = response.places || [];
     allResults.push(...places);
@@ -164,7 +166,8 @@ export async function searchPlaces(
     }).catch(() => {});
   }
 
-  return finalResults;
+  // Enforce the requested result limit
+  return finalResults.slice(0, limit);
 }
 
 // CLI usage: npx tsx packages/discover/search.ts --city "Tokyo" --category "food" --limit 5
