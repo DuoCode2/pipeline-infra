@@ -3,6 +3,7 @@ name: batch
 description: "Process multiple business leads in parallel. Each lead runs the full generate pipeline (prepare→design→finalize) as an independent agent. Use when user says 'batch', '批量', 'generate N sites', or provides multiple leads."
 allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion, Skill, TeamCreate, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet]
 user-invocable: true
+disable-model-invocation: false
 ---
 
 # Batch Processing — Fully Parallel
