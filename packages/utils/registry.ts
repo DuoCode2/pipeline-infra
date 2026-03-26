@@ -213,10 +213,33 @@ if (require.main === module) {
     } else {
       console.log('NOT REGISTERED');
     }
+  } else if (args.includes('--register')) {
+    // Manual registration for custom projects that bypass the pipeline
+    const slug = args[args.indexOf('--register') + 1];
+    if (!slug) { console.error('Usage: --register <slug> [--url <url>] [--id <placeId>]'); process.exit(1); }
+    const url = args.includes('--url') ? args[args.indexOf('--url') + 1] : `https://${slug}.vercel.app`;
+    const placeId = args.includes('--id') ? args[args.indexOf('--id') + 1] : `slug:${slug}`;
+    registerDeployed(placeId, slug, url || `https://${slug}.vercel.app`);
+    console.log(`Registered: ${slug} → ${url} (key: ${placeId})`);
+  } else if (args.includes('--remove')) {
+    const slug = args[args.indexOf('--remove') + 1];
+    if (!slug) { console.error('Usage: --remove <slug>'); process.exit(1); }
+    mutateRegistry((registry) => {
+      for (const [key, entry] of Object.entries(registry)) {
+        if (entry.slug === slug) {
+          delete registry[key];
+          console.log(`Removed: ${slug} (key: ${key})`);
+          return;
+        }
+      }
+      console.log(`Not found: ${slug}`);
+    });
   } else {
     console.log(`Usage:
-  npx tsx packages/utils/registry.ts --bootstrap    # Scan output/ and build registry
-  npx tsx packages/utils/registry.ts --list          # List all registered sites
-  npx tsx packages/utils/registry.ts --check <id>    # Check if a place ID is registered`);
+  npx tsx packages/utils/registry.ts --bootstrap              # Scan output/ and build registry
+  npx tsx packages/utils/registry.ts --list                    # List all registered sites
+  npx tsx packages/utils/registry.ts --check <placeId>         # Check if a place ID is registered
+  npx tsx packages/utils/registry.ts --register <slug> [--url <url>] [--id <placeId>]  # Manual registration
+  npx tsx packages/utils/registry.ts --remove <slug>           # Remove a site from registry`);
   }
 }

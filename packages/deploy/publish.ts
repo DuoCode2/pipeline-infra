@@ -101,15 +101,24 @@ export function publishGeneratedSite(options: PublishOptions): PublishResult {
   run('git branch -M main', repoDir);
   run('git push -u origin main', repoDir);
 
+  // Set homepage and description on GitHub repo (retry once on failure)
   if (options.homepage || options.description) {
-    const args = [
+    const editArgs = [
       `gh repo edit ${repo}`,
       options.homepage ? `--homepage "${options.homepage}"` : '',
       options.description ? `--description "${options.description}"` : '',
     ]
       .filter(Boolean)
       .join(' ');
-    tryRun(args, repoDir);
+
+    if (!tryRun(editArgs, repoDir)) {
+      // Retry once — gh repo edit sometimes fails on first push due to propagation delay
+      try {
+        run('sleep 2 && ' + editArgs, repoDir);
+      } catch {
+        console.warn(`[publish] WARNING: Failed to set homepage on ${repo}. Run manually: ${editArgs}`);
+      }
+    }
   }
 
   return { pushed: true, repo };

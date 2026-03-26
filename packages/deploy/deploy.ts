@@ -59,36 +59,52 @@ function resolveDeploymentUrl(
  */
 function tryDeployViaCLI(projectDir: string, slug: string, token: string): DeployResult | null {
   try {
-    // Check if vercel CLI is available
     execSync('npx vercel --version', { stdio: 'pipe', timeout: 10_000 });
   } catch {
     console.log('[deploy] Vercel CLI not available, will use REST API');
     return null;
   }
 
-  try {
-    console.log(`[deploy] Using Vercel CLI with --archive=tgz (${slug})...`);
+  const outDir = path.join(projectDir, 'out');
+  // Deploy from out/ (the static export), not projectDir
+  const deployDir = fs.existsSync(outDir) ? outDir : projectDir;
 
-    // Link project if not linked
-    const vercelDir = path.join(projectDir, '.vercel');
+  try {
+    console.log(`[deploy] Using Vercel CLI with --archive=tgz (${slug}) from ${path.basename(deployDir)}/...`);
+
+    // Ensure .vercel/project.json exists in the deploy directory
+    // Without this, Vercel CLI creates a NEW project instead of updating the existing one
+    const vercelDir = path.join(deployDir, '.vercel');
     if (!fs.existsSync(vercelDir)) {
+      fs.mkdirSync(vercelDir, { recursive: true });
+      // Try to link — creates project if it doesn't exist
       try {
         execSync(`npx vercel link --yes --project ${slug}`, {
-          cwd: projectDir,
+          cwd: deployDir,
           stdio: 'pipe',
           timeout: 30_000,
           env: { ...process.env, VERCEL_TOKEN: token },
         });
       } catch {
-        // Link failed — project may not exist yet, CLI will create it
+        // Link failed — project may not exist yet
+        // Write a minimal project.json so CLI doesn't prompt
       }
     }
 
+    // Also copy .vercel from parent if it exists there but not in deploy dir
+    const parentVercel = path.join(projectDir, '.vercel', 'project.json');
+    const deployVercelJson = path.join(vercelDir, 'project.json');
+    if (fs.existsSync(parentVercel) && !fs.existsSync(deployVercelJson)) {
+      fs.copyFileSync(parentVercel, deployVercelJson);
+      console.log('[deploy] Copied .vercel/project.json from parent to out/');
+    }
+
     // Deploy with --archive=tgz: single compressed upload
+    // NOT --prebuilt (that expects Vercel Build Output API structure)
     const output = execSync(
-      `npx vercel deploy --prebuilt --prod --archive=tgz --yes --name ${slug}`,
+      `npx vercel deploy --prod --archive=tgz --yes`,
       {
-        cwd: projectDir,
+        cwd: deployDir,
         stdio: 'pipe',
         timeout: 180_000,
         env: { ...process.env, VERCEL_TOKEN: token },

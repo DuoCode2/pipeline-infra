@@ -220,6 +220,19 @@ ${sitemapUrls}
   const deploy = await deployToVercel(outDir, slug);
   log(`Deployed: ${deploy.url}`);
 
+  // Post-deploy health check — verify the URL actually responds
+  try {
+    await new Promise(r => setTimeout(r, 3000)); // wait for propagation
+    const healthCheck = await fetch(deploy.url, { method: 'HEAD', redirect: 'follow' });
+    if (healthCheck.ok) {
+      log(`Health check: ${deploy.url} → ${healthCheck.status} OK`);
+    } else {
+      log(`[warn] Health check: ${deploy.url} → ${healthCheck.status} (may need time to propagate)`);
+    }
+  } catch {
+    log(`[warn] Health check failed for ${deploy.url} (may need time to propagate)`);
+  }
+
   // Update sitemap if actual URL differs from pre-deploy assumption
   const expectedUrl = `https://${slug}.vercel.app`;
   if (deploy.url !== expectedUrl) {
