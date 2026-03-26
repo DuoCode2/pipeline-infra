@@ -18,6 +18,7 @@ import { resolveArchetype, type Archetype, type ArchetypeMapping } from '../gene
 import { type PlaceResult } from '../discover/search';
 import { getArg } from '../utils/cli';
 import { detectRegionId, toInternationalPhone } from '../utils/env';
+import { isRegistered, registerPrepared } from '../utils/registry';
 import { logAction } from '../utils/n8n';
 
 // ── Industry-specific favicon SVGs ──────────────────────────────
@@ -252,6 +253,12 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId?: s
   const slug = slugify(lead.displayName.text);
   const outputDir = path.resolve('output', slug);
 
+  // Check registry for duplicates
+  if (isRegistered(lead.id)) {
+    console.error(`\n⚠ SKIP: ${lead.displayName.text} (place_id: ${lead.id}) is already registered.`);
+    console.error(`  Use --include-existing in search.ts to re-discover, or delete from data/sites-registry.json to redo.`);
+  }
+
   console.error(`\n━━ Preparing: ${lead.displayName.text} (${resolvedIndustry}) ━━`);
 
   // 1. Create directory structure
@@ -386,6 +393,9 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId?: s
     archetypeMapping,
     config: { ...config, schemaOrgType },
   };
+
+  // Register in sites registry (marks as prepared, not yet deployed)
+  registerPrepared(lead.id, { slug, industry: resolvedIndustry, regionId: resolvedRegionId });
 
   return result;
 }

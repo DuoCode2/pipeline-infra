@@ -1,0 +1,126 @@
+{
+  "ChIJeV5c-b-xEmsRAqM2LKNzrxQ": {
+    "slug": "anita-s-fusion",
+    "url": "https://anita-s-fusion.vercel.app",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T02:32:18.239Z"
+  },
+  "car-demo-autocare-pro": {
+    "slug": "autocare-pro",
+    "url": "https://autocare-pro.vercel.app",
+    "industry": "service",
+    "preparedAt": "2026-03-25T04:29:00.061Z"
+  },
+  "ChIJ_3O7FKdLzDERPluiP3IlnTk": {
+    "slug": "bananabro-sri-petaling",
+    "url": "https://bananabro-sri-petaling.vercel.app",
+    "industry": "south_indian_restaurant",
+    "preparedAt": "2026-03-25T03:26:17.006Z"
+  },
+  "ChIJP557fJ6tzTER58RXpr9HJrA": {
+    "slug": "geekfix-klang-smartphone-repair-shop",
+    "url": "https://geekfix-klang-smartphone-repair-shop.vercel.app",
+    "industry": "generic",
+    "preparedAt": "2026-03-25T06:40:49.259Z"
+  },
+  "ChIJiwz58WexEmsRiag7qLOkaJ8": {
+    "slug": "helen-mascot-supermarket",
+    "url": "https://helen-mascot-supermarket.vercel.app",
+    "industry": "retail",
+    "regionId": "my",
+    "preparedAt": "2026-03-25T15:41:35.784Z"
+  },
+  "ChIJC7gG_QZJzDERRdaks00Rfn4": {
+    "slug": "looks-salon-kuala-lumpur",
+    "url": "https://looks-salon-kuala-lumpur.vercel.app",
+    "industry": "beauty",
+    "preparedAt": "2026-03-25T01:51:22.707Z"
+  },
+  "ChIJvZtL6jFLzDERgslRIZ1WeN8": {
+    "slug": "luckee",
+    "url": "https://luckee.vercel.app",
+    "industry": "restaurant",
+    "preparedAt": "2026-03-25T03:11:55.146Z"
+  },
+  "ChIJp7_1-amxEmsRjNiguYfGdS0": {
+    "slug": "mascot-auto-repairs",
+    "url": "https://mascot-auto-repairs.vercel.app",
+    "industry": "automotive",
+    "regionId": "my",
+    "preparedAt": "2026-03-25T15:41:39.477Z"
+  },
+  "ChIJjWG3ae2xEmsRIbErcPfMpv8": {
+    "slug": "mascot-chinese-cuisine",
+    "url": "https://mascot-chinese-cuisine.vercel.app",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T02:32:24.956Z"
+  },
+  "ChIJhXux0qqxEmsRRuv5kxFpB5A": {
+    "slug": "mr-nam",
+    "url": "https://mr-nam.vercel.app",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T02:32:28.245Z"
+  },
+  "ChIJ2QlTFG2xEmsRJUenWimVbKI": {
+    "slug": "noodle-bar-mascot",
+    "url": "https://noodle-bar-mascot.vercel.app",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T02:32:33.484Z"
+  },
+  "ChIJkRmqZdetzTER4lp5aotp6T4": {
+    "slug": "one-stop-phone-repair-centre-bukit-tinggi",
+    "url": "https://one-stop-phone-repair-centre-bukit-tinggi.vercel.app",
+    "industry": "generic",
+    "preparedAt": "2026-03-25T06:34:09.261Z"
+  },
+  "ChIJoyA19pCxEmsRnJMUnzDHVWA": {
+    "slug": "pochito",
+    "url": "https://pochito.vercel.app",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T02:32:19.679Z"
+  },
+  "ChIJoUYal8WtzTERg8od5uUHwjg": {
+    "slug": "power-fix-mobile-repair-bukit-tinggi-2",
+    "url": "https://power-fix-mobile-repair-bukit-tinggi-2.vercel.app",
+    "industry": "generic",
+    "preparedAt": "2026-03-25T06:57:10.943Z"
+  },
+  "ChIJuZqNMgBLzDERlj563wgHMKI": {
+    "slug": "restoran-bbq-soon-hing-wantan-mee-sri-petaling",
+    "url": "https://restoran-bbq-soon-hing-wantan-mee-sri-petaling.vercel.app",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-25T17:03:37.890Z"
+  },
+  "ChIJzW6Ezm6xEmsRym4mpe_dolY": {
+    "slug": "sam-po-malaysia-kitchen",
+    "url": "https://sam-po-malaysia-kitchen.vercel.app",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T02:32:31.139Z"
+  },
+  "ChIJP5LdcwBLzDERheKdff50cLA": {
+    "slug": "sri-petaling-ye-wen-klang-bak-kut-teh",
+    "url": "https://sri-petaling-ye-wen-klang-bak-kut-teh.vercel.app",
+    "industry": "chinese_restaurant",
+    "preparedAt": "2026-03-25T03:10:53.553Z"
+  },
+  "suki-ya-pavilion-kl": {
+    "slug": "suki-ya",
+    "url": "https://suki-ya.vercel.app",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-25T16:12:13.045Z"
+  },
+  "ChIJx8dNqTBLzDERA1Kle0TeLQY": {
+    "slug": "yitcha-kawkaw-kopitiam-sri-petaling",
+    "url": "https://yitcha-kawkaw-kopitiam-sri-petaling.vercel.app",
+    "industry": "chinese_restaurant",
+    "preparedAt": "2026-03-25T03:26:16.502Z"
+  }
+}

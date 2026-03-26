@@ -3,6 +3,7 @@ import * as path from 'path';
 import { requireEnv } from '../utils/env';
 import { getArg } from '../utils/cli';
 import { postWebhook } from '../utils/n8n';
+import { getRegisteredPlaceIds } from '../utils/registry';
 
 const API_KEY = requireEnv('GOOGLE_API_KEY');
 const PLACES_URL = 'https://places.googleapis.com/v1/places:searchText';
@@ -94,7 +95,8 @@ export async function searchPlaces(
   category: string,
   city: string,
   limit: number = 5,
-  filterNoWebsite: boolean = false
+  filterNoWebsite: boolean = false,
+  skipRegistered: boolean = true,
 ): Promise<PlaceResult[]> {
   // Compute pages needed: 20 results per page, fetch enough to likely get `limit` after filtering
   const maxPages = Math.min(Math.ceil(limit / 10), 3); // over-fetch since quality filters remove ~50%
@@ -152,6 +154,17 @@ export async function searchPlaces(
     );
   }
 
+  // Dedup: filter out sites that already exist in the registry
+  if (skipRegistered) {
+    const registered = getRegisteredPlaceIds();
+    const beforeDedup = finalResults.length;
+    finalResults = finalResults.filter(p => !registered.has(p.id));
+    const skippedDedup = beforeDedup - finalResults.length;
+    if (skippedDedup > 0) {
+      console.error(`  Skipped ${skippedDedup} already-registered site(s). Use --include-existing to include them.`);
+    }
+  }
+
   // Log discovered leads to Sheets (fire-and-forget)
   for (const lead of finalResults) {
     postWebhook('log-lead', {
@@ -186,6 +199,7 @@ Options:
   --out <file>        Write JSON to file instead of stdout
   --compact           Output compact format (less fields)
   --include-all       Include businesses WITH websites (default: no-website only)
+  --include-existing  Include businesses that already have a generated site (default: skip them)
   --help, -h          Show this help message
 
 Examples:
@@ -205,11 +219,13 @@ Examples:
   // Default: filter out businesses WITH websites (we only want leads without sites)
   const includeAll = args.includes('--include-all');
   const filterNoWebsite = !includeAll;
+  const includeExisting = args.includes('--include-existing');
+  const skipRegistered = !includeExisting;
 
   const compact = args.includes('--compact');
   const outFile = getArg(args, 'out', '');
 
-  searchPlaces(category, city, limit, filterNoWebsite)
+  searchPlaces(category, city, limit, filterNoWebsite, skipRegistered)
     .then((results) => {
       let output: unknown;
       if (compact) {

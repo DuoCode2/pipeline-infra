@@ -17,6 +17,7 @@ import { runLocalQualityGate } from '../quality/serve-and-check';
 import { getArg, hasFlag } from '../utils/cli';
 import { getLocalesForRegion } from '../utils/env';
 import { logAction } from '../utils/n8n';
+import { registerDeployed } from '../utils/registry';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -246,6 +247,9 @@ ${sitemapUrls}
     } catch { /* ignore parse errors */ }
   }
   logAction({ place_id: placeId, slug, action: 'deployed', result: deploy.url, url: deploy.url, industry, qa_score: scores });
+
+  // Register in sites registry for deduplication
+  registerDeployed(placeId, deploy.url);
 
   return { status: 'deployed', url: deploy.url, scores };
 }

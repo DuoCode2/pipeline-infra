@@ -52,6 +52,13 @@ When running /generate or /batch, Claude must:
 
 Data flow: `search.ts` → `PlaceResult[]` → `prepare.ts` (via `--lead-file`). Any country auto-detected from address.
 
+## Automatic Deduplication
+`search.ts` automatically skips businesses that already have a generated site (tracked in `data/sites-registry.json`). This is code-level — no agent action needed.
+- Registry is updated automatically: `prepare.ts` registers on prepare, `finalize.ts` registers on deploy
+- To redo a site: use `--include-existing` flag on search.ts
+- To check registry: `npx tsx packages/utils/registry.ts --list`
+- If search returns 0 results, check if they're already registered (the tool will tell you)
+
 ## RULE: Photos must come from Google Maps
 - **ALWAYS use `--lead-file` (from search.ts)**, not inline `--lead` JSON
 - If search returns 0 results because business has a website, use `--include-all`
