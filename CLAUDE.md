@@ -30,7 +30,7 @@ When running /generate or /batch, Claude must use **AskUserQuestion** for missin
 When running /generate or /batch, Claude must:
 - Make ALL design decisions autonomously (fonts, layout, colors, copy, site structure)
 - Use PrepareResult `hints` as suggestions — agree or override based on business context
-- Pick fonts using `frontend-design` skill, then download: `npx tsx packages/assets/download-fonts.ts --fonts "Font1,Font2" --output output/{slug}/public/fonts`
+- Pick fonts using `frontend-design` skill, then download: `npx tsx packages/assets/download-fonts.ts --fonts "Font1,Font2" --weights "400,500,600,700" --output output/{slug}/public/fonts`
 - Import shared UI components from `src/components/ui/` — don't regenerate them
 - Fix quality gate failures without asking
 - Deploy to Vercel and report the live URL
@@ -49,7 +49,11 @@ When running /generate or /batch, Claude must:
 | `npx tsx packages/discover/search.ts --city X --category Y --include-all --out data/leads/leads.json` | Include businesses WITH websites |
 | `npx tsx packages/pipeline/prepare.ts --lead-file data/leads/leads.json --index 0` | Prepare from search output |
 | `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/` | After design (build + quality + deploy) |
-| `npx tsx packages/assets/download-fonts.ts --fonts "Font1,Font2" --output output/{slug}/public/fonts` | Download fonts (called by Claude during design) |
+| `npx tsx packages/assets/download-fonts.ts --fonts "Font1,Font2" --weights "400,500,600,700" --output output/{slug}/public/fonts` | Download fonts (called by Claude during design) |
+| `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ --skip-build` | Re-deploy with existing build (skip npm install + build) |
+| `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ --check-path /` | Finalize non-locale site (Lighthouse checks / instead of /en/) |
+| `npx tsx packages/assets/optimize-images.ts --input path/to/images` | Standalone image optimization (any directory) |
+| `npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN` | Generate translation template from EN content |
 
 Data flow: `search.ts` → `PlaceResult[]` → `prepare.ts` (via `--lead-file`). Any country auto-detected from address.
 
@@ -81,7 +85,7 @@ Prepare auto-classifies from Google Places `primaryType` and provides `hints`:
 ## Quality Gate
 - **a11y ≥ 95, SEO ≥ 95, best-practices ≥ 90** → hard fail (blocks deploy)
 - **performance ≥ 90** → warn only (does NOT block deploy)
-- Lighthouse runs with `--preset=desktop`; retry up to 2× on failure
+- Lighthouse runs with `--preset=desktop`; retry up to 3× on warn-level failures only
 
 ## Dev Commands
 ```bash
@@ -97,11 +101,18 @@ npm run build:check      # TypeScript compile check (run from INFRA ROOT, not ou
 | Skill | Type | Purpose |
 |-------|------|---------|
 | `/generate` | invoke | prepare → design → finalize (one site) |
-| `/batch` | invoke | fully parallel — one Agent per lead |
+| `/batch` | invoke | parallel agents with diversity plan + worktree isolation |
 | `/fix-site` | invoke | Fix visual issues → rebuild → redeploy |
 | `frontend-design` | auto | Anthropic design skill — typography, color, layout, motion |
 | `duocode-design` | auto | Design references + archetype guide + A11y + scaffolding |
 
+## Batch-Specific Rules
+- **Diversity plan required** — before launching agents, assign different fonts/layouts/colors per site to prevent mode collapse (see batch SKILL.md Step 1.5)
+- **Worktree isolation** — each agent runs in `isolation: "worktree"` to prevent concurrent file collisions
+- **Agent Teams preferred** — use `TeamCreate` for leader-supervisor coordination; leader relays discovered issues between teammates
+
 ## Shared UI Components (in scaffold)
 Import from `@/components/ui` — these are pre-built, don't recreate:
 `Button` | `Section` | `Card` | `Grid` | `Accordion` | `Badge` | `ResponsiveImage` | `DemoModal` | `ReviewStars` | `HoursTable`
+
+Base components (also in scaffold, don't recreate): `Header` | `Footer` | `Hero` | `Location` | `LanguageSwitcher`

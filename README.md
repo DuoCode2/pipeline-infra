@@ -378,7 +378,30 @@ npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN,zh-T
 
 ```bash
 # Download fonts chosen by Claude during design
-npx tsx packages/assets/download-fonts.ts --fonts "Inter,Playfair Display" --output output/{slug}/public/fonts --help
+npx tsx packages/assets/download-fonts.ts --fonts "Inter,Playfair Display" --weights "400,500,600,700" --output output/{slug}/public/fonts
+```
+
+### Image Optimization (standalone)
+
+```bash
+# Optimize any directory of images to responsive WebP + AVIF
+npx tsx packages/assets/optimize-images.ts --input path/to/images
+```
+
+### Finalize (escape hatches)
+
+```bash
+# Standard: build + quality gate + deploy
+npx tsx packages/pipeline/finalize.ts --dir output/{slug}/
+
+# Skip build (use existing out/)
+npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ --skip-build
+
+# Non-locale site (check / instead of /en/)
+npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ --check-path /
+
+# Dry run (build + quality only, no deploy)
+npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ --dry-run
 ```
 
 ### Testing (428 tests, 10 files)
