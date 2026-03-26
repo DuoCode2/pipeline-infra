@@ -36,42 +36,63 @@ export function readRegistry(): SiteRegistry {
 }
 
 const LOCK_PATH = REGISTRY_PATH + '.lock';
-const LOCK_TIMEOUT_MS = 5_000;
-const LOCK_RETRY_MS = 50;
 
-/** Acquire a simple file lock (spin-wait with timeout). */
-function acquireLock(): void {
-  const deadline = Date.now() + LOCK_TIMEOUT_MS;
+/** Acquire a file lock with exclusive create + stale detection. */
+function acquireLock(maxWaitMs = 10_000): void {
+  const deadline = Date.now() + maxWaitMs;
   while (Date.now() < deadline) {
     try {
-      fs.writeFileSync(LOCK_PATH, String(process.pid), { flag: 'wx' }); // exclusive create
+      // O_EXCL: fails if file exists — atomic on POSIX
+      fs.writeFileSync(LOCK_PATH, `${process.pid}:${Date.now()}`, { flag: 'wx' });
       return;
     } catch {
-      // Lock held by another process — wait and retry
-      const start = Date.now();
-      while (Date.now() - start < LOCK_RETRY_MS) { /* spin */ }
+      // Check for stale lock (holder crashed)
+      try {
+        const content = fs.readFileSync(LOCK_PATH, 'utf8');
+        const lockTime = parseInt(content.split(':')[1] || '0', 10);
+        if (Date.now() - lockTime > 30_000) {
+          // Lock older than 30s = stale, safe to remove
+          fs.unlinkSync(LOCK_PATH);
+          continue;
+        }
+      } catch { /* lock was just released — retry */ }
+      // Wait 50-150ms (jitter to avoid thundering herd)
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50 + Math.random() * 100);
     }
   }
-  // Timeout — force acquire (stale lock from crashed process)
-  fs.writeFileSync(LOCK_PATH, String(process.pid));
+  throw new Error(`Registry lock timeout after ${maxWaitMs}ms. Another process may be stuck. Delete ${LOCK_PATH} manually if needed.`);
 }
 
 function releaseLock(): void {
   try { fs.unlinkSync(LOCK_PATH); } catch { /* already released */ }
 }
 
-/** Write the registry atomically with file locking for concurrent agent safety. */
-function writeRegistry(registry: SiteRegistry): void {
+/**
+ * Read-modify-write the registry atomically.
+ * Always use this instead of separate readRegistry() + writeRegistry() for mutations.
+ */
+function mutateRegistry(fn: (registry: SiteRegistry) => void): void {
   const dir = path.dirname(REGISTRY_PATH);
   fs.mkdirSync(dir, { recursive: true });
   acquireLock();
   try {
+    const registry = readRegistry();
+    fn(registry);
     const tmp = REGISTRY_PATH + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(registry, null, 2));
     fs.renameSync(tmp, REGISTRY_PATH);
   } finally {
     releaseLock();
   }
+}
+
+/** @deprecated Use mutateRegistry() for concurrent-safe writes. */
+function writeRegistry(registry: SiteRegistry): void {
+  const dir = path.dirname(REGISTRY_PATH);
+  fs.mkdirSync(dir, { recursive: true });
+  const tmp = REGISTRY_PATH + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(registry, null, 2));
+  fs.renameSync(tmp, REGISTRY_PATH);
 }
 
 /** Check if a place ID is already registered. */
@@ -89,28 +110,33 @@ export function getRegisteredPlaceIds(): Set<string> {
   return new Set(Object.keys(readRegistry()));
 }
 
-/** Register a site after prepare (before deploy). */
-export function registerPrepared(placeId: string, entry: Omit<SiteEntry, 'preparedAt'>): void {
-  const registry = readRegistry();
-  registry[placeId] = {
-    ...registry[placeId],
-    ...entry,
-    preparedAt: new Date().toISOString(),
-  };
-  writeRegistry(registry);
+/** Get all registered slugs as a Set (secondary dedup for sites without place_id). */
+export function getRegisteredSlugs(): Set<string> {
+  return new Set(Object.values(readRegistry()).map(e => e.slug).filter(Boolean));
 }
 
-/** Register a site after successful deployment. Requires slug. */
+/** Register a site after prepare (before deploy). Concurrent-safe. */
+export function registerPrepared(placeId: string, entry: Omit<SiteEntry, 'preparedAt'>): void {
+  mutateRegistry((registry) => {
+    registry[placeId] = {
+      ...registry[placeId],
+      ...entry,
+      preparedAt: new Date().toISOString(),
+    };
+  });
+}
+
+/** Register a site after successful deployment. Concurrent-safe. Requires slug. */
 export function registerDeployed(placeId: string, slug: string, url: string): void {
-  const registry = readRegistry();
-  const existing = registry[placeId] ?? {};
-  registry[placeId] = {
-    ...existing,
-    slug: slug || existing.slug || '',
-    url,
-    deployedAt: new Date().toISOString(),
-  };
-  writeRegistry(registry);
+  mutateRegistry((registry) => {
+    const existing = registry[placeId] ?? {};
+    registry[placeId] = {
+      ...existing,
+      slug: slug || existing.slug || '',
+      url,
+      deployedAt: new Date().toISOString(),
+    };
+  });
 }
 
 /** Bootstrap: scan output directories to build initial registry from existing sites. */

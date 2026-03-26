@@ -191,10 +191,21 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
     console.warn(`Explicit alias request error: ${err instanceof Error ? err.message : err}`);
   }
 
-  // Final fallback: return expected canonical URL (deployment is READY, alias may propagate later).
+  // Final fallback: verify the URL actually responds before returning it.
   const fallbackUrl = `https://${expectedAlias}`;
-  console.log(`Deployed: ${fallbackUrl} (alias pending)`);
-  return { url: fallbackUrl, projectId: slug, deploymentId: deployment.id };
+  try {
+    const verify = await fetch(fallbackUrl, { method: 'HEAD', redirect: 'follow' });
+    if (verify.ok || verify.status === 301 || verify.status === 308) {
+      console.log(`Deployed: ${fallbackUrl} (alias pending but URL responds)`);
+      return { url: fallbackUrl, projectId: slug, deploymentId: deployment.id };
+    }
+  } catch { /* URL doesn't respond */ }
+
+  // URL doesn't work — return the raw deployment URL with a warning
+  const rawUrl = deployment.url ? toHttps(deployment.url) : fallbackUrl;
+  console.warn(`[deploy] WARNING: ${fallbackUrl} is not responding. Using raw URL: ${rawUrl}`);
+  console.warn(`[deploy] The alias may propagate later. Check manually: ${fallbackUrl}`);
+  return { url: rawUrl, projectId: slug, deploymentId: deployment.id };
 }
 
 // CLI

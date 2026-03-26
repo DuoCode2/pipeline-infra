@@ -15,7 +15,10 @@ export function getArg(
   fallback?: string,
 ): string | undefined {
   const idx = args.indexOf(`--${name}`);
-  return idx >= 0 && args[idx + 1] ? args[idx + 1] : fallback;
+  if (idx < 0) return fallback;
+  const next = args[idx + 1];
+  if (!next) return fallback;
+  return next;
 }
 
 /** Check whether `--name` flag is present (no value). */

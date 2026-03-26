@@ -3,7 +3,7 @@ import * as path from 'path';
 import { requireEnv } from '../utils/env';
 import { getArg } from '../utils/cli';
 import { postWebhook } from '../utils/n8n';
-import { getRegisteredPlaceIds } from '../utils/registry';
+import { getRegisteredPlaceIds, getRegisteredSlugs } from '../utils/registry';
 
 const API_KEY = requireEnv('GOOGLE_API_KEY');
 const PLACES_URL = 'https://places.googleapis.com/v1/places:searchText';
@@ -154,11 +154,19 @@ export async function searchPlaces(
     );
   }
 
-  // Dedup: filter out sites that already exist in the registry
+  // Dedup: filter out sites that already exist in the registry (by place_id AND slug)
   if (skipRegistered) {
-    const registered = getRegisteredPlaceIds();
+    const registeredIds = getRegisteredPlaceIds();
+    const registeredSlugs = getRegisteredSlugs();
     const beforeDedup = finalResults.length;
-    finalResults = finalResults.filter(p => !registered.has(p.id));
+    finalResults = finalResults.filter(p => {
+      if (registeredIds.has(p.id)) return false;
+      // Also check slug for sites registered without place_id
+      const name = p.displayName?.text || '';
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      if (registeredSlugs.has(slug)) return false;
+      return true;
+    });
     const skippedDedup = beforeDedup - finalResults.length;
     if (skippedDedup > 0) {
       console.error(`  Skipped ${skippedDedup} already-registered site(s). Use --include-existing to include them.`);

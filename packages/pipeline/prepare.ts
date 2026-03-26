@@ -300,8 +300,10 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId?: s
   // Final photo count check
   const finalJpgs = fs.readdirSync(imgDir).filter(f => f.endsWith('.jpg'));
   if (finalJpgs.length === 0) {
-    console.error('  ✗ CRITICAL: No photos at all (Maps + Stock both failed). Site will have no images.');
-    photoSource = 'none';
+    throw new Error(
+      `FATAL: No photos for ${lead.displayName.text}. Maps photos: ${photoNames.length} requested, 0 downloaded. Stock fallback also failed.\n` +
+      `This site cannot be built without images. Use --lead-file from search.ts (includes photo references) instead of inline --lead.`
+    );
   } else {
     console.error(`  Photo source: ${photoSource} (${mapsCount} maps + ${finalJpgs.length - mapsCount} stock = ${finalJpgs.length} total)`);
   }
