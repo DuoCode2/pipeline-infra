@@ -196,7 +196,7 @@ describe('ARCHETYPE_CONFIGS completeness', () => {
   });
 
   describe('localization coverage', () => {
-    const MY_LOCALES = ['en', 'ms', 'zh-CN', 'zh-TW'];
+    const MY_LOCALES = ['en', 'ms', 'zh-CN'];
 
     it.each(ALL_ARCHETYPES)('%s has CTA localized for all MY locales', (archetype) => {
       const localized = ARCHETYPE_CONFIGS[archetype].primaryCTA.localized;

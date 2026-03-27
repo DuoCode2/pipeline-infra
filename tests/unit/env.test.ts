@@ -82,7 +82,7 @@ describe('getLocalesForRegion', () => {
   });
 
   it('returns region-specific locales for known regions', () => {
-    expect(getLocalesForRegion('my')).toEqual(['en', 'ms', 'zh-CN', 'zh-TW']);
+    expect(getLocalesForRegion('my')).toEqual(['en', 'ms', 'zh-CN']);
     expect(getLocalesForRegion('jp')).toEqual(['ja', 'en']);
   });
 

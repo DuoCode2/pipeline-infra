@@ -353,13 +353,17 @@
     "slug": "restoran-windmill-bandar-baru-klang",
     "industry": "food",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:16:15.425Z"
+    "preparedAt": "2026-03-26T18:16:15.425Z",
+    "deployedUrl": "https://restoran-windmill-bandar-baru-klang-2keohbvww-duocodetech.vercel.app",
+    "deployedAt": "2026-03-27T04:07:57.535Z"
   },
   "ChIJQ1rnfgBTzDERvAetEKD1bsM": {
     "slug": "restoran-klang-kopitiam",
     "industry": "food",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:17:20.175Z"
+    "preparedAt": "2026-03-26T18:17:20.175Z",
+    "url": "https://restoran-klang-kopitiam-three.vercel.app",
+    "deployedAt": "2026-03-27T03:52:40.150Z"
   },
   "ChIJ1WKRLGKvEmsREGAzngzx3OA": {
     "slug": "magic-hens-salon",
@@ -371,7 +375,9 @@
     "slug": "hair-space-beauty-studio",
     "industry": "beauty",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:17:41.847Z"
+    "preparedAt": "2026-03-26T18:17:41.847Z",
+    "url": "https://hair-space-beauty-studio-vert.vercel.app",
+    "deployedAt": "2026-03-27T03:58:32.659Z"
   },
   "ChIJA4V3bQexEmsRPCqUK_dZ970": {
     "slug": "landau-automotive",
@@ -401,7 +407,9 @@
     "slug": "bayleaf-kitchen-restaurant-klang",
     "industry": "food",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:18:32.753Z"
+    "preparedAt": "2026-03-26T18:18:32.753Z",
+    "url": "https://bayleaf-kitchen-restaurant-klang-seven.vercel.app",
+    "deployedAt": "2026-03-27T03:53:27.350Z"
   },
   "ChIJKyYZkf-vEmsRdUL1HQ35bmE": {
     "slug": "chalmers-convenience",
@@ -413,7 +421,9 @@
     "slug": "seni-sattisorru-klang-branch",
     "industry": "food",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:18:36.036Z"
+    "preparedAt": "2026-03-26T18:18:36.036Z",
+    "url": "https://seni-sattisorru-klang-branch-indol.vercel.app",
+    "deployedAt": "2026-03-27T03:51:52.358Z"
   },
   "ChIJg6ClIGOwEmsReeeLFOmStvA": {
     "slug": "arapidis-partners",
@@ -425,13 +435,17 @@
     "slug": "a-b-hair-studio",
     "industry": "beauty",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:18:49.653Z"
+    "preparedAt": "2026-03-26T18:18:49.653Z",
+    "url": "https://a-b-hair-studio-three.vercel.app",
+    "deployedAt": "2026-03-27T03:56:58.098Z"
   },
   "ChIJ7yHDQPlTzDERZdvd43YEph4": {
     "slug": "la-patrie-caf",
     "industry": "food",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:18:50.177Z"
+    "preparedAt": "2026-03-26T18:18:50.177Z",
+    "url": "https://la-patrie-caf-beta.vercel.app",
+    "deployedAt": "2026-03-27T03:56:05.482Z"
   },
   "ChIJuxq5xEevEmsR24rbr-fG5Rc": {
     "slug": "teatube",
@@ -443,13 +457,17 @@
     "slug": "cafe-1986",
     "industry": "food",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:19:00.568Z"
+    "preparedAt": "2026-03-26T18:19:00.568Z",
+    "url": "https://cafe-1986-pearl.vercel.app",
+    "deployedAt": "2026-03-27T03:54:19.277Z"
   },
   "ChIJhVLwixKtzTERVg8IG_dPT5U": {
     "slug": "super-cut-professional-studio-sentosa-branch",
     "industry": "beauty",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:19:01.495Z"
+    "preparedAt": "2026-03-26T18:19:01.495Z",
+    "url": "https://super-cut-professional-studio-sento-zeta.vercel.app",
+    "deployedAt": "2026-03-27T04:03:53.766Z"
   },
   "ChIJZTOIRSuwEmsR_XbKlO92vwA": {
     "slug": "sydney-uni-sport-fitness",
@@ -479,13 +497,17 @@
     "slug": "klinik-health-360-sdn-bhd-aman-perdana-klang-famil",
     "industry": "clinic",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:19:18.480Z"
+    "preparedAt": "2026-03-26T18:19:18.480Z",
+    "url": "https://klinik-health-360-sdn-bhd-aman-perd-two.vercel.app",
+    "deployedAt": "2026-03-27T04:02:06.326Z"
   },
   "ChIJw3aHR0CtzTERHqESXCl0UUM": {
     "slug": "mahogani-roastery-coffee",
     "industry": "food",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:19:20.723Z"
+    "preparedAt": "2026-03-26T18:19:20.723Z",
+    "url": "https://mahogani-roastery-coffee-six.vercel.app",
+    "deployedAt": "2026-03-27T03:55:16.647Z"
   },
   "ChIJ42rfRzCuEmsRfcjP2V_i_MQ": {
     "slug": "anna-wash-laundry",
@@ -509,13 +531,17 @@
     "slug": "klinik-bayu-medic-medical-clinic-skin-women-s-heal",
     "industry": "clinic",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:19:40.337Z"
+    "preparedAt": "2026-03-26T18:19:40.337Z",
+    "url": "https://klinik-bayu-medic-medical-clinic-sk-orcin.vercel.app",
+    "deployedAt": "2026-03-27T04:01:21.571Z"
   },
   "ChIJDRxPkuSszTER_O8wBDjchKg": {
     "slug": "hb-auto-tyre-services-klang",
     "industry": "automotive",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:19:43.201Z"
+    "preparedAt": "2026-03-26T18:19:43.201Z",
+    "url": "https://hb-auto-tyre-services-klang-eight.vercel.app",
+    "deployedAt": "2026-03-27T04:00:35.099Z"
   },
   "ChIJD3CUgWCxEmsRPRrtN_ivMQU": {
     "slug": "mascot-bakery",
@@ -527,7 +553,9 @@
     "slug": "pusat-service-kenderaan-abe-mat-auto",
     "industry": "automotive",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:19:53.646Z"
+    "preparedAt": "2026-03-26T18:19:53.646Z",
+    "url": "https://pusat-service-kenderaan-abe-mat-aut-omega.vercel.app",
+    "deployedAt": "2026-03-27T03:59:52.999Z"
   },
   "ChIJK2GDc_-wEmsRs4SIKptqjAc": {
     "slug": "cupino-mascot",
@@ -593,7 +621,9 @@
     "slug": "elite-auto-service",
     "industry": "automotive",
     "regionId": "my",
-    "preparedAt": "2026-03-26T18:20:21.260Z"
+    "preparedAt": "2026-03-26T18:20:21.260Z",
+    "deployedUrl": "https://elite-auto-service-jj1h2gqxw-duocodetech.vercel.app",
+    "deployedAt": "2026-03-27T04:07:57.547Z"
   },
   "ChIJaRCcFLmxEmsR7YPyeEEFfbs": {
     "slug": "the-hongkong-treatment-centre-remedial-massage",

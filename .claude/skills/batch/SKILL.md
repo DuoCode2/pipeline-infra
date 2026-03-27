@@ -1,6 +1,6 @@
 ---
 name: batch
-description: "Process multiple business leads in parallel. Each lead runs the full generate pipeline (prepare→design→finalize) as an independent agent. Use when user says 'batch', '批量', 'generate N sites', or provides multiple leads. Also triggers for '帮我给...做网站' or 'create sites for businesses in...'."
+description: "Process multiple business leads in parallel. Each lead runs the full generate pipeline (prepare→design→translate→finalize) as an independent agent. Use when user says 'batch', '批量', 'generate N sites', or provides multiple leads. Also triggers for '帮我给...做网站' or 'create sites for businesses in...'."
 allowed-tools: [Bash, Read, Write, Edit, Glob, Grep, Agent, AskUserQuestion, Skill, TeamCreate, SendMessage, TaskCreate, TaskUpdate, TaskList, TaskGet]
 user-invocable: true
 disable-model-invocation: false
@@ -8,7 +8,7 @@ disable-model-invocation: false
 
 # Batch Processing — Fully Parallel
 
-Each lead runs its own complete pipeline (prepare → design → finalize) in a dedicated Agent.
+Each lead runs its own complete pipeline (prepare → design → translate → finalize) in a dedicated Agent.
 All agents run concurrently. No sequential bottleneck.
 
 ## RULE: Gather required inputs BEFORE running
@@ -99,7 +99,7 @@ TeamCreate(
 
     ## Your responsibilities
     1. Create one task per lead with TaskCreate (subject: 'Generate site: {businessName}')
-    2. Set task dependencies: each site has 3 phases (prepare → design → finalize)
+    2. Set task dependencies: each site has 4 phases (prepare → design → translate → finalize)
        Use addBlockedBy to ensure finalize waits for design, design waits for prepare.
     3. Assign each task to a teammate
     4. Monitor progress via TaskList
@@ -123,7 +123,7 @@ TeamCreate(
 )
 ```
 
-Each teammate runs the full /generate pipeline with `isolation: "worktree"` and its assigned design direction. The leader relays discovered issues between teammates in real time.
+Each teammate runs the full /generate pipeline (prepare → design → translate → finalize) with `isolation: "worktree"` and its assigned design direction. The leader relays discovered issues between teammates in real time.
 
 ### Option B: Plain Parallel Agents (fallback if Teams unavailable)
 
@@ -174,7 +174,14 @@ For each lead [i] in leads.json:
       npx browser-use screenshot 'http://localhost:3000/en/' --output screenshots/preview.png --width 1440 --height 900
       Check the screenshot for obvious issues. Kill dev server when done.
 
-      ## Step 3: Finalize
+      ## Step 3: Translate (zero context cost)
+      Auto-translate EN → target locales. Determine locales from regionId:
+        my → ms,zh-CN,zh-TW | sg → zh-CN,ms | hk → zh-TW,zh-CN | EN-only regions (au,us,uk) → skip
+      Run: npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN
+      This is cached — common phrases are free after the first site in the batch.
+      For EN-only regions, skip this step entirely.
+
+      ## Step 4: Finalize
       Run: npx tsx packages/pipeline/finalize.ts --dir output/{slug}/
       If quality-failed: fix issues, re-run (max 3 retries).
 
@@ -195,6 +202,26 @@ For each lead [i] in leads.json:
 - Registry race conditions (each worktree has its own copy)
 
 After each agent finishes, its changes are on a separate branch. The leader (or parent) merges results back.
+
+## Concurrency Limits
+
+**Local machine (Apple Silicon Mac):**
+- Maximum **4-5 concurrent agents** running full pipeline (npm install + next build is CPU+memory intensive)
+- Beyond 5 agents: builds start failing silently with empty error strings (resource exhaustion)
+- For batches > 5: run in waves of 4-5, wait for wave to complete before starting next
+
+**Vercel Pro Plan:**
+- 12 concurrent Vercel builds with on-demand Turbo machines (30 vCPU, 60GB RAM) — Vercel is NOT the bottleneck
+- 6,000 deploys/day, CLI upload limit 1GB — all deploy uploads can run in parallel
+- The real bottleneck is local `next build`, not Vercel
+
+**Important worktree notes:**
+- Worktree cleanup removes node_modules (gitignored) — finalize.ts handles this by auto-running `npm install`
+- All paths in pipeline scripts resolve from `__dirname`, not CWD — safe to run from any directory
+- Registry and translation cache resolve to the project root regardless of worktree location
+
+## RULE: Agents must NOT modify next.config.js
+The scaffold's `next.config.js` is locked — adding webpack aliases or React resolve overrides will break `React.cache` and cause build failures. If an agent encounters "duplicate React" errors, the fix is to ensure `node_modules` is installed correctly, NOT to add webpack aliases.
 
 ## Step 3: Collect Results
 

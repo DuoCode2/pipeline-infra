@@ -36,7 +36,7 @@ const REGION_LOCALES: Record<string, string[]> = {
   ca: ['en'],
   nz: ['en'],
   // Multi-lingual regions
-  my: ['en', 'ms', 'zh-CN', 'zh-TW'],
+  my: ['en', 'ms', 'zh-CN'],
   sg: ['en', 'zh-CN', 'ms'],
   hk: ['en', 'zh-TW', 'zh-CN'],
   tw: ['zh-TW', 'en'],

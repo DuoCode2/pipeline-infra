@@ -1,6 +1,7 @@
-// Locales are set dynamically per region during scaffolding.
-// Default: ['en', 'ms', 'zh-CN', 'zh-TW'] for Malaysia.
-export const locales = ['en', 'ms', 'zh-CN', 'zh-TW'] as const;
+// Locales are rewritten by scaffold.ts during prepare.
+// Default: EN only. translate.ts adds target locales after design.
+// DO NOT manually add locales — they are managed by the pipeline.
+export const locales = ['en'] as const;
 export type Locale = (typeof locales)[number];
 
 // ── Shared sub-types ────────────────────────────────────────────

@@ -16,7 +16,7 @@ Claude Code drives the full pipeline. Use `frontend-design` skill for all design
 - Use **AskUserQuestion tool** for user input — never plain text questions
 - Pipeline runs **end-to-end without pausing** — only stop if a gate fails after max retries
 - **ONLY generate sites for businesses WITHOUT a website** — discover defaults to no-website filter
-- Default locale is **English only** — multi-locale opt-in via `--locales`
+- **Multi-locale is standard** — after writing EN content, run translate.ts to add target locales (auto-detected from region)
 - Region market rules: see `.claude/skills/duocode-design/references/`
 - A11y rules: see `.claude/skills/duocode-design/references/a11y-checklist.md`
 
@@ -37,10 +37,11 @@ When running /generate or /batch, Claude must:
 - NEVER stop to ask "should I continue?" or "does this look good?"
 - Only stop if: (a) missing required input (use AskUserQuestion), (b) gate fails after 3 retries
 
-## Pipeline: /generate (3 steps)
+## Pipeline: /generate (4 steps)
 1. **Discover + Prepare** — find lead, prepare assets + scaffold. Returns `lead` (full business data) + `hints` (suggested industry/archetype)
-2. **Design** — Claude reads business data, decides site structure, picks fonts, creates components (the ONLY creative step)
-3. **Finalize** — `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/` → build + quality + deploy
+2. **Design** — Claude reads business data, decides site structure, picks fonts, writes EN content (the ONLY creative step)
+3. **Translate** — `npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN` → auto-translate EN → target locales (zero context cost)
+4. **Finalize** — `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/` → build + quality + deploy
 
 ## Pipeline Commands
 | Command | When |
@@ -113,14 +114,17 @@ npm run build:check      # TypeScript compile check (run from INFRA ROOT, not ou
 - **Worktree isolation** — each agent runs in `isolation: "worktree"` to prevent concurrent file collisions
 - **Agent Teams preferred** — use `TeamCreate` for leader-supervisor coordination; leader relays discovered issues between teammates
 
-## Translation (multi-locale)
-- **One command**: `npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN` — runs end-to-end, zero context cost
-- Script reads business.ts EN content → calls Google Translate API v2 → writes locale blocks back → QA checks
-- **Cache**: `data/translation-cache.json` — common phrases ("Book Now", "View Menu") hit cache after first site
-- **Skip rules**: addresses, phones, URLs, prices, people's names, image paths are never translated
-- **Hours**: day-name keys translated, time values kept as-is
-- Run **after** Claude finishes writing EN content, **before** finalize
-- Region locales auto-updated in `region.locales` array
+## Translation (multi-locale) — production-validated
+- **One command**: `npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN` — zero context cost
+- Script: parse business.ts → extract EN → Google Translate API v2 → write locale blocks back → QA
+- **Cache**: `data/translation-cache.json` — reused across sites. 15-site batch tested: common phrases hit cache after first site
+- **Business name protection**: proper nouns (from `businessName` or `lead.json`) never translated ("Mascot Bakery" stays, not "吉祥物面包店")
+- **Weekday normalization**: hardcoded `WEEKDAY_MAP` for 14 languages — guaranteed consistent (周一~周日, never 星期X mixed in)
+- **Skip rules**: addresses, phones, URLs, prices, people's names, image paths, platform names
+- **Parallel-safe**: 15 concurrent translate.ts runs tested with zero conflicts
+- **Region → locales mapping** (from `env.ts`): `my` → `ms,zh-CN` | `sg` → `zh-CN,ms` | `au/us/uk` → EN only | `hk` → `zh-TW,zh-CN` etc.
+- **Locale management**: Scaffold defaults to `['en']` only. translate.ts adds target locales. NEVER manually add locales to i18n.ts or business.d.ts
+- Run **after** design (EN content written), **before** finalize
 
 ## Shared UI Components (in scaffold)
 Import from `@/components/ui` — these are pre-built, don't recreate:

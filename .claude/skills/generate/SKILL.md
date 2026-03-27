@@ -8,7 +8,7 @@ disable-model-invocation: false
 
 # Site Generation
 
-Three steps: **prepare** (mechanical) → **design** (creative) → **finalize** (mechanical).
+Four steps: **prepare** (mechanical) → **design** (creative) → **translate** (mechanical) → **finalize** (mechanical).
 
 ## Input
 - Lead data from discover or user-provided
@@ -107,18 +107,11 @@ Import from `@/data/images` for srcset data. Use the `ResponsiveImage` UI compon
 - Non-hero images: `loading="lazy"` + `decoding="async"`
 - Sequential headings (h1 → h2 → h3), touch targets ≥ 44x44px
 - Read `references/a11y-checklist.md` for accessibility rules
+- **DO NOT modify `next.config.js`** — webpack aliases break React.cache
+- **DO NOT manually add locales** to `i18n.ts` or `business.d.ts` — translate.ts manages this
 
-### 2f. Multi-locale content
-Write the EN locale content first. Then auto-translate — one command, zero context cost:
-```bash
-npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN
-```
-This reads EN content from business.ts → calls Google Translate API → writes all locale blocks back → runs QA checks. No manual translation needed.
-
-- The script auto-detects target locales from the region (see `getLocalesForRegion()` in env.ts)
-- Use `--dry-run` to preview what strings will be translated before calling the API
-- Translations are cached in `data/translation-cache.json` — repeated phrases across sites are free
-- After translation, review the output for any QA warnings (exit code 1 = warnings found)
+### 2f. Write EN content only
+Write **only the English locale** content in `business.ts`. Do NOT write other locale blocks manually — translate.ts handles that automatically in Step 3.
 
 ## Step 2.5: Dev Preview (catch issues before finalize)
 
@@ -133,7 +126,28 @@ Read the screenshots to catch layout/style issues BEFORE the full build cycle. K
 
 This step is optional but recommended — it saves time by catching issues early instead of after a full Lighthouse audit cycle.
 
-## Step 3: Finalize (one command)
+## Step 3: Translate (one command, zero context cost)
+
+Auto-translate EN content to target locales via Google Translate API. This is a standard pipeline step — always run for multi-locale regions.
+
+```bash
+# Determine target locales from region (see getLocalesForRegion() in env.ts)
+# my → ms,zh-CN | sg → zh-CN,ms | hk → zh-TW,zh-CN | au/us/uk → skip (EN only)
+npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN
+```
+
+What it does:
+1. Parses business.ts, extracts EN content
+2. Protects business name from translation (proper noun)
+3. Skips addresses, phones, URLs, prices, image paths
+4. Translates via Google Translate API v2 (cached — free for repeated phrases)
+5. Applies hardcoded weekday map (consistent 周一~周日, not API)
+6. Writes all locale blocks back into business.ts
+7. Updates `region.locales` array
+
+**For EN-only regions** (au, us, uk, ca, nz): skip this step entirely.
+
+## Step 4: Finalize (one command)
 
 ```bash
 npx tsx packages/pipeline/finalize.ts --dir output/{slug}/

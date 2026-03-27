@@ -132,12 +132,12 @@ export function isValidLocale(locale: string): locale is Locale {
 `;
   fs.writeFileSync(path.join(outputDir, 'src/lib/i18n.ts'), i18nContent);
 
-  // Rewrite business.d.ts with the provided locales
+  // Rewrite business.d.ts locale union type to match scaffolded locales
   const businessDtsPath = path.join(outputDir, 'src/types/business.d.ts');
   if (fs.existsSync(businessDtsPath)) {
     let dtsContent = fs.readFileSync(businessDtsPath, 'utf8');
     dtsContent = dtsContent.replace(
-      /export const locales = \[.*?\] as const;\nexport type Locale = \(typeof locales\)\[number\];/,
+      /export const locales = \[.*?\] as const;\s*\nexport type Locale = \(typeof locales\)\[number\];/,
       `export const locales = ${JSON.stringify(locales)} as const;\nexport type Locale = (typeof locales)[number];`,
     );
     fs.writeFileSync(businessDtsPath, dtsContent);

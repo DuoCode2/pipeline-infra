@@ -73,22 +73,38 @@ export async function finalize(options: {
       log('Building...');
     }
 
+    // Check node_modules exists — worktree cleanup may have removed it
+    const nodeModulesDir = path.join(dir, 'node_modules');
+    if (!fs.existsSync(nodeModulesDir)) {
+      log('node_modules missing — running npm install first...');
+    }
+
     try {
       execSync('npm install --silent && npm run build', {
         cwd: dir,
         stdio: 'pipe',
-        timeout: 120_000,
+        timeout: 180_000, // 3min for concurrent builds
       });
     } catch (err: unknown) {
-      let stderr: string;
-      if (err && typeof err === 'object' && 'stderr' in err) {
-        const buf = (err as Record<string, unknown>).stderr;
-        stderr = buf instanceof Buffer ? buf.toString() : String(buf);
-      } else {
-        stderr = err instanceof Error ? err.message : String(err);
+      // Capture BOTH stdout and stderr — Next.js writes errors to both
+      let errorOutput = '';
+      if (err && typeof err === 'object') {
+        const e = err as Record<string, unknown>;
+        if ('stderr' in e) {
+          const buf = e.stderr;
+          errorOutput += buf instanceof Buffer ? buf.toString() : String(buf);
+        }
+        if ('stdout' in e) {
+          const buf = e.stdout;
+          const out = buf instanceof Buffer ? buf.toString() : String(buf);
+          if (out.trim()) errorOutput += (errorOutput ? '\n' : '') + out;
+        }
+      }
+      if (!errorOutput) {
+        errorOutput = err instanceof Error ? err.message : String(err);
       }
       log('Build FAILED');
-      return { status: 'build-failed', error: stderr };
+      return { status: 'build-failed', error: errorOutput };
     }
   }
 
@@ -220,7 +236,23 @@ ${sitemapUrls}
   const deploy = await deployToVercel(outDir, slug);
   log(`Deployed: ${deploy.url}`);
 
-  // Post-deploy health check — verify the URL actually responds
+  // ── REGISTER IMMEDIATELY after deploy success ──────────────────
+  // This MUST happen before health check, git push, or any other step
+  // that could fail. Otherwise the registry stays empty (issue #3 + #7).
+  let placeId = slug;
+  let industry: string | undefined;
+  const leadJsonPath = path.join(dir, 'lead.json');
+  if (fs.existsSync(leadJsonPath)) {
+    try {
+      const leadData = JSON.parse(fs.readFileSync(leadJsonPath, 'utf8'));
+      if (leadData.place_id) placeId = leadData.place_id;
+      if (leadData.industry) industry = leadData.industry;
+    } catch { /* ignore parse errors */ }
+  }
+  registerDeployed(placeId, slug, deploy.url);
+  log(`Registry updated: ${placeId} → ${deploy.url}`);
+
+  // ── Post-deploy health check (non-blocking — warn only) ────────
   try {
     await new Promise(r => setTimeout(r, 3000)); // wait for propagation
     const healthCheck = await fetch(deploy.url, { method: 'HEAD', redirect: 'follow' });
@@ -260,20 +292,7 @@ ${sitemapUrls}
   }
 
   // Log to n8n (optional, fire-and-forget)
-  let placeId = slug;
-  let industry: string | undefined;
-  const leadJsonPath = path.join(dir, 'lead.json');
-  if (fs.existsSync(leadJsonPath)) {
-    try {
-      const leadData = JSON.parse(fs.readFileSync(leadJsonPath, 'utf8'));
-      if (leadData.place_id) placeId = leadData.place_id;
-      if (leadData.industry) industry = leadData.industry;
-    } catch { /* ignore parse errors */ }
-  }
   logAction({ place_id: placeId, slug, action: 'deployed', result: deploy.url, url: deploy.url, industry, qa_score: scores });
-
-  // Register in sites registry for deduplication
-  registerDeployed(placeId, slug, deploy.url);
 
   return { status: 'deployed', url: deploy.url, scores };
 }

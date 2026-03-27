@@ -251,7 +251,9 @@ export async function prepare(lead: PlaceResult, industry?: string, regionId?: s
   const config = INDUSTRY_CONFIG[resolvedIndustry] || INDUSTRY_CONFIG.generic;
   const schemaOrgType = SCHEMA_ORG_TYPE[resolvedIndustry] || 'LocalBusiness';
   const slug = slugify(lead.displayName.text);
-  const outputDir = path.resolve('output', slug);
+  // Resolve from project root, not CWD — works from worktrees and subdirectories
+  const projectRoot = path.resolve(__dirname, '../..');
+  const outputDir = path.join(projectRoot, 'output', slug);
 
   // Check registry for duplicates
   if (isRegistered(lead.id)) {

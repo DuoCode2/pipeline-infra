@@ -61,6 +61,11 @@ function resolveDeploymentUrl(
  * Try deploying via Vercel CLI with --archive=tgz.
  * This is the preferred method: compresses all files into one .tgz upload,
  * avoiding per-file API requests, rate limits, and 10MB body limits.
+ *
+ * On Vercel Pro Plan:
+ * - Concurrent builds: up to 2 (vs 1 on Hobby)
+ * - Same build timeout (45min) but faster queue times
+ * - --archive=tgz bypasses all file-count and body-size limits
  */
 function tryDeployViaCLI(projectDir: string, slug: string, token: string, scope?: string): DeployResult | null {
   try {
@@ -105,11 +110,13 @@ function tryDeployViaCLI(projectDir: string, slug: string, token: string, scope?
       console.log('[deploy] Copied .vercel/project.json from parent to out/');
     }
 
-    // Deploy with --archive=tgz: single compressed upload
-    // NOT --prebuilt (that expects Vercel Build Output API structure)
+    // Deploy with --archive=tgz and explicit --token:
+    // - --token prevents "Loading scopes..." hang
+    // - --archive=tgz: single compressed upload (no size limits)
+    // - --scope: routes to team (required for Pro Plan)
     const deployScopeFlag = scope ? ` --scope ${scope}` : '';
     const output = execSync(
-      `npx vercel deploy --prod --archive=tgz --yes${deployScopeFlag}`,
+      `npx vercel deploy --prod --archive=tgz --yes --token ${token}${deployScopeFlag}`,
       {
         cwd: deployDir,
         stdio: 'pipe',
@@ -133,7 +140,14 @@ function tryDeployViaCLI(projectDir: string, slug: string, token: string, scope?
     return null;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`[deploy] CLI deploy failed: ${msg.slice(0, 200)}`);
+    // Log more detail for CLI failures to aid debugging
+    let stderr = '';
+    if (err && typeof err === 'object' && 'stderr' in err) {
+      const buf = (err as Record<string, unknown>).stderr;
+      stderr = buf instanceof Buffer ? buf.toString() : String(buf);
+    }
+    console.warn(`[deploy] CLI deploy failed: ${msg.slice(0, 300)}`);
+    if (stderr) console.warn(`[deploy] CLI stderr: ${stderr.slice(0, 300)}`);
     return null;
   }
 }
@@ -196,8 +210,9 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
 
   if (totalMB > 10) {
     throw new Error(
-      `Build is ${totalMB.toFixed(1)}MB — exceeds REST API limit. ` +
-      `Install Vercel CLI: npm i -g vercel && vercel login`
+      `Build is ${totalMB.toFixed(1)}MB — exceeds REST API 10MB limit, and CLI deploy also failed. ` +
+      `Ensure Vercel CLI is installed and VERCEL_TOKEN + VERCEL_SCOPE are set correctly. ` +
+      `Try: npx vercel deploy --prod --archive=tgz --yes --token $VERCEL_TOKEN --scope duocodetech`
     );
   }
 

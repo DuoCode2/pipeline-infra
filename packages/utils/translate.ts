@@ -43,7 +43,9 @@ interface TranslateResult {
 const GOOGLE_TRANSLATE_V2 = 'https://translation.googleapis.com/language/translate/v2';
 const BATCH_SIZE = 100; // Google v2 limit: 128 segments per request
 const BATCH_DELAY_MS = 100; // small delay between batches to avoid rate limits
-const CACHE_PATH = path.join(process.cwd(), 'data', 'translation-cache.json');
+// Resolve from project root, not CWD — works from worktrees and subdirectories
+const PROJECT_ROOT = path.resolve(__dirname, '../..');
+const CACHE_PATH = path.join(PROJECT_ROOT, 'data', 'translation-cache.json');
 
 // ── Field classification ────────────────────────────────
 // Paths matching these patterns are NOT sent to the translation API.

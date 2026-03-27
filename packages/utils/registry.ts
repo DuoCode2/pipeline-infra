@@ -12,7 +12,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const REGISTRY_PATH = path.resolve('data/sites-registry.json');
+// Resolve from project root (where package.json lives), not CWD.
+// This ensures registry works correctly from worktrees and subdirectories.
+const PROJECT_ROOT = path.resolve(__dirname, '../..');
+const REGISTRY_PATH = path.join(PROJECT_ROOT, 'data/sites-registry.json');
 
 export interface SiteEntry {
   slug: string;
@@ -141,7 +144,7 @@ export function registerDeployed(placeId: string, slug: string, url: string): vo
 
 /** Bootstrap: scan output directories to build initial registry from existing sites. */
 export function bootstrap(): SiteRegistry {
-  const outputDir = path.resolve('output');
+  const outputDir = path.join(PROJECT_ROOT, 'output');
   if (!fs.existsSync(outputDir)) return {};
 
   const registry = readRegistry();
