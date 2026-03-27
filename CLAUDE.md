@@ -84,6 +84,13 @@ Prepare auto-classifies from Google Places `primaryType` and provides `hints`:
 ```
 **These are suggestions.** Claude decides the final site structure. See `references/archetype-guide.md` for validated patterns.
 
+## RULE: Deployment is ONLY through finalize.ts
+- **NEVER run `vercel deploy`, `vercel build`, or any direct Vercel CLI command** — these trigger remote builds ($0.014-$0.476/min)
+- **ALWAYS use `finalize.ts`** which calls `deploy.ts` internally with $0-cost REST API
+- deploy.ts handles clean URLs, aliases, and team scope automatically
+- If an agent needs to redeploy: `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ --skip-build`
+- See `.claude/rules/deployment.md` for full cost rules
+
 ## Quality Gate
 - **a11y ≥ 95, SEO ≥ 95, best-practices ≥ 90** → hard fail (blocks deploy)
 - **performance ≥ 90** → warn only (does NOT block deploy)

@@ -211,10 +211,12 @@ After each agent finishes, its changes are on a separate branch. The leader (or 
 - **Detecting resource exhaustion**: before launching a wave, check available memory with `os.freemem()` — if below 2 GB, wait for running builds to finish. The telltale symptom is `next build` failing with an empty error string (no stack trace, no message) due to the OS killing the process (OOM)
 - For batches > 5: run in waves of 4-5, wait for wave to complete before starting next
 
-**Vercel Pro Plan (COST-AWARE):**
-- deploy.ts uploads prebuilt static files only — NEVER triggers remote builds ($0 build cost)
-- All projects use Standard build machines (NOT Turbo) to minimize any incidental charges
-- 6,000 deploys/day — all deploy uploads can run in parallel (REST API is free)
+**Vercel Pro Plan (COST-AWARE — CRITICAL):**
+- **NEVER run `vercel deploy` or `vercel build` directly** — these trigger remote builds ($0.014-$0.476/min)
+- deploy.ts uses REST API with `framework: null` = $0 build cost (no remote build machine)
+- CLI fallback (`--prebuilt` + Build Output API v3) also $0 — but only deploy.ts configures it correctly
+- **ALL deployment MUST go through `finalize.ts`** which calls deploy.ts internally
+- Agents must NEVER bypass finalize.ts by running Vercel CLI commands directly
 - The real bottleneck is local `next build`, not Vercel
 
 **Important worktree notes:**

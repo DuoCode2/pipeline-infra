@@ -24,8 +24,15 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Deploy to Vercel
-        run: npx vercel deploy out/ --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy to Vercel (static files only, no remote build)
+        run: |
+          cd out
+          # Create Build Output API v3 structure for --prebuilt ($0 cost)
+          mkdir -p .vercel/output/static
+          echo '{"version":3,"routes":[{"handle":"filesystem"},{"src":"^/(.*)\\.html/?$","headers":{"Location":"/$1"},"status":308}]}' > .vercel/output/config.json
+          cp -r $(ls -A | grep -v .vercel) .vercel/output/static/
+          npx vercel link --yes --project ${{ vars.VERCEL_PROJECT_NAME }} --scope duocodetech --token ${{ secrets.VERCEL_TOKEN }}
+          npx vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }} --scope duocodetech
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}

@@ -92,6 +92,28 @@ function resolveDeploymentUrl(
 }
 
 /**
+ * Scan out/ for .html files and generate Build Output API v3 overrides.
+ * Overrides map "en.html" → path "en" so Vercel serves /en without extension.
+ * This is the ONLY reliable way to get clean URLs with static deploys.
+ */
+function generateHtmlOverrides(outDir: string): Record<string, { path: string }> {
+  const overrides: Record<string, { path: string }> = {};
+  function scan(dir: string, prefix: string = '') {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory() && entry.name !== '_next' && entry.name !== '.vercel') {
+        scan(path.join(dir, entry.name), rel);
+      } else if (entry.name.endsWith('.html') && entry.name !== 'index.html') {
+        // en.html → "en", subdir/page.html → "subdir/page"
+        overrides[rel] = { path: rel.replace(/\.html$/, '') };
+      }
+    }
+  }
+  scan(outDir);
+  return overrides;
+}
+
+/**
  * Convert out/ into Vercel Build Output API v3 format (.vercel/output/).
  * This is required for --prebuilt deploys which skip remote builds entirely.
  * Structure: .vercel/output/config.json + .vercel/output/static/{files}
@@ -103,12 +125,27 @@ function prepareBuildOutputAPI(outDir: string): string {
   const outputDir = path.join(outDir, '.vercel', 'output');
   const staticDir = path.join(outputDir, 'static');
 
-  // Write config.json (Build Output API v3)
+  // Generate overrides for clean URLs (en.html → /en)
+  const overrides = generateHtmlOverrides(outDir);
+
+  // Write config.json with version, routes for clean URLs, and overrides
   fs.mkdirSync(outputDir, { recursive: true });
-  fs.writeFileSync(path.join(outputDir, 'config.json'), JSON.stringify({ version: 3 }, null, 2));
+  const config = {
+    version: 3,
+    routes: [
+      { handle: 'filesystem' as const },
+      // Redirect .html URLs to clean versions
+      { src: '^/(?:(.+)/)?index(?:\\.html)?/?$', headers: { Location: '/$1' }, status: 308 },
+      { src: '^/(.*)\\.html/?$', headers: { Location: '/$1' }, status: 308 },
+      // Remove trailing slashes
+      { src: '^/(.+)/$', headers: { Location: '/$1' }, status: 308 },
+    ],
+    overrides,
+  };
+  fs.writeFileSync(path.join(outputDir, 'config.json'), JSON.stringify(config, null, 2));
+  console.log(`[deploy] Build Output API: ${Object.keys(overrides).length} HTML overrides for clean URLs`);
 
   // Symlink static/ → out/ contents (avoid copying GBs of files)
-  // We link each top-level item in out/ into static/ (skip .vercel itself)
   if (fs.existsSync(staticDir)) fs.rmSync(staticDir, { recursive: true });
   fs.mkdirSync(staticDir, { recursive: true });
 
@@ -116,7 +153,6 @@ function prepareBuildOutputAPI(outDir: string): string {
     if (entry === '.vercel') continue;
     const src = path.join(outDir, entry);
     const dest = path.join(staticDir, entry);
-    // Use symlink for speed; copy as fallback
     try {
       fs.symlinkSync(src, dest);
     } catch {
@@ -248,14 +284,7 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   // Only falls through to CLI if total size exceeds 10MB REST API limit.
   console.log('[deploy] Attempting REST API deploy (static files, no remote build)...');
 
-  // Read vercel.json from project root
-  const vercelConfigPath = path.join(projectDir, 'vercel.json');
-  let vercelConfig: Record<string, unknown> = {};
-  if (fs.existsSync(vercelConfigPath)) {
-    vercelConfig = JSON.parse(fs.readFileSync(vercelConfigPath, 'utf8'));
-  }
-
-  // Collect files, skip large dirs
+  // Collect files from out/, skip large dirs
   const files: Array<{ file: string; data: string }> = [];
   function collectFiles(dir: string, prefix: string = '') {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -277,15 +306,29 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   }
   collectFiles(buildDir);
 
+  // CRITICAL: Include vercel.json AS an uploaded file for clean URL routing.
+  // The REST API body does NOT support cleanUrls/redirects/headers properties —
+  // Vercel silently ignores them. Only vercel.json in the uploaded files works.
+  const vercelConfigPath = path.join(projectDir, 'vercel.json');
+  if (fs.existsSync(vercelConfigPath)) {
+    // Remove any existing vercel.json from files (may be in out/)
+    const idx = files.findIndex(f => f.file === 'vercel.json');
+    if (idx >= 0) files.splice(idx, 1);
+    files.push({
+      file: 'vercel.json',
+      data: fs.readFileSync(vercelConfigPath).toString('base64'),
+    });
+    console.log('[deploy] Including vercel.json as uploaded file for clean URL routing');
+  }
+
   const totalBytes = files.reduce((sum, f) => sum + Buffer.byteLength(f.data, 'base64') * 0.75, 0);
   const totalMB = totalBytes / (1024 * 1024);
   console.log(`[deploy] REST API: ${files.length} files (${totalMB.toFixed(1)}MB)`);
 
   if (totalMB > 10) {
     // ── Strategy 2: CLI fallback for large sites (>10MB) ──────────────
-    // Uses --archive=tgz to compress upload. Deploys from out/ (static export)
-    // to avoid triggering a remote build.
-    console.log(`[deploy] REST API limit exceeded (${totalMB.toFixed(1)}MB > 10MB), falling back to CLI...`);
+    // Uses --prebuilt with Build Output API v3 to skip remote builds. $0 cost.
+    console.log(`[deploy] REST API limit exceeded (${totalMB.toFixed(1)}MB > 10MB), falling back to CLI --prebuilt...`);
     const cliResult = tryDeployViaCLI(projectDir, slug, token, scope);
     if (cliResult) {
       await disableDeploymentProtection(slug, token, scope);
@@ -293,12 +336,13 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
     }
     throw new Error(
       `Build is ${totalMB.toFixed(1)}MB — exceeds REST API 10MB limit, and CLI deploy also failed. ` +
-      `Ensure Vercel CLI is installed and VERCEL_TOKEN + VERCEL_SCOPE are set correctly. ` +
-      `Try: npx vercel deploy --prod --archive=tgz --yes --token $VERCEL_TOKEN --scope duocodetech`
+      `Ensure Vercel CLI is installed and VERCEL_TOKEN + VERCEL_SCOPE are set correctly.`
     );
   }
 
   // Create deployment via REST API
+  // IMPORTANT: Do NOT spread vercelConfig into the body — the API ignores it.
+  // Clean URLs come from the vercel.json uploaded as a file above.
   const teamQuery = scope ? `?teamId=${scope}` : '';
   const res = await fetch(`${VERCEL_API}/v13/deployments${teamQuery}`, {
     method: 'POST',
@@ -311,7 +355,6 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
       files: files.map(f => ({ file: f.file, data: f.data, encoding: 'base64' })),
       projectSettings: { framework: null },
       target: 'production',
-      ...vercelConfig,
     }),
   });
 

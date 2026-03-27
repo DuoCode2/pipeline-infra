@@ -18,27 +18,35 @@ description: Deployment configuration for Vercel and GitHub
 ### COST RULE: NEVER trigger remote builds
 - **$20/mo included credit** covers CDN, bandwidth, edge requests
 - **Build minutes cost extra**: Standard $0.014/min, Turbo $0.476/min
-- All projects use **Standard** build machines (not Turbo)
-- deploy.ts uses REST API (`framework: null`) = $0 build cost
-- CLI fallback uses `--prebuilt` + Build Output API v3 = $0 build cost
-- **NEVER** run `vercel deploy` from project root (triggers remote build)
-- **NEVER** use Turbo build machines for static sites
+- deploy.ts handles all cost optimization automatically
+- **NEVER** run bare `vercel deploy` or `vercel deploy --prod` (triggers remote build = $$$)
+- **NEVER** run `vercel build` (runs build locally in Vercel wrapper, then still uploads)
+- **NEVER** use `--archive=tgz` without `--prebuilt` (uploads source → remote build)
+- **ONLY** use `deploy.ts` for deployments — it ensures $0 build cost
+
+### How deploy.ts avoids build costs:
+1. **REST API v13** (preferred, <10MB) — uploads `out/` static files + `vercel.json` as file, `framework: null`, $0
+2. **CLI + `--prebuilt`** (fallback, >10MB) — Build Output API v3 with `overrides` for clean URLs, $0
+
+### Clean URL routing:
+- **REST API path**: `vercel.json` must be included as an UPLOADED FILE (not in request body — API ignores body-level config)
+- **CLI path**: `config.json` uses `overrides` (e.g., `"en.html": {"path": "en"}`) + `routes` for redirects
+- deploy.ts generates both automatically — agents should NEVER manually configure Vercel routing
 
 ### Team API usage:
 - **REST API**: `?teamId=duocodetech` (slug) or `?teamId=team_30QY2z2YGzW70ITKAAvrlBep` (ID)
 - **CLI**: `--scope duocodetech` (slug only)
 
-### Deploy strategy (automatic in deploy.ts):
-1. **REST API v13** (preferred) — uploads `out/` static files with `framework: null`, NO remote build, $0 cost
-2. **CLI + `--prebuilt`** (fallback for >10MB) — uses Build Output API v3 format, NO remote build, $0 cost
-
-### Manual deploy:
+### FORBIDDEN commands (will incur build charges):
 ```bash
-cd output/{slug}/out
-# Create Build Output API structure
-mkdir -p .vercel/output/static && echo '{"version":3}' > .vercel/output/config.json
-# Deploy with --prebuilt (no remote build)
-npx vercel deploy --prebuilt --prod --archive=tgz --yes --token $VERCEL_TOKEN --scope duocodetech
+# ❌ NEVER DO THESE:
+vercel deploy --prod                    # uploads source → remote build
+vercel deploy --prod --archive=tgz      # same, just compressed
+vercel deploy out/ --prod               # Vercel detects Next.js → remote build
+vercel build                            # runs build in Vercel wrapper
+
+# ✅ ONLY THIS (handled by deploy.ts):
+npx tsx packages/deploy/deploy.ts --build-dir output/{slug}/out --slug {slug}
 ```
 
 ## Credentials (.env)

@@ -153,7 +153,8 @@ What it does:
 npx tsx packages/pipeline/finalize.ts --dir output/{slug}/
 ```
 
-Does: build → Lighthouse audit → deploy to Vercel → git push → log.
+Does: build → Lighthouse audit → deploy to Vercel (via REST API, $0 cost) → git push → log.
+**NEVER run `vercel deploy` directly** — finalize.ts handles deployment through deploy.ts which ensures $0 build cost.
 
 Returns JSON:
 - **Success**: `{ "status": "deployed", "url": "https://...", "scores": {...} }`
