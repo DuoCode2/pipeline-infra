@@ -10,18 +10,19 @@ description: Deployment configuration for Vercel and GitHub
 - Override via env: `GIT_OWNER`, `GIT_USER_NAME`, `GIT_USER_EMAIL`
 
 ## Vercel
-- deploy.ts tries **CLI first** (`vercel --archive=tgz`), falls back to REST API
+- **Team**: DuoCode Pro (`duocodetech`) — set via `VERCEL_SCOPE` env var
+- deploy.ts tries **CLI first** (`vercel --archive=tgz --scope duocodetech`), falls back to REST API
 - `--archive=tgz` compresses all files into one upload — no rate limits, no 10MB body limit
 - Sites live at: `https://{slug}.vercel.app`
 
 ### Deploy strategy (automatic):
 1. **Vercel CLI + `--archive=tgz`** (preferred) — single compressed upload, works for any size
-2. **REST API v13** (fallback) — per-file base64 upload, limited to ~10MB total
+2. **REST API v13** (fallback) — per-file base64 upload, limited to ~10MB total, passes `?teamId=` query
 
 ### Manual deploy (for custom/large projects):
 ```bash
 cd output/{slug}
-npx vercel deploy --prebuilt --prod --archive=tgz --yes
+npx vercel deploy --prebuilt --prod --archive=tgz --yes --scope duocodetech
 ```
 
 ## Credentials (.env)
@@ -30,6 +31,7 @@ npx vercel deploy --prebuilt --prod --archive=tgz --yes
 | `GOOGLE_API_KEY` | Maps Places API |
 | `UNSPLASH_ACCESS_KEY` | Stock photo fallback |
 | `VERCEL_TOKEN` | Deployment (used by both CLI and REST API) |
+| `VERCEL_SCOPE` | Vercel Team slug (default: `duocodetech`) |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | Notifications |
 | `N8N_WEBHOOK_URL` | Post-deploy logging (optional) |
 | `GIT_OWNER` | GitHub org override (default: `DuoCode2`) |

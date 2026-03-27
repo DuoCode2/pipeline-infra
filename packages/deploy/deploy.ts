@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import { requireEnv } from '../utils/env';
+import { requireEnv, optionalEnv } from '../utils/env';
 import { getArg } from '../utils/cli';
 
 const VERCEL_API = 'https://api.vercel.com';
@@ -9,6 +9,11 @@ const VERCEL_API = 'https://api.vercel.com';
 /** Lazy-loaded token — only evaluated when deployToVercel() is actually called. */
 function getVercelToken(): string {
   return requireEnv('VERCEL_TOKEN');
+}
+
+/** Vercel Team/Org scope (slug). When set, all deploys go to this team. */
+function getVercelScope(): string | undefined {
+  return process.env.VERCEL_SCOPE || undefined;
 }
 
 const EXCLUDE_DIRS = new Set(['.next', 'node_modules', '.git', 'screenshots', 'src', '.vercel']);
@@ -57,7 +62,7 @@ function resolveDeploymentUrl(
  * This is the preferred method: compresses all files into one .tgz upload,
  * avoiding per-file API requests, rate limits, and 10MB body limits.
  */
-function tryDeployViaCLI(projectDir: string, slug: string, token: string): DeployResult | null {
+function tryDeployViaCLI(projectDir: string, slug: string, token: string, scope?: string): DeployResult | null {
   try {
     execSync('npx vercel --version', { stdio: 'pipe', timeout: 10_000 });
   } catch {
@@ -79,7 +84,8 @@ function tryDeployViaCLI(projectDir: string, slug: string, token: string): Deplo
       fs.mkdirSync(vercelDir, { recursive: true });
       // Try to link — creates project if it doesn't exist
       try {
-        execSync(`npx vercel link --yes --project ${slug}`, {
+        const scopeFlag = scope ? ` --scope ${scope}` : '';
+        execSync(`npx vercel link --yes --project ${slug}${scopeFlag}`, {
           cwd: deployDir,
           stdio: 'pipe',
           timeout: 30_000,
@@ -101,8 +107,9 @@ function tryDeployViaCLI(projectDir: string, slug: string, token: string): Deplo
 
     // Deploy with --archive=tgz: single compressed upload
     // NOT --prebuilt (that expects Vercel Build Output API structure)
+    const deployScopeFlag = scope ? ` --scope ${scope}` : '';
     const output = execSync(
-      `npx vercel deploy --prod --archive=tgz --yes`,
+      `npx vercel deploy --prod --archive=tgz --yes${deployScopeFlag}`,
       {
         cwd: deployDir,
         stdio: 'pipe',
@@ -133,6 +140,7 @@ function tryDeployViaCLI(projectDir: string, slug: string, token: string): Deplo
 
 export async function deployToVercel(buildDir: string, slug: string): Promise<DeployResult> {
   const token = getVercelToken(); // lazy — only throws when actually deploying
+  const scope = getVercelScope();
 
   if (!fs.existsSync(buildDir)) {
     throw new Error(`Build directory not found: ${buildDir}`);
@@ -140,10 +148,14 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
 
   const projectDir = path.resolve(buildDir, '..');
 
+  if (scope) {
+    console.log(`[deploy] Using Vercel Team scope: ${scope}`);
+  }
+
   // ── Strategy 1: Vercel CLI with --archive=tgz (preferred) ──────────
   // Single compressed upload — no file count limits, no 10MB body limit,
   // no API rate limiting. Works for any size project.
-  const cliResult = tryDeployViaCLI(projectDir, slug, token);
+  const cliResult = tryDeployViaCLI(projectDir, slug, token, scope);
   if (cliResult) return cliResult;
 
   // ── Strategy 2: REST API fallback (small sites only) ───────────────
@@ -190,7 +202,8 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   }
 
   // Create deployment via REST API
-  const res = await fetch(`${VERCEL_API}/v13/deployments`, {
+  const teamQuery = scope ? `?teamId=${scope}` : '';
+  const res = await fetch(`${VERCEL_API}/v13/deployments${teamQuery}`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -234,7 +247,7 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
 
     let status: DeploymentState;
     try {
-      const check = await fetch(`${VERCEL_API}/v13/deployments/${deployment.id}`, {
+      const check = await fetch(`${VERCEL_API}/v13/deployments/${deployment.id}${teamQuery}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!check.ok) {
@@ -274,7 +287,7 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   const expectedAlias = `${slug}.vercel.app`;
   console.log(`Alias not auto-assigned, explicitly setting ${expectedAlias}...`);
   try {
-    const aliasRes = await fetch(`${VERCEL_API}/v2/deployments/${deployment.id}/aliases`, {
+    const aliasRes = await fetch(`${VERCEL_API}/v2/deployments/${deployment.id}/aliases${teamQuery}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

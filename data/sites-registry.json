@@ -332,5 +332,293 @@
     "preparedAt": "2026-03-26T04:29:14.213Z",
     "url": "https://rolls-station.vercel.app",
     "deployedAt": "2026-03-26T04:40:05.717Z"
+  },
+  "slug:flexidesignx": {
+    "slug": "flexidesignx",
+    "url": "https://flexidesignx.vercel.app",
+    "deployedAt": "2026-03-26T14:38:13.903Z"
+  },
+  "0x31da132b2e4a4743:0xa8f02aecd7cda161": {
+    "slug": "flexidesignx",
+    "url": "https://flexidesignx.vercel.app",
+    "deployedAt": "2026-03-26T15:38:10.807Z"
+  },
+  "ChIJZVLu796xEmsRpTR_I8MMLGY": {
+    "slug": "darlington-laundry",
+    "industry": "service",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:14:36.714Z"
+  },
+  "ChIJXbpe6xpTzDERsCJFSE5mF10": {
+    "slug": "restoran-windmill-bandar-baru-klang",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:16:15.425Z"
+  },
+  "ChIJQ1rnfgBTzDERvAetEKD1bsM": {
+    "slug": "restoran-klang-kopitiam",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:17:20.175Z"
+  },
+  "ChIJ1WKRLGKvEmsREGAzngzx3OA": {
+    "slug": "magic-hens-salon",
+    "industry": "beauty",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:17:27.176Z"
+  },
+  "ChIJGchVh4-tzTER-Iegu17YYMs": {
+    "slug": "hair-space-beauty-studio",
+    "industry": "beauty",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:17:41.847Z"
+  },
+  "ChIJA4V3bQexEmsRPCqUK_dZ970": {
+    "slug": "landau-automotive",
+    "industry": "automotive",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:17:55.940Z"
+  },
+  "ChIJh8dIHsKvEmsRAQQu4014pgk": {
+    "slug": "cozy-corner-ultimo",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:18:02.117Z"
+  },
+  "ChIJX-KhL7SxEmsRZMNQ_tmhshs": {
+    "slug": "events-to-a-t",
+    "industry": "generic",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:18:09.917Z"
+  },
+  "ChIJY5gFCcOvEmsRU59NnwwIecU": {
+    "slug": "easebite-catering",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:18:11.136Z"
+  },
+  "ChIJSYXjrsZTzDERoW75XTyQsBk": {
+    "slug": "bayleaf-kitchen-restaurant-klang",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:18:32.753Z"
+  },
+  "ChIJKyYZkf-vEmsRdUL1HQ35bmE": {
+    "slug": "chalmers-convenience",
+    "industry": "retail",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:18:34.079Z"
+  },
+  "ChIJG93SHQ5TzDERPRbSQdbv_M0": {
+    "slug": "seni-sattisorru-klang-branch",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:18:36.036Z"
+  },
+  "ChIJg6ClIGOwEmsReeeLFOmStvA": {
+    "slug": "arapidis-partners",
+    "industry": "generic",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:18:45.737Z"
+  },
+  "ChIJkWMtwkJTzDERuhq6EKd0wXA": {
+    "slug": "a-b-hair-studio",
+    "industry": "beauty",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:18:49.653Z"
+  },
+  "ChIJ7yHDQPlTzDERZdvd43YEph4": {
+    "slug": "la-patrie-caf",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:18:50.177Z"
+  },
+  "ChIJuxq5xEevEmsR24rbr-fG5Rc": {
+    "slug": "teatube",
+    "industry": "generic",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:18:52.633Z"
+  },
+  "ChIJ-fyH0GKszTERbbsxLgDrf1Q": {
+    "slug": "cafe-1986",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:19:00.568Z"
+  },
+  "ChIJhVLwixKtzTERVg8IG_dPT5U": {
+    "slug": "super-cut-professional-studio-sentosa-branch",
+    "industry": "beauty",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:19:01.495Z"
+  },
+  "ChIJZTOIRSuwEmsR_XbKlO92vwA": {
+    "slug": "sydney-uni-sport-fitness",
+    "industry": "fitness",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:19:02.117Z"
+  },
+  "ChIJ8bfOO6SxEmsRAIYr6wq2I8s": {
+    "slug": "rosebery-service-station",
+    "industry": "automotive",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:19:05.481Z"
+  },
+  "ChIJ-YKxaQSxEmsRloiWLucJrQY": {
+    "slug": "mascot-auto-electrical-services",
+    "industry": "automotive",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:19:09.991Z"
+  },
+  "ChIJ-4MpIQSxEmsRjBYgU2La46Y": {
+    "slug": "mascot-tailoring",
+    "industry": "generic",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:19:17.836Z"
+  },
+  "ChIJ30vMF25VzDER2sqeJoWXGb8": {
+    "slug": "klinik-health-360-sdn-bhd-aman-perdana-klang-famil",
+    "industry": "clinic",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:19:18.480Z"
+  },
+  "ChIJw3aHR0CtzTERHqESXCl0UUM": {
+    "slug": "mahogani-roastery-coffee",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:19:20.723Z"
+  },
+  "ChIJ42rfRzCuEmsRfcjP2V_i_MQ": {
+    "slug": "anna-wash-laundry",
+    "industry": "service",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:19:24.886Z"
+  },
+  "ChIJWVxT3f-vEmsRQ6diOwUv_zw": {
+    "slug": "north-chunxi-authentic-chengdu-flavours-ultimo",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:19:30.239Z"
+  },
+  "ChIJZ27QsCeuEmsRLAJ-fFbZ84A": {
+    "slug": "machi-machi-central-park",
+    "industry": "generic",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:19:35.536Z"
+  },
+  "ChIJ18-SCJyszTERyCYK0BHxCIs": {
+    "slug": "klinik-bayu-medic-medical-clinic-skin-women-s-heal",
+    "industry": "clinic",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:19:40.337Z"
+  },
+  "ChIJDRxPkuSszTER_O8wBDjchKg": {
+    "slug": "hb-auto-tyre-services-klang",
+    "industry": "automotive",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:19:43.201Z"
+  },
+  "ChIJD3CUgWCxEmsRPRrtN_ivMQU": {
+    "slug": "mascot-bakery",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:19:48.675Z"
+  },
+  "ChIJkafG2OZSzDER24M1p7GSvSA": {
+    "slug": "pusat-service-kenderaan-abe-mat-auto",
+    "industry": "automotive",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:19:53.646Z"
+  },
+  "ChIJK2GDc_-wEmsRs4SIKptqjAc": {
+    "slug": "cupino-mascot",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:02.280Z"
+  },
+  "ChIJRTJgK0evEmsR1vpxezDoncs": {
+    "slug": "coco-fresh-tea-juice-ultimo",
+    "industry": "generic",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:06.165Z"
+  },
+  "ChIJo2hYZiiuEmsR4fE-uOzkywA": {
+    "slug": "salon-hair-design",
+    "industry": "beauty",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:06.249Z"
+  },
+  "ChIJHzT-CSqxEmsR8gA9hhDYblk": {
+    "slug": "mantra-on-sydney-airport-restaurant",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:08.493Z"
+  },
+  "ChIJk6HJorCxEmsRigaon_Ciyq8": {
+    "slug": "surpassed-alterations",
+    "industry": "generic",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:09.561Z"
+  },
+  "ChIJn6t-FDixEmsRZ0LkeHXNiS4": {
+    "slug": "pyong-laser-skin-clinic",
+    "industry": "clinic",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:10.436Z"
+  },
+  "ChIJi1R3-CiuEmsRa6TXnz0xoho": {
+    "slug": "the-black-groodle",
+    "industry": "food",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:11.642Z"
+  },
+  "ChIJFXwxlAGxEmsRDHmJYzAqN9c": {
+    "slug": "sunny-rooms-mascot",
+    "industry": "hospitality",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:12.123Z"
+  },
+  "ChIJjWWZviWuEmsRJlWRdTsVs7M": {
+    "slug": "cutlounge",
+    "industry": "beauty",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:13.667Z"
+  },
+  "ChIJISud5AGxEmsRE_phAk7CKdg": {
+    "slug": "airport-supermarket",
+    "industry": "retail",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:19.287Z"
+  },
+  "ChIJcdFUva1VzDERRsmZFZxVSk0": {
+    "slug": "elite-auto-service",
+    "industry": "automotive",
+    "regionId": "my",
+    "preparedAt": "2026-03-26T18:20:21.260Z"
+  },
+  "ChIJaRCcFLmxEmsR7YPyeEEFfbs": {
+    "slug": "the-hongkong-treatment-centre-remedial-massage",
+    "industry": "beauty",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:25.883Z",
+    "url": "https://the-hongkong-treatment-centre-reme-weiliudev0607-3691s-projects.vercel.app",
+    "deployedAt": "2026-03-27T01:31:36.236Z"
+  },
+  "ChIJocpt7nivEmsR0XypCPtudYQ": {
+    "slug": "x-matrix-supermarket",
+    "industry": "retail",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:28.219Z"
+  },
+  "ChIJu74FBMqxEmsR9q2AVe31YAA": {
+    "slug": "d-h-asian-mart",
+    "industry": "retail",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:31.797Z"
+  },
+  "ChIJo475pTSxEmsRcuQt1EPHu88": {
+    "slug": "beta-indo-grocery-big",
+    "industry": "retail",
+    "regionId": "au",
+    "preparedAt": "2026-03-26T18:20:33.667Z"
   }
 }

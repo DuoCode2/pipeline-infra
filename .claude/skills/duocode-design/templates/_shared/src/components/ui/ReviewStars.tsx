@@ -29,7 +29,7 @@ export default function ReviewStars({ rating, count, className = '' }: ReviewSta
 
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
-      <div className="flex" aria-label={`${rating} out of 5 stars`}>
+      <div className="flex" role="img" aria-label={`${rating} out of 5 stars`}>
         {stars.map((fill, i) => <Star key={i} fill={fill} />)}
       </div>
       <span className="font-medium text-[var(--color-text-title)]">{rating.toFixed(1)}</span>

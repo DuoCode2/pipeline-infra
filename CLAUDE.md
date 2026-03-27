@@ -53,7 +53,8 @@ When running /generate or /batch, Claude must:
 | `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ --skip-build` | Re-deploy with existing build (skip npm install + build) |
 | `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ --check-path /` | Finalize non-locale site (Lighthouse checks / instead of /en/) |
 | `npx tsx packages/assets/optimize-images.ts --input path/to/images` | Standalone image optimization (any directory) |
-| `npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN` | Generate translation template from EN content |
+| `npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN` | Auto-translate EN → target locales via Google Translate API (writes back to business.ts) |
+| `npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN --dry-run` | Preview translatable strings without calling API |
 
 Data flow: `search.ts` → `PlaceResult[]` → `prepare.ts` (via `--lead-file`). Any country auto-detected from address.
 
@@ -100,8 +101,9 @@ npm run build:check      # TypeScript compile check (run from INFRA ROOT, not ou
 ## Skills
 | Skill | Type | Purpose |
 |-------|------|---------|
-| `/generate` | invoke | prepare → design → finalize (one site) |
+| `/generate` | invoke | prepare → design → translate → finalize (one site) |
 | `/batch` | invoke | parallel agents with diversity plan + worktree isolation |
+| `/translate` | invoke | Add locales to an existing site (standalone) |
 | `/fix-site` | invoke | Fix visual issues → rebuild → redeploy |
 | `frontend-design` | auto | Anthropic design skill — typography, color, layout, motion |
 | `duocode-design` | auto | Design references + archetype guide + A11y + scaffolding |
@@ -110,6 +112,15 @@ npm run build:check      # TypeScript compile check (run from INFRA ROOT, not ou
 - **Diversity plan required** — before launching agents, assign different fonts/layouts/colors per site to prevent mode collapse (see batch SKILL.md Step 1.5)
 - **Worktree isolation** — each agent runs in `isolation: "worktree"` to prevent concurrent file collisions
 - **Agent Teams preferred** — use `TeamCreate` for leader-supervisor coordination; leader relays discovered issues between teammates
+
+## Translation (multi-locale)
+- **One command**: `npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN` — runs end-to-end, zero context cost
+- Script reads business.ts EN content → calls Google Translate API v2 → writes locale blocks back → QA checks
+- **Cache**: `data/translation-cache.json` — common phrases ("Book Now", "View Menu") hit cache after first site
+- **Skip rules**: addresses, phones, URLs, prices, people's names, image paths are never translated
+- **Hours**: day-name keys translated, time values kept as-is
+- Run **after** Claude finishes writing EN content, **before** finalize
+- Region locales auto-updated in `region.locales` array
 
 ## Shared UI Components (in scaffold)
 Import from `@/components/ui` — these are pre-built, don't recreate:

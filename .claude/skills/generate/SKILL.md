@@ -109,11 +109,16 @@ Import from `@/data/images` for srcset data. Use the `ResponsiveImage` UI compon
 - Read `references/a11y-checklist.md` for accessibility rules
 
 ### 2f. Multi-locale content
-Write the EN locale content first, then generate other locales. For multi-locale sites:
+Write the EN locale content first. Then auto-translate — one command, zero context cost:
 ```bash
-npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN,zh-TW
+npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN
 ```
-This extracts EN strings into a translation template. Use it as a reference to write other locale blocks in business.ts.
+This reads EN content from business.ts → calls Google Translate API → writes all locale blocks back → runs QA checks. No manual translation needed.
+
+- The script auto-detects target locales from the region (see `getLocalesForRegion()` in env.ts)
+- Use `--dry-run` to preview what strings will be translated before calling the API
+- Translations are cached in `data/translation-cache.json` — repeated phrases across sites are free
+- After translation, review the output for any QA warnings (exit code 1 = warnings found)
 
 ## Step 2.5: Dev Preview (catch issues before finalize)
 

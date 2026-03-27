@@ -19,8 +19,8 @@ export default function LanguageSwitcher({ current }: { current: Locale }) {
           aria-current={locale === current ? 'page' : undefined}
           className={`px-2 py-1 text-sm rounded transition-colors ${
             locale === current
-              ? 'bg-white/20 font-semibold'
-              : 'opacity-70 hover:opacity-100'
+              ? 'bg-white/30 font-semibold'
+              : 'text-white/90 hover:text-white'
           }`}
         >
           {localeLabels[locale]}
