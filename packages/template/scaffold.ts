@@ -96,6 +96,13 @@ function copyTree(sourceDir: string, targetDir: string): void {
 }
 
 export function copyTemplates(industry: string, outputDir: string, locales: string[] = ['en'], defaultLocale: string = 'en'): void {
+  // Validate and deduplicate locales
+  const bcp47 = /^[a-z]{2}(-[A-Z]{2,})?$/;
+  const invalid = locales.filter((l) => !bcp47.test(l));
+  if (invalid.length > 0) {
+    throw new Error(`Invalid BCP-47 locale(s): ${invalid.join(', ')}`);
+  }
+  locales = [...new Set(locales)];
   const industryDir = path.join(TEMPLATE_ROOT, industry);
 
   for (const fileName of SHARED_CONFIG_FILES) {

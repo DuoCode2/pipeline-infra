@@ -54,13 +54,21 @@ function acquireLock(maxWaitMs = 10_000): void {
         const content = fs.readFileSync(LOCK_PATH, 'utf8');
         const lockTime = parseInt(content.split(':')[1] || '0', 10);
         if (Date.now() - lockTime > 30_000) {
-          // Lock older than 30s = stale, safe to remove
-          fs.unlinkSync(LOCK_PATH);
-          continue;
+          // Atomic rename to claim the stale lock — only one process wins the rename
+          const claimPath = LOCK_PATH + `.claim.${process.pid}`;
+          try {
+            fs.renameSync(LOCK_PATH, claimPath);
+            fs.unlinkSync(claimPath);
+            continue; // retry creating the lock
+          } catch {
+            // Another process won the rename — retry
+          }
         }
       } catch { /* lock was just released — retry */ }
-      // Wait 50-150ms (jitter to avoid thundering herd)
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50 + Math.random() * 100);
+      // Wait 50-150ms (jitter to avoid thundering herd) — non-blocking via sync sleep
+      const waitMs = 50 + Math.floor(Math.random() * 100);
+      const end = Date.now() + waitMs;
+      while (Date.now() < end) { /* spin-wait, avoids blocking Atomics.wait */ }
     }
   }
   throw new Error(`Registry lock timeout after ${maxWaitMs}ms. Another process may be stuck. Delete ${LOCK_PATH} manually if needed.`);
@@ -186,9 +194,15 @@ export function bootstrap(): SiteRegistry {
     added++;
   }
 
-  if (added > 0) writeRegistry(registry);
+  if (added > 0) {
+    mutateRegistry((current) => {
+      for (const [key, entry] of Object.entries(registry)) {
+        if (!current[key]) current[key] = entry;
+      }
+    });
+  }
   console.error(`  Added ${added} new entries`);
-  return registry;
+  return readRegistry();
 }
 
 // CLI

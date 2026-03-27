@@ -145,7 +145,7 @@ What it does:
 6. Writes all locale blocks back into business.ts
 7. Updates `region.locales` array
 
-**For EN-only regions** (au, us, uk, ca, nz): skip this step entirely.
+**When to run:** Run translate.ts for ALL non-English-only regions. English-only regions (skip entirely): AU, US, UK, NZ, CA. All other regions default to multi-locale — always run translation for them.
 
 ## Step 4: Finalize (one command)
 

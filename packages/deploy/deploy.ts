@@ -175,6 +175,22 @@ function tryDeployViaCLI(projectDir: string, slug: string, token: string, scope?
       fs.copyFileSync(parentVercel, projectJsonPath);
     }
 
+    // Verify project.json exists and contains a valid projectId
+    if (!fs.existsSync(projectJsonPath)) {
+      console.warn('[deploy] CLI: project.json missing after link — falling back to REST API');
+      return null;
+    }
+    try {
+      const projJson = JSON.parse(fs.readFileSync(projectJsonPath, 'utf8'));
+      if (!projJson.projectId || typeof projJson.projectId !== 'string') {
+        console.warn('[deploy] CLI: project.json has no valid projectId — falling back to REST API');
+        return null;
+      }
+    } catch {
+      console.warn('[deploy] CLI: project.json is malformed — falling back to REST API');
+      return null;
+    }
+
     // --prebuilt: uses .vercel/output/ directly, NO remote build, $0 cost
     const deployScopeFlag = scope ? ` --scope ${scope}` : '';
     const output = execSync(

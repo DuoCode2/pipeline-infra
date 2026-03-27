@@ -267,11 +267,15 @@ export function classifyIndustry(mapsType: string | undefined, businessName?: st
 }
 
 export function slugify(name: string): string {
-  return name
+  const raw = name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .substring(0, 50);
+    .replace(/^-|-$/g, '');
+  if (raw.length <= 50) return raw;
+  // Truncate at word (hyphen) boundary to avoid partial words and trailing hyphens
+  const truncated = raw.substring(0, 50);
+  const lastHyphen = truncated.lastIndexOf('-');
+  return lastHyphen > 0 ? truncated.substring(0, lastHyphen) : truncated;
 }
 
 /**

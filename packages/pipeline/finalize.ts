@@ -186,7 +186,7 @@ ${sitemapUrls}
   // and best-practices failures are deterministic code issues — retrying the
   // same code won't improve the score. Only retry when the sole failures are
   // warn-level categories (performance).
-  const MAX_QA_RETRIES = 2;
+  const MAX_QA_RETRIES = 3;
   let quality!: Awaited<ReturnType<typeof runLocalQualityGate>>;
 
   for (let attempt = 1; attempt <= MAX_QA_RETRIES + 1; attempt++) {
@@ -340,12 +340,15 @@ Options:
     // Output clean JSON to stdout for Claude to consume.
     process.stdout.write(JSON.stringify(result, null, 2) + '\n');
 
-    process.exit(result.status === 'deployed' ? 0 : 1);
+    const exitCode = result.status === 'deployed' ? 0
+      : result.status === 'build-failed' ? 2
+      : 3; // quality-failed
+    process.exit(exitCode);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     const errorResult: FinalizeResult = { status: 'build-failed', error: msg };
     process.stdout.write(JSON.stringify(errorResult, null, 2) + '\n');
-    process.exit(1);
+    process.exit(2);
   }
 }
 

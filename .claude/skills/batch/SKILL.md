@@ -208,6 +208,7 @@ After each agent finishes, its changes are on a separate branch. The leader (or 
 **Local machine (Apple Silicon Mac):**
 - Maximum **4-5 concurrent agents** running full pipeline (npm install + next build is CPU+memory intensive)
 - Beyond 5 agents: builds start failing silently with empty error strings (resource exhaustion)
+- **Detecting resource exhaustion**: before launching a wave, check available memory with `os.freemem()` — if below 2 GB, wait for running builds to finish. The telltale symptom is `next build` failing with an empty error string (no stack trace, no message) due to the OS killing the process (OOM)
 - For batches > 5: run in waves of 4-5, wait for wave to complete before starting next
 
 **Vercel Pro Plan (COST-AWARE):**

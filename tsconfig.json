@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "commonjs",
+    "module": "ESNext",
     "lib": ["ES2021"],
     "strict": true,
     "esModuleInterop": true,
@@ -18,7 +18,7 @@
       "@/*": ["./*"]
     },
     "jsx": "react-jsx",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "types": ["node"]
   },
   "include": ["packages/**/*.ts", "tests/**/*.ts"],

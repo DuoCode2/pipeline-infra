@@ -110,9 +110,10 @@ export async function runLocalQualityGate(options: {
   log(`[serve-and-check] Port      : ${port}`);
   log(`[serve-and-check] Check URL : ${checkUrl}`);
 
-  // 2. Start serve (NOT detached — keeps child tied to parent for reliable cleanup)
+  // 2. Start serve (detached + process group kill ensures entire tree is cleaned up)
   const serve = spawn('npx', ['serve', buildDir, '-l', String(port), '--no-clipboard'], {
     stdio: 'pipe',
+    detached: true,
   });
 
   // Forward serve stderr for troubleshooting (non-blocking).
@@ -124,9 +125,13 @@ export async function runLocalQualityGate(options: {
   const cleanup = () => {
     if (!serve.pid || serve.killed) return;
     try {
-      serve.kill('SIGTERM');
+      // Kill the entire process group (npx + serve child) to prevent orphaned servers
+      process.kill(-serve.pid, 'SIGTERM');
     } catch {
-      try { serve.kill('SIGKILL'); } catch { /* already dead */ }
+      try { process.kill(-serve.pid, 'SIGKILL'); } catch {
+        // Fallback: kill just the direct child
+        try { serve.kill('SIGKILL'); } catch { /* already dead */ }
+      }
     }
   };
   process.on('exit', cleanup);

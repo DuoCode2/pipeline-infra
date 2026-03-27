@@ -331,7 +331,47 @@ async function googleTranslateBatch(
   return results;
 }
 
-// ── Cache ───────────────────────────────────────────────
+// ── Cache (with file locking for concurrency safety) ────
+
+const CACHE_LOCK_PATH = CACHE_PATH + '.lock';
+const CACHE_LOCK_TIMEOUT_MS = 10_000;
+const CACHE_LOCK_STALE_MS = 30_000;
+
+function acquireCacheLock(maxWaitMs = CACHE_LOCK_TIMEOUT_MS): void {
+  const deadline = Date.now() + maxWaitMs;
+  while (Date.now() < deadline) {
+    try {
+      fs.writeFileSync(CACHE_LOCK_PATH, `${process.pid}:${Date.now()}`, { flag: 'wx' });
+      return;
+    } catch {
+      // Check for stale lock (holder crashed)
+      try {
+        const content = fs.readFileSync(CACHE_LOCK_PATH, 'utf8');
+        const lockTime = parseInt(content.split(':')[1] || '0', 10);
+        if (Date.now() - lockTime > CACHE_LOCK_STALE_MS) {
+          // Atomic rename to claim the stale lock — only one process wins
+          const claimPath = CACHE_LOCK_PATH + `.claim.${process.pid}`;
+          try {
+            fs.renameSync(CACHE_LOCK_PATH, claimPath);
+            fs.unlinkSync(claimPath);
+            continue; // retry creating the lock
+          } catch {
+            // Another process won the rename — retry
+          }
+        }
+      } catch { /* lock was just released — retry */ }
+      // Wait 50-150ms (jitter to avoid thundering herd) — non-blocking via sync sleep
+      const waitMs = 50 + Math.floor(Math.random() * 100);
+      const end = Date.now() + waitMs;
+      while (Date.now() < end) { /* spin-wait */ }
+    }
+  }
+  throw new Error(`Translation cache lock timeout after ${maxWaitMs}ms. Delete ${CACHE_LOCK_PATH} manually if needed.`);
+}
+
+function releaseCacheLock(): void {
+  try { fs.unlinkSync(CACHE_LOCK_PATH); } catch { /* already released */ }
+}
 
 function loadCache(): TranslationCache {
   try {
@@ -347,7 +387,28 @@ function loadCache(): TranslationCache {
 function saveCache(cache: TranslationCache): void {
   const dir = path.dirname(CACHE_PATH);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(CACHE_PATH, JSON.stringify(cache, null, 2));
+  const tmp = CACHE_PATH + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(cache, null, 2));
+  fs.renameSync(tmp, CACHE_PATH);
+}
+
+/**
+ * Read-modify-write the translation cache atomically with file locking.
+ * Prevents data loss when multiple agents translate concurrently.
+ */
+function mutateCacheAtomically(fn: (cache: TranslationCache) => void): void {
+  const dir = path.dirname(CACHE_PATH);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  acquireCacheLock();
+  try {
+    const cache = loadCache();
+    fn(cache);
+    const tmp = CACHE_PATH + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(cache, null, 2));
+    fs.renameSync(tmp, CACHE_PATH);
+  } finally {
+    releaseCacheLock();
+  }
 }
 
 // ── business.ts parse / write ───────────────────────────
@@ -498,8 +559,18 @@ export async function translateSite(
     }));
   }
 
-  // 3. Load cache
-  const cache = opts.noCache ? ({} as TranslationCache) : loadCache();
+  // 3. Load cache (under lock for concurrency safety)
+  let cache: TranslationCache;
+  if (opts.noCache) {
+    cache = {} as TranslationCache;
+  } else {
+    acquireCacheLock();
+    try {
+      cache = loadCache();
+    } finally {
+      releaseCacheLock();
+    }
+  }
   const results: TranslateResult[] = [];
 
   for (const locale of targetLocales) {
@@ -588,8 +659,13 @@ export async function translateSite(
   writeBusinessTs(businessPath, siteData, importLine, exportPrefix);
   log('Done — business.ts updated with all locale blocks');
 
-  // 11. Save cache
-  saveCache(cache);
+  // 11. Save cache (merge with any concurrent updates from other agents)
+  mutateCacheAtomically((diskCache) => {
+    for (const [ck, entries] of Object.entries(cache)) {
+      if (!diskCache[ck]) diskCache[ck] = {};
+      Object.assign(diskCache[ck], entries);
+    }
+  });
   log(`Cache saved (${Object.keys(cache).length} locale pairs)`);
 
   return results;
