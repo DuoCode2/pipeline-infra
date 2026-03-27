@@ -467,7 +467,7 @@
     "regionId": "my",
     "preparedAt": "2026-03-26T18:19:01.495Z",
     "url": "https://super-cut-professional-studio-sento-zeta.vercel.app",
-    "deployedAt": "2026-03-27T04:03:53.766Z"
+    "deployedAt": "2026-03-27T04:34:11.472Z"
   },
   "ChIJZTOIRSuwEmsR_XbKlO92vwA": {
     "slug": "sydney-uni-sport-fitness",
@@ -499,7 +499,7 @@
     "regionId": "my",
     "preparedAt": "2026-03-26T18:19:18.480Z",
     "url": "https://klinik-health-360-sdn-bhd-aman-perd-two.vercel.app",
-    "deployedAt": "2026-03-27T04:02:06.326Z"
+    "deployedAt": "2026-03-27T04:35:26.863Z"
   },
   "ChIJw3aHR0CtzTERHqESXCl0UUM": {
     "slug": "mahogani-roastery-coffee",
@@ -533,7 +533,7 @@
     "regionId": "my",
     "preparedAt": "2026-03-26T18:19:40.337Z",
     "url": "https://klinik-bayu-medic-medical-clinic-sk-orcin.vercel.app",
-    "deployedAt": "2026-03-27T04:01:21.571Z"
+    "deployedAt": "2026-03-27T04:36:23.965Z"
   },
   "ChIJDRxPkuSszTER_O8wBDjchKg": {
     "slug": "hb-auto-tyre-services-klang",
@@ -555,7 +555,7 @@
     "regionId": "my",
     "preparedAt": "2026-03-26T18:19:53.646Z",
     "url": "https://pusat-service-kenderaan-abe-mat-aut-omega.vercel.app",
-    "deployedAt": "2026-03-27T03:59:52.999Z"
+    "deployedAt": "2026-03-27T04:37:48.404Z"
   },
   "ChIJK2GDc_-wEmsRs4SIKptqjAc": {
     "slug": "cupino-mascot",
@@ -650,5 +650,221 @@
     "industry": "retail",
     "regionId": "au",
     "preparedAt": "2026-03-26T18:20:33.667Z"
+  },
+  "ChIJy30L2oBLzDERKUog7epO3xI": {
+    "slug": "one-living-sri-petaling-40sp",
+    "industry": "retail",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:22:13.072Z",
+    "url": "https://one-living-sri-petaling-40sp.vercel.app",
+    "deployedAt": "2026-03-27T04:33:15.992Z"
+  },
+  "ChIJZ9CA90ZLzDERCGC7SFSJ5U8": {
+    "slug": "chan-s-kitchen-teochew-cuisines-chicken-rice-and-n",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:22:14.461Z",
+    "url": "https://chan-s-kitchen-teochew-cuisines-chi.vercel.app",
+    "deployedAt": "2026-03-27T04:32:14.719Z"
+  },
+  "ChIJp4qrmEBLzDERDpC7MNPqzG8": {
+    "slug": "bake-with-yen-sri-petaling",
+    "industry": "generic",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:22:19.266Z",
+    "url": "https://bake-with-yen-sri-petaling.vercel.app",
+    "deployedAt": "2026-03-27T04:39:18.225Z"
+  },
+  "ChIJJ6tPxhlLzDERNQAD8Fxq7rw": {
+    "slug": "brewmaster-sri-petaling",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:22:20.829Z",
+    "url": "https://brewmaster-sri-petaling.vercel.app",
+    "deployedAt": "2026-03-27T04:33:12.120Z"
+  },
+  "ChIJJ3H8WMRLzDERHAPjptP29gE": {
+    "slug": "beautyfull-sri-petaling",
+    "industry": "beauty",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:22:25.739Z",
+    "url": "https://beautyfull-sri-petaling.vercel.app",
+    "deployedAt": "2026-03-27T04:33:16.309Z"
+  },
+  "ChIJI5ALHntLzDERzbSl813xzKI": {
+    "slug": "goldgeous-by-tricca",
+    "industry": "beauty",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:42:04.894Z"
+  },
+  "ChIJL-U3dQBLzDERwzzhBmwEWe0": {
+    "slug": "celine-beauty-sri-petaling",
+    "industry": "beauty",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:42:36.838Z",
+    "url": "https://celine-beauty-sri-petaling.vercel.app",
+    "deployedAt": "2026-03-27T05:06:06.442Z"
+  },
+  "ChIJM7gey2FLzDERPRU81w-KPMI": {
+    "slug": "s-beauty-centre",
+    "industry": "beauty",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:42:44.337Z",
+    "url": "https://s-beauty-centre.vercel.app",
+    "deployedAt": "2026-03-27T05:04:58.238Z"
+  },
+  "ChIJMZbT-lZLzDERHSYWi3r-ozg": {
+    "slug": "klinik-ev-medic-24-jam",
+    "industry": "clinic",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:42:54.926Z",
+    "url": "https://klinik-ev-medic-24-jam.vercel.app",
+    "deployedAt": "2026-03-27T05:04:36.579Z"
+  },
+  "ChIJ1yt4iA9LzDERBWhJbmzGlQE": {
+    "slug": "fluffed-cafe-sri-petaling",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:43:01.456Z",
+    "url": "https://fluffed-cafe-sri-petaling.vercel.app",
+    "deployedAt": "2026-03-27T05:04:35.983Z"
+  },
+  "ChIJgQhVwbdLzDER7rERVeu7gg0": {
+    "slug": "my-healthcare-clinic",
+    "industry": "clinic",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:43:01.748Z",
+    "url": "https://my-healthcare-clinic.vercel.app",
+    "deployedAt": "2026-03-27T05:05:25.021Z"
+  },
+  "ChIJmVmfEtNLzDERRviVqODd4Vk": {
+    "slug": "after-five-coffee-sri-petaling",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:43:02.052Z"
+  },
+  "ChIJQ5OHfc1LzDER6Y0Rkd23ouM": {
+    "slug": "komo-wellness-sri-petaling",
+    "industry": "clinic",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:43:06.456Z"
+  },
+  "ChIJX_LSBwBLzDERLU-BCee3hd4": {
+    "slug": "ipoh-ipoh-cafe-sri-petaling",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T04:43:11.551Z"
+  },
+  "ChIJT1_CUSw2zDER0XJ98TquOAI": {
+    "slug": "fred-perry-pavilion-kuala-lumpur",
+    "industry": "retail",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:07:08.706Z",
+    "url": "https://fred-perry-pavilion-kuala-lumpur.vercel.app",
+    "deployedAt": "2026-03-27T05:21:26.360Z"
+  },
+  "ChIJ_8pjOKg3zDER1FJj8ku2A5o": {
+    "slug": "jordan-hong-kong-restaurant-pavilion-kuala-lumpur",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:07:27.906Z",
+    "url": "https://jordan-hong-kong-restaurant-pavilio.vercel.app",
+    "deployedAt": "2026-03-27T05:21:49.068Z"
+  },
+  "ChIJaVVjMig2zDERciRQWF5ABIo": {
+    "slug": "bmic-nail-spa-salon-pavilion-kl-shopping-mall",
+    "industry": "beauty",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:08:04.936Z",
+    "url": "https://bmic-nail-spa-salon-pavilion-kl-sho.vercel.app",
+    "deployedAt": "2026-03-27T05:23:58.043Z"
+  },
+  "ChIJtfnQK0A3zDERh-tGEeI3PU4": {
+    "slug": "miko-galere-pavilion-beauty-hall",
+    "industry": "beauty",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:08:07.305Z",
+    "url": "https://miko-galere-pavilion-beauty-hall.vercel.app",
+    "deployedAt": "2026-03-27T05:19:07.927Z"
+  },
+  "ChIJs9dJfiw2zDER4kDZeyLBShQ": {
+    "slug": "aveda-pavilion",
+    "industry": "generic",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:08:26.565Z",
+    "url": "https://aveda-pavilion.vercel.app",
+    "deployedAt": "2026-03-27T05:22:36.795Z"
+  },
+  "ChIJCfOi94Y3zDER8XRiD3YTihs": {
+    "slug": "loka-espresso",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:08:37.938Z",
+    "url": "https://loka-espresso.vercel.app",
+    "deployedAt": "2026-03-27T05:19:32.044Z"
+  },
+  "ChIJHc6_5rM3zDERhZautz2qNYg": {
+    "slug": "chicha-san-chen-pavilion-kuala-lumpur",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:08:37.960Z",
+    "url": "https://chicha-san-chen-pavilion-kuala-lump.vercel.app",
+    "deployedAt": "2026-03-27T05:21:14.819Z"
+  },
+  "ChIJA6cs5U03zDER8UY4E6fN7Sc": {
+    "slug": "tanyu-pavilion-kuala-lumpur",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:08:38.240Z",
+    "url": "https://tanyu-pavilion-kuala-lumpur.vercel.app",
+    "deployedAt": "2026-03-27T05:25:30.000Z"
+  },
+  "ChIJHZumVkBJzDERRntKI6qoJlk": {
+    "slug": "mov-c-see-lounge",
+    "industry": "food",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:08:46.364Z",
+    "url": "https://mov-c-see-lounge.vercel.app",
+    "deployedAt": "2026-03-27T05:22:40.839Z"
+  },
+  "ChIJZ5jarwk3zDERfOeJdsLSNXU": {
+    "slug": "v-spa-bukit-bintang",
+    "industry": "beauty",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:08:51.611Z",
+    "url": "https://v-spa-bukit-bintang.vercel.app",
+    "deployedAt": "2026-03-27T05:21:25.861Z"
+  },
+  "ChIJ_9u0TQA3zDER1ilNHWB6QYw": {
+    "slug": "my-wellness-reflexology-opposite-tg-s-bistro-tengk",
+    "industry": "generic",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:23:55.310Z",
+    "url": "https://my-wellness-reflexology-opposite-tg.vercel.app",
+    "deployedAt": "2026-03-27T05:34:34.885Z"
+  },
+  "ChIJHa6Mc9A3zDER6m6rhKs5YAM": {
+    "slug": "klinik-medipro-bukit-bintang",
+    "industry": "clinic",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:24:16.718Z",
+    "url": "https://klinik-medipro-bukit-bintang.vercel.app",
+    "deployedAt": "2026-03-27T05:36:28.298Z"
+  },
+  "ChIJV4Yt_VQ3zDEREObKmwkz0EQ": {
+    "slug": "my-wellness-reflexology-tengkat-tong-shin",
+    "industry": "generic",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:24:21.494Z",
+    "url": "https://my-wellness-reflexology-tengkat-ton.vercel.app",
+    "deployedAt": "2026-03-27T05:34:34.170Z"
+  },
+  "ChIJ13mPnSw2zDERdvP49fCdDI8": {
+    "slug": "watch-clinic-pavilion-kl",
+    "industry": "clinic",
+    "regionId": "my",
+    "preparedAt": "2026-03-27T05:24:28.362Z",
+    "url": "https://watch-clinic-pavilion-kl.vercel.app",
+    "deployedAt": "2026-03-27T05:33:53.277Z"
   }
 }

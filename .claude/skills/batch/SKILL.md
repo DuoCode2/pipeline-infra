@@ -210,9 +210,10 @@ After each agent finishes, its changes are on a separate branch. The leader (or 
 - Beyond 5 agents: builds start failing silently with empty error strings (resource exhaustion)
 - For batches > 5: run in waves of 4-5, wait for wave to complete before starting next
 
-**Vercel Pro Plan:**
-- 12 concurrent Vercel builds with on-demand Turbo machines (30 vCPU, 60GB RAM) — Vercel is NOT the bottleneck
-- 6,000 deploys/day, CLI upload limit 1GB — all deploy uploads can run in parallel
+**Vercel Pro Plan (COST-AWARE):**
+- deploy.ts uploads prebuilt static files only — NEVER triggers remote builds ($0 build cost)
+- All projects use Standard build machines (NOT Turbo) to minimize any incidental charges
+- 6,000 deploys/day — all deploy uploads can run in parallel (REST API is free)
 - The real bottleneck is local `next build`, not Vercel
 
 **Important worktree notes:**

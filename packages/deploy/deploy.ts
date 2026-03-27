@@ -34,6 +34,40 @@ interface DeploymentState {
   aliasAssigned?: boolean;
 }
 
+/**
+ * Disable Vercel Authentication (ssoProtection) on a project so .vercel.app URLs are public.
+ * Pro teams default to Standard Protection which requires Vercel login on all non-custom-domain URLs.
+ * This is a no-op if protection is already disabled.
+ */
+async function disableDeploymentProtection(slug: string, token: string, scope?: string): Promise<void> {
+  const teamQuery = scope ? `?teamId=${scope}` : '';
+  try {
+    // Look up project by name to get its ID
+    const projRes = await fetch(`${VERCEL_API}/v9/projects/${encodeURIComponent(slug)}${teamQuery}`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!projRes.ok) {
+      console.warn(`[deploy] Could not look up project "${slug}" to disable protection: ${projRes.status}`);
+      return;
+    }
+    const proj = await projRes.json() as Record<string, unknown>;
+    if (proj.ssoProtection == null) return; // already disabled
+
+    const patchRes = await fetch(`${VERCEL_API}/v9/projects/${encodeURIComponent(slug)}${teamQuery}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ssoProtection: null }),
+    });
+    if (patchRes.ok) {
+      console.log(`[deploy] Disabled Vercel Authentication (ssoProtection) on "${slug}"`);
+    } else {
+      console.warn(`[deploy] Failed to disable ssoProtection on "${slug}": ${patchRes.status}`);
+    }
+  } catch (err) {
+    console.warn(`[deploy] Error disabling ssoProtection: ${err instanceof Error ? err.message : err}`);
+  }
+}
+
 function toHttps(hostname: string): string {
   return hostname.startsWith('http') ? hostname : `https://${hostname}`;
 }
@@ -58,80 +92,107 @@ function resolveDeploymentUrl(
 }
 
 /**
- * Try deploying via Vercel CLI with --archive=tgz.
- * This is the preferred method: compresses all files into one .tgz upload,
- * avoiding per-file API requests, rate limits, and 10MB body limits.
+ * Convert out/ into Vercel Build Output API v3 format (.vercel/output/).
+ * This is required for --prebuilt deploys which skip remote builds entirely.
+ * Structure: .vercel/output/config.json + .vercel/output/static/{files}
  *
- * On Vercel Pro Plan:
- * - Concurrent builds: up to 2 (vs 1 on Hobby)
- * - Same build timeout (45min) but faster queue times
- * - --archive=tgz bypasses all file-count and body-size limits
+ * COST IMPACT: --prebuilt = $0 build charges (no remote build machine spins up).
+ * Without --prebuilt, even buildCommand="" still costs ~$0.04/deploy on Standard.
+ */
+function prepareBuildOutputAPI(outDir: string): string {
+  const outputDir = path.join(outDir, '.vercel', 'output');
+  const staticDir = path.join(outputDir, 'static');
+
+  // Write config.json (Build Output API v3)
+  fs.mkdirSync(outputDir, { recursive: true });
+  fs.writeFileSync(path.join(outputDir, 'config.json'), JSON.stringify({ version: 3 }, null, 2));
+
+  // Symlink static/ → out/ contents (avoid copying GBs of files)
+  // We link each top-level item in out/ into static/ (skip .vercel itself)
+  if (fs.existsSync(staticDir)) fs.rmSync(staticDir, { recursive: true });
+  fs.mkdirSync(staticDir, { recursive: true });
+
+  for (const entry of fs.readdirSync(outDir)) {
+    if (entry === '.vercel') continue;
+    const src = path.join(outDir, entry);
+    const dest = path.join(staticDir, entry);
+    // Use symlink for speed; copy as fallback
+    try {
+      fs.symlinkSync(src, dest);
+    } catch {
+      fs.cpSync(src, dest, { recursive: true });
+    }
+  }
+
+  return outputDir;
+}
+
+/**
+ * CLI fallback for large sites (>10MB) that exceed REST API limits.
+ * Uses --prebuilt with Build Output API v3 format to completely skip
+ * remote builds. $0 build charges.
  */
 function tryDeployViaCLI(projectDir: string, slug: string, token: string, scope?: string): DeployResult | null {
   try {
     execSync('npx vercel --version', { stdio: 'pipe', timeout: 10_000 });
   } catch {
-    console.log('[deploy] Vercel CLI not available, will use REST API');
+    console.log('[deploy] Vercel CLI not available');
     return null;
   }
 
   const outDir = path.join(projectDir, 'out');
-  // Deploy from out/ (the static export), not projectDir
-  const deployDir = fs.existsSync(outDir) ? outDir : projectDir;
+  if (!fs.existsSync(outDir)) {
+    console.warn('[deploy] No out/ directory found — cannot deploy via CLI');
+    return null;
+  }
 
   try {
-    console.log(`[deploy] Using Vercel CLI with --archive=tgz (${slug}) from ${path.basename(deployDir)}/...`);
+    console.log(`[deploy] Using Vercel CLI with --prebuilt (${slug}) — zero remote build cost`);
 
-    // Ensure .vercel/project.json exists in the deploy directory
-    // Without this, Vercel CLI creates a NEW project instead of updating the existing one
-    const vercelDir = path.join(deployDir, '.vercel');
-    if (!fs.existsSync(vercelDir)) {
-      fs.mkdirSync(vercelDir, { recursive: true });
-      // Try to link — creates project if it doesn't exist
+    // Convert out/ to Build Output API v3 format for --prebuilt
+    prepareBuildOutputAPI(outDir);
+
+    // Ensure .vercel/project.json exists (required for CLI)
+    const vercelDir = path.join(outDir, '.vercel');
+    const projectJsonPath = path.join(vercelDir, 'project.json');
+    if (!fs.existsSync(projectJsonPath)) {
       try {
         const scopeFlag = scope ? ` --scope ${scope}` : '';
         execSync(`npx vercel link --yes --project ${slug}${scopeFlag}`, {
-          cwd: deployDir,
+          cwd: outDir,
           stdio: 'pipe',
           timeout: 30_000,
           env: { ...process.env, VERCEL_TOKEN: token },
         });
       } catch {
         // Link failed — project may not exist yet
-        // Write a minimal project.json so CLI doesn't prompt
       }
     }
 
-    // Also copy .vercel from parent if it exists there but not in deploy dir
+    // Copy .vercel/project.json from parent if needed
     const parentVercel = path.join(projectDir, '.vercel', 'project.json');
-    const deployVercelJson = path.join(vercelDir, 'project.json');
-    if (fs.existsSync(parentVercel) && !fs.existsSync(deployVercelJson)) {
-      fs.copyFileSync(parentVercel, deployVercelJson);
-      console.log('[deploy] Copied .vercel/project.json from parent to out/');
+    if (fs.existsSync(parentVercel) && !fs.existsSync(projectJsonPath)) {
+      fs.copyFileSync(parentVercel, projectJsonPath);
     }
 
-    // Deploy with --archive=tgz and explicit --token:
-    // - --token prevents "Loading scopes..." hang
-    // - --archive=tgz: single compressed upload (no size limits)
-    // - --scope: routes to team (required for Pro Plan)
+    // --prebuilt: uses .vercel/output/ directly, NO remote build, $0 cost
     const deployScopeFlag = scope ? ` --scope ${scope}` : '';
     const output = execSync(
-      `npx vercel deploy --prod --archive=tgz --yes --token ${token}${deployScopeFlag}`,
+      `npx vercel deploy --prebuilt --prod --archive=tgz --yes --token ${token}${deployScopeFlag}`,
       {
-        cwd: deployDir,
+        cwd: outDir,
         stdio: 'pipe',
         timeout: 180_000,
         env: { ...process.env, VERCEL_TOKEN: token },
       },
     ).toString().trim();
 
-    // CLI outputs the deployment URL on the last line
     const lines = output.split('\n');
     const deployUrl = lines[lines.length - 1]?.trim();
 
     if (deployUrl && deployUrl.startsWith('http')) {
       const prodUrl = `https://${slug}.vercel.app`;
-      console.log(`[deploy] CLI deployed: ${deployUrl}`);
+      console.log(`[deploy] CLI deployed (no remote build): ${deployUrl}`);
       console.log(`[deploy] Production URL: ${prodUrl}`);
       return { url: prodUrl, projectId: slug, deploymentId: deployUrl };
     }
@@ -140,7 +201,6 @@ function tryDeployViaCLI(projectDir: string, slug: string, token: string, scope?
     return null;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    // Log more detail for CLI failures to aid debugging
     let stderr = '';
     if (err && typeof err === 'object' && 'stderr' in err) {
       const buf = (err as Record<string, unknown>).stderr;
@@ -166,14 +226,11 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
     console.log(`[deploy] Using Vercel Team scope: ${scope}`);
   }
 
-  // ── Strategy 1: Vercel CLI with --archive=tgz (preferred) ──────────
-  // Single compressed upload — no file count limits, no 10MB body limit,
-  // no API rate limiting. Works for any size project.
-  const cliResult = tryDeployViaCLI(projectDir, slug, token, scope);
-  if (cliResult) return cliResult;
-
-  // ── Strategy 2: REST API fallback (small sites only) ───────────────
-  console.log('[deploy] CLI deploy failed or unavailable, falling back to REST API...');
+  // ── Strategy 1: REST API (preferred — uploads prebuilt static files, NO remote build) ──
+  // Uploads out/ as static files with framework:null → Vercel serves as-is.
+  // This is FREE — no Turbo Build Machine charges.
+  // Only falls through to CLI if total size exceeds 10MB REST API limit.
+  console.log('[deploy] Attempting REST API deploy (static files, no remote build)...');
 
   // Read vercel.json from project root
   const vercelConfigPath = path.join(projectDir, 'vercel.json');
@@ -209,6 +266,15 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   console.log(`[deploy] REST API: ${files.length} files (${totalMB.toFixed(1)}MB)`);
 
   if (totalMB > 10) {
+    // ── Strategy 2: CLI fallback for large sites (>10MB) ──────────────
+    // Uses --archive=tgz to compress upload. Deploys from out/ (static export)
+    // to avoid triggering a remote build.
+    console.log(`[deploy] REST API limit exceeded (${totalMB.toFixed(1)}MB > 10MB), falling back to CLI...`);
+    const cliResult = tryDeployViaCLI(projectDir, slug, token, scope);
+    if (cliResult) {
+      await disableDeploymentProtection(slug, token, scope);
+      return cliResult;
+    }
     throw new Error(
       `Build is ${totalMB.toFixed(1)}MB — exceeds REST API 10MB limit, and CLI deploy also failed. ` +
       `Ensure Vercel CLI is installed and VERCEL_TOKEN + VERCEL_SCOPE are set correctly. ` +
@@ -240,6 +306,9 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
 
   const deployment = (await res.json()) as DeploymentState;
   console.log(`Deployment created: ${deployment.url} (${deployment.readyState})`);
+
+  // Disable Vercel Authentication so .vercel.app URLs are publicly accessible
+  await disableDeploymentProtection(slug, token, scope);
 
   // Detect slug collision: if Vercel added a scope suffix, the URL won't match {slug}.vercel.app
   const expectedHost = `${slug}.vercel.app`;

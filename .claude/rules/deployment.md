@@ -12,24 +12,33 @@ description: Deployment configuration for Vercel and GitHub
 ## Vercel
 - **Team**: DuoCode (`duocodetech`, ID: `team_30QY2z2YGzW70ITKAAvrlBep`)
 - **Plan**: Pro (Active)
-- deploy.ts tries **CLI first** (`--scope duocodetech`), falls back to REST API (`?teamId=duocodetech`)
-- `--archive=tgz` compresses all files into one upload — no rate limits, no 10MB body limit
-- `--token` is passed explicitly to avoid "Loading scopes..." hang
+- deploy.ts uploads **prebuilt static files only** — NEVER triggers remote builds
 - Sites live at: `https://{slug}.vercel.app`
 
+### COST RULE: NEVER trigger remote builds
+- **$20/mo included credit** covers CDN, bandwidth, edge requests
+- **Build minutes cost extra**: Standard $0.014/min, Turbo $0.476/min
+- All projects use **Standard** build machines (not Turbo)
+- deploy.ts uses REST API (`framework: null`) = $0 build cost
+- CLI fallback uses `--prebuilt` + Build Output API v3 = $0 build cost
+- **NEVER** run `vercel deploy` from project root (triggers remote build)
+- **NEVER** use Turbo build machines for static sites
+
 ### Team API usage:
-- **REST API**: `?teamId=duocodetech` (slug) or `?teamId=team_30QY2z2YGzW70ITKAAvrlBep` (ID) — both work
-- **CLI**: `--scope duocodetech` (slug only, not team ID)
-- **Recommendation**: Use slug (`duocodetech`) everywhere — works in both CLI and REST API
+- **REST API**: `?teamId=duocodetech` (slug) or `?teamId=team_30QY2z2YGzW70ITKAAvrlBep` (ID)
+- **CLI**: `--scope duocodetech` (slug only)
 
 ### Deploy strategy (automatic in deploy.ts):
-1. **Vercel CLI + `--archive=tgz` + `--token` + `--scope`** (preferred) — single compressed upload
-2. **REST API v13** (fallback) — per-file base64 upload, limited to ~10MB total, passes `?teamId=` query
+1. **REST API v13** (preferred) — uploads `out/` static files with `framework: null`, NO remote build, $0 cost
+2. **CLI + `--prebuilt`** (fallback for >10MB) — uses Build Output API v3 format, NO remote build, $0 cost
 
-### Manual deploy (for custom/large projects):
+### Manual deploy:
 ```bash
-cd output/{slug}
-npx vercel deploy --prod --archive=tgz --yes --token $VERCEL_TOKEN --scope duocodetech
+cd output/{slug}/out
+# Create Build Output API structure
+mkdir -p .vercel/output/static && echo '{"version":3}' > .vercel/output/config.json
+# Deploy with --prebuilt (no remote build)
+npx vercel deploy --prebuilt --prod --archive=tgz --yes --token $VERCEL_TOKEN --scope duocodetech
 ```
 
 ## Credentials (.env)
