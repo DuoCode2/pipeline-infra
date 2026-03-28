@@ -13,6 +13,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { deployToVercel } from '../deploy/deploy';
 import { publishGeneratedSite } from '../deploy/publish';
+import {
+  readLocalesFromProjectDir,
+  summarizeLocaleRouteFailures,
+  waitForHealthyLocaleRoutes,
+} from '../quality/deployed-locale-routes';
 import { runLocalQualityGate } from '../quality/serve-and-check';
 import { getArg, hasFlag } from '../utils/cli';
 import { getLocalesForRegion } from '../utils/env';
@@ -236,9 +241,33 @@ ${sitemapUrls}
   const deploy = await deployToVercel(outDir, slug);
   log(`Deployed: ${deploy.url}`);
 
-  // ── REGISTER IMMEDIATELY after deploy success ──────────────────
-  // This MUST happen before health check, git push, or any other step
-  // that could fail. Otherwise the registry stays empty (issue #3 + #7).
+  const deployedLocales = readLocalesFromProjectDir(dir);
+  if (deployedLocales.length > 0) {
+    log(`Verifying deployed locale routes: ${deployedLocales.join(', ')}`);
+    const routeAudit = await waitForHealthyLocaleRoutes(deploy.url, deployedLocales, 5, 3_000);
+    if (!routeAudit.ok) {
+      const description = summarizeLocaleRouteFailures(routeAudit);
+      log(`Post-deploy locale route verification FAILED: ${description}`);
+      return {
+        status: 'quality-failed',
+        url: deploy.url,
+        scores,
+        failures: [{
+          category: 'deployment',
+          audit: 'locale-routes',
+          description: 'Deployed locale routes did not return successful responses',
+          elements: routeAudit.localeRoutes
+            .filter((route) => !route.ok)
+            .map((route) => `${route.url} → ${route.status ?? route.error ?? 'ERR'}`),
+        }],
+        error: description,
+      };
+    }
+    log('Post-deploy locale route verification PASSED');
+  }
+
+  // ── REGISTER after deploy verification passes ───────────────────
+  // A broken deployed URL should not be written into the registry.
   let placeId = slug;
   let industry: string | undefined;
   const leadJsonPath = path.join(dir, 'lead.json');

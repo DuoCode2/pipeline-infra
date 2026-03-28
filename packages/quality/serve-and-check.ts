@@ -133,6 +133,30 @@ export async function runLocalQualityGate(options: {
         try { serve.kill('SIGKILL'); } catch { /* already dead */ }
       }
     }
+
+    // Verify the port is actually free after kill. If not, force-kill by port.
+    // SIGTERM may be ignored by zombie processes; give 2s then escalate.
+    const deadline = Date.now() + 2000;
+    while (Date.now() < deadline) {
+      try {
+        // Check if process group still exists
+        process.kill(-serve.pid!, 0);
+        // Still alive — wait briefly then SIGKILL
+        const waitEnd = Date.now() + 200;
+        while (Date.now() < waitEnd) { /* spin */ }
+        try { process.kill(-serve.pid!, 'SIGKILL'); } catch { break; }
+      } catch {
+        break; // Process is gone
+      }
+    }
+
+    // Final fallback: kill anything on the port via lsof (macOS/Linux)
+    try {
+      execSync(`lsof -ti :${port} | xargs kill -9 2>/dev/null || true`, {
+        stdio: 'pipe',
+        timeout: 3000,
+      });
+    } catch { /* best effort */ }
   };
   process.on('exit', cleanup);
   process.on('SIGINT', cleanup);
@@ -266,4 +290,6 @@ async function main() {
 }
 
 // Run CLI when executed directly.
-main();
+if (require.main === module) {
+  main();
+}

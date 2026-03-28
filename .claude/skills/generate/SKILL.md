@@ -155,6 +155,8 @@ npx tsx packages/pipeline/finalize.ts --dir output/{slug}/
 
 Does: build → Lighthouse audit → deploy to Vercel (via REST API, $0 cost) → git push → log.
 **NEVER run `vercel deploy` directly** — finalize.ts handles deployment through deploy.ts which ensures $0 build cost.
+Finalize is not successful until the **deployed locale routes** verify successfully after propagation. If `/en`, `/ms`, `/zh-CN`, etc. fail after deploy, treat the run as failed and fix/redeploy.
+The returned URL may be a stable project-owned `.vercel.app` domain fallback, not necessarily `https://{slug}.vercel.app`.
 
 Returns JSON:
 - **Success**: `{ "status": "deployed", "url": "https://...", "scores": {...} }`

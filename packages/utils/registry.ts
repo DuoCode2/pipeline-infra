@@ -150,6 +150,81 @@ export function registerDeployed(placeId: string, slug: string, url: string): vo
   });
 }
 
+/**
+ * Refresh registry URLs by checking which URLs actually respond.
+ * Fixes mismatches caused by Vercel hostname truncation (DNS label ≤ 63 chars).
+ * Queries the Vercel API for the actual production alias when the expected URL fails.
+ */
+export async function refreshUrls(): Promise<{ checked: number; fixed: number; errors: string[] }> {
+  const registry = readRegistry();
+  const entries = Object.entries(registry);
+  let checked = 0;
+  let fixed = 0;
+  const errors: string[] = [];
+
+  const token = process.env.VERCEL_TOKEN;
+  const scope = process.env.VERCEL_SCOPE || 'duocodetech';
+
+  for (const [placeId, entry] of entries) {
+    if (!entry.url || !entry.slug) continue;
+    checked++;
+
+    // Check if current URL responds
+    try {
+      const res = await fetch(entry.url, { method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(5000) });
+      if (res.ok || res.status === 301 || res.status === 308) continue; // URL works fine
+    } catch {
+      // URL doesn't respond — try to find the real one
+    }
+
+    // Query Vercel API for actual aliases
+    if (!token) {
+      errors.push(`${entry.slug}: URL unreachable, no VERCEL_TOKEN to query API`);
+      continue;
+    }
+
+    try {
+      const teamQuery = scope ? `?teamId=${scope}` : '';
+      const res = await fetch(
+        `https://api.vercel.com/v9/projects/${encodeURIComponent(entry.slug)}${teamQuery}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!res.ok) {
+        errors.push(`${entry.slug}: API lookup failed (${res.status})`);
+        continue;
+      }
+      const proj = (await res.json()) as Record<string, unknown>;
+      const targets = proj.targets as Record<string, { alias?: string[] }> | undefined;
+      const prodAliases = targets?.production?.alias ?? [];
+      const domains = Array.isArray(proj.domains)
+        ? proj.domains.filter((domain): domain is string => typeof domain === 'string')
+        : [];
+      const preferredProjectDomain = scope ? `${entry.slug}-${scope}.vercel.app` : '';
+
+      // Prefer a production alias, then fall back to project-owned domains.
+      const vercelAlias = prodAliases.find((a: string) => a.endsWith('.vercel.app'))
+        || (preferredProjectDomain && domains.includes(preferredProjectDomain) ? preferredProjectDomain : undefined)
+        || domains.find((domain: string) => domain.endsWith('.vercel.app'));
+      if (vercelAlias) {
+        const newUrl = `https://${vercelAlias}`;
+        if (newUrl !== entry.url) {
+          console.error(`  FIX: ${entry.slug}: ${entry.url} → ${newUrl}`);
+          mutateRegistry((reg) => {
+            if (reg[placeId]) reg[placeId].url = newUrl;
+          });
+          fixed++;
+        }
+      } else {
+        errors.push(`${entry.slug}: no project-owned .vercel.app domain found`);
+      }
+    } catch (err) {
+      errors.push(`${entry.slug}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return { checked, fixed, errors };
+}
+
 /** Bootstrap: scan output directories to build initial registry from existing sites. */
 export function bootstrap(): SiteRegistry {
   const outputDir = path.join(PROJECT_ROOT, 'output');
@@ -207,6 +282,8 @@ export function bootstrap(): SiteRegistry {
 
 // CLI
 if (require.main === module) {
+  require('dotenv/config');
+  (async () => {
   const args = process.argv.slice(2);
 
   if (args.includes('--bootstrap')) {
@@ -238,6 +315,13 @@ if (require.main === module) {
     const placeId = args.includes('--id') ? args[args.indexOf('--id') + 1] : `slug:${slug}`;
     registerDeployed(placeId, slug, url || `https://${slug}.vercel.app`);
     console.log(`Registered: ${slug} → ${url} (key: ${placeId})`);
+  } else if (args.includes('--refresh-urls')) {
+    const { checked, fixed, errors } = await refreshUrls();
+    console.log(`Checked ${checked} entries, fixed ${fixed} URLs`);
+    if (errors.length) {
+      console.error(`Errors (${errors.length}):`);
+      for (const e of errors) console.error(`  ${e}`);
+    }
   } else if (args.includes('--remove')) {
     const slug = args[args.indexOf('--remove') + 1];
     if (!slug) { console.error('Usage: --remove <slug>'); process.exit(1); }
@@ -257,6 +341,8 @@ if (require.main === module) {
   npx tsx packages/utils/registry.ts --list                    # List all registered sites
   npx tsx packages/utils/registry.ts --check <placeId>         # Check if a place ID is registered
   npx tsx packages/utils/registry.ts --register <slug> [--url <url>] [--id <placeId>]  # Manual registration
-  npx tsx packages/utils/registry.ts --remove <slug>           # Remove a site from registry`);
+  npx tsx packages/utils/registry.ts --remove <slug>           # Remove a site from registry
+  npx tsx packages/utils/registry.ts --refresh-urls            # Verify + fix stale URLs via Vercel API`);
   }
+  })();
 }

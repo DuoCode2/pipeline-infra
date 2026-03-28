@@ -13,7 +13,7 @@ description: Deployment configuration for Vercel and GitHub
 - **Team**: DuoCode (`duocodetech`, ID: `team_30QY2z2YGzW70ITKAAvrlBep`)
 - **Plan**: Pro (Active)
 - deploy.ts uploads **prebuilt static files only** — NEVER triggers remote builds
-- Sites live at: `https://{slug}.vercel.app`
+- Preferred URLs are project-owned `.vercel.app` domains. If `https://{slug}.vercel.app` is unavailable or owned elsewhere, deploy.ts will fall back to a stable project domain (for example `https://{slug}-{team}.vercel.app`) instead of returning a broken alias.
 
 ### COST RULE: NEVER trigger remote builds
 - **$20/mo included credit** covers CDN, bandwidth, edge requests
@@ -27,11 +27,21 @@ description: Deployment configuration for Vercel and GitHub
 ### How deploy.ts avoids build costs:
 1. **REST API v13** (preferred, <10MB) — uploads `out/` static files + `vercel.json` as file, `framework: null`, $0
 2. **CLI + `--prebuilt`** (fallback, >10MB) — Build Output API v3 with `overrides` for clean URLs, $0
+3. **CLI + `--prebuilt` is forced** when static export contains clean-URL collisions like `en/` + `en.html`
 
 ### Clean URL routing:
 - **REST API path**: `vercel.json` must be included as an UPLOADED FILE (not in request body — API ignores body-level config)
-- **CLI path**: `config.json` uses `overrides` (e.g., `"en.html": {"path": "en"}`) + `routes` for redirects
+- **REST API path**: if a site is missing `vercel.json`, deploy.ts synthesizes a minimal clean-locale config automatically
+- **CLI path**: `config.json` uses `overrides` (e.g., `"en.html": {"path": "en"}`) + `routes` for redirects; `.vercel/output/static` must be a self-contained copy, never symlinks
 - deploy.ts generates both automatically — agents should NEVER manually configure Vercel routing
+
+### Post-deploy verification:
+- `finalize.ts` performs deployed locale-route verification after Vercel propagation and fails the run if any locale URL returns an error
+- Fleet-wide audit / repair command:
+```bash
+npx tsx packages/utils/repair-locale-routes.ts --check-only
+npx tsx packages/utils/repair-locale-routes.ts --slug {slug}
+```
 
 ### Team API usage:
 - **REST API**: `?teamId=duocodetech` (slug) or `?teamId=team_30QY2z2YGzW70ITKAAvrlBep` (ID)

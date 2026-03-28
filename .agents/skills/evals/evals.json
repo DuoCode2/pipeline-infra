@@ -1,0 +1,59 @@
+{
+  "skill_name": "duocode-pipeline-skills",
+  "evals": [
+    {
+      "id": 1,
+      "skill": "generate",
+      "prompt": "帮我给悉尼mascot附近的店铺做网站",
+      "expected_output": "Should use AskUserQuestion to ask what TYPE of business (user said '店铺' which is generic, not 'restaurant'). Should NOT default to food/restaurant.",
+      "assertions": [
+        { "name": "asks-for-category", "type": "contains", "check": "AskUserQuestion must be used before running search.ts because '店铺' is ambiguous" },
+        { "name": "no-default-restaurant", "type": "not_contains", "check": "Should NOT automatically search for 'restaurant' or 'food' without asking" }
+      ]
+    },
+    {
+      "id": 2,
+      "skill": "batch",
+      "prompt": "batch generate 5 sites for businesses in Shibuya Tokyo",
+      "expected_output": "Should use AskUserQuestion to ask what categories of businesses. Should NOT default to restaurant. Should use --city 'Shibuya, Tokyo' and detect region 'jp'.",
+      "assertions": [
+        { "name": "asks-for-category", "type": "contains", "check": "AskUserQuestion must be used because no business category was specified" },
+        { "name": "correct-region", "type": "contains", "check": "Region should be detected as 'jp' (Japan)" },
+        { "name": "limit-enforced", "type": "contains", "check": "--limit should return at most 5 results, not more" }
+      ]
+    },
+    {
+      "id": 3,
+      "skill": "generate",
+      "prompt": "给东京涩谷的 Tsutaya Books 做一个网站",
+      "expected_output": "Should search for the specific business by name. Should detect region 'jp', use Japanese locale. Should NOT ask for category since user specified a specific business.",
+      "assertions": [
+        { "name": "specific-search", "type": "contains", "check": "Should search for 'Tsutaya Books' specifically, not a generic category" },
+        { "name": "japanese-locale", "type": "contains", "check": "Should use Japanese locale (ja) based on region jp" },
+        { "name": "no-unnecessary-question", "type": "not_contains", "check": "Should NOT ask for category since user specified a specific business" }
+      ]
+    },
+    {
+      "id": 4,
+      "skill": "generate",
+      "prompt": "build a website for a hair salon called Luxe Beauty in Melbourne",
+      "expected_output": "Should NOT ask for category (user specified 'hair salon'). Should search with --city Melbourne --category beauty. Region should be au. Locale should be en.",
+      "assertions": [
+        { "name": "category-inferred", "type": "contains", "check": "Should search for 'beauty' or 'hair salon' category without asking" },
+        { "name": "region-au", "type": "contains", "check": "Region should be detected as 'au' (Australia)" },
+        { "name": "english-only", "type": "contains", "check": "Locale should be English only for Australia" }
+      ]
+    },
+    {
+      "id": 5,
+      "skill": "fix-site",
+      "prompt": "pochito 的网站看起来不对劲，字体太小而且颜色对比度不够",
+      "expected_output": "Should find output/pochito/ directory, take screenshots, identify font size and contrast issues, fix using theme tokens, rebuild and redeploy.",
+      "assertions": [
+        { "name": "finds-site", "type": "contains", "check": "Should locate output/pochito/ without asking" },
+        { "name": "reads-a11y", "type": "contains", "check": "Should read a11y-checklist.md for contrast rules" },
+        { "name": "uses-theme-tokens", "type": "contains", "check": "Fixes should use var(--text-title), var(--text-body) etc, not hardcoded colors" }
+      ]
+    }
+  ]
+}

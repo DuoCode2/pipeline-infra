@@ -559,7 +559,23 @@ export async function translateSite(
     }));
   }
 
-  // 3. Load cache (under lock for concurrency safety)
+  // 3. Load cache — uses claim-based dedup to prevent duplicate API calls.
+  //    Under lock: load cache, check for cached/pending entries, write pending
+  //    markers for unclaimed strings. After lock release: call API only for
+  //    strings this process claimed. Other agents see "pending" and wait/skip.
+  const PENDING_PREFIX = '__pending:';
+  const PENDING_STALE_MS = 120_000; // 2min — if pending marker older than this, reclaim
+
+  function isPendingEntry(entry: CacheEntry): boolean {
+    return entry.result.startsWith(PENDING_PREFIX);
+  }
+
+  function isPendingStale(entry: CacheEntry): boolean {
+    if (!isPendingEntry(entry)) return false;
+    const ts = parseInt(entry.result.split(':')[2] || '0', 10);
+    return Date.now() - ts > PENDING_STALE_MS;
+  }
+
   let cache: TranslationCache;
   if (opts.noCache) {
     cache = {} as TranslationCache;
@@ -584,26 +600,100 @@ export async function translateSite(
       businessName ? protectBusinessName(j.text, businessName) : j.text,
     );
 
-    // 5. Split into cached vs uncached
+    // 5. Split into cached vs uncached (under lock to claim uncached strings)
     const uncachedIdx: number[] = [];
+    const pendingWaitIdx: number[] = []; // strings another process is translating
     const translatedTexts: string[] = new Array(jobs.length);
     let cached = 0;
 
-    for (let i = 0; i < jobs.length; i++) {
-      const entry = cache[ck][protectedTexts[i]];
-      if (entry && !opts.noCache) {
-        translatedTexts[i] = businessName
-          ? restoreBusinessName(entry.result, businessName)
-          : entry.result;
-        cached++;
-      } else {
+    // Phase 1: under lock — read cache, claim uncached strings with pending markers
+    if (!opts.noCache) {
+      acquireCacheLock();
+      try {
+        // Re-read from disk to see latest state (another agent may have written)
+        const freshCache = loadCache();
+        if (!freshCache[ck]) freshCache[ck] = {};
+
+        for (let i = 0; i < jobs.length; i++) {
+          const entry = freshCache[ck][protectedTexts[i]];
+          if (entry && !isPendingEntry(entry)) {
+            // Already translated — use cached result
+            translatedTexts[i] = businessName
+              ? restoreBusinessName(entry.result, businessName)
+              : entry.result;
+            cache[ck][protectedTexts[i]] = entry;
+            cached++;
+          } else if (entry && isPendingEntry(entry) && !isPendingStale(entry)) {
+            // Another process is translating this — we'll wait for it
+            pendingWaitIdx.push(i);
+          } else {
+            // Uncached (or stale pending) — claim it
+            uncachedIdx.push(i);
+            freshCache[ck][protectedTexts[i]] = {
+              result: `${PENDING_PREFIX}${process.pid}:${Date.now()}`,
+              ts: new Date().toISOString().slice(0, 10),
+            };
+          }
+        }
+
+        // Write pending markers to disk so other agents see them
+        if (uncachedIdx.length > 0) {
+          const tmp = CACHE_PATH + '.tmp';
+          fs.writeFileSync(tmp, JSON.stringify(freshCache, null, 2));
+          fs.renameSync(tmp, CACHE_PATH);
+        }
+      } finally {
+        releaseCacheLock();
+      }
+    } else {
+      // No cache mode — everything is uncached
+      for (let i = 0; i < jobs.length; i++) {
+        uncachedIdx.push(i);
+      }
+    }
+
+    // Phase 2: wait for pending strings from other agents (poll cache, max 60s)
+    if (pendingWaitIdx.length > 0) {
+      log(`Waiting for ${pendingWaitIdx.length} strings from other agents...`);
+      const waitDeadline = Date.now() + 60_000;
+      const remaining = new Set(pendingWaitIdx);
+
+      while (remaining.size > 0 && Date.now() < waitDeadline) {
+        await new Promise((r) => setTimeout(r, 1000));
+        acquireCacheLock();
+        try {
+          const freshCache = loadCache();
+          if (!freshCache[ck]) freshCache[ck] = {};
+          for (const i of [...remaining]) {
+            const entry = freshCache[ck][protectedTexts[i]];
+            if (entry && !isPendingEntry(entry)) {
+              // Other agent finished — use their result
+              translatedTexts[i] = businessName
+                ? restoreBusinessName(entry.result, businessName)
+                : entry.result;
+              cache[ck][protectedTexts[i]] = entry;
+              cached++;
+              remaining.delete(i);
+            } else if (!entry || isPendingStale(entry)) {
+              // Pending expired — claim it ourselves
+              uncachedIdx.push(i);
+              remaining.delete(i);
+            }
+          }
+        } finally {
+          releaseCacheLock();
+        }
+      }
+
+      // Anything still pending after timeout — translate ourselves
+      for (const i of remaining) {
         uncachedIdx.push(i);
       }
     }
 
     log(`Cache hits: ${cached}, API calls needed: ${uncachedIdx.length}`);
 
-    // 6. Translate uncached via Google API
+    // 6. Translate uncached via Google API (only strings this process claimed)
     if (uncachedIdx.length > 0) {
       const textsToSend = uncachedIdx.map((i) => protectedTexts[i]);
       const apiResults = await googleTranslateBatch(textsToSend, locale, apiKey);
@@ -659,11 +749,25 @@ export async function translateSite(
   writeBusinessTs(businessPath, siteData, importLine, exportPrefix);
   log('Done — business.ts updated with all locale blocks');
 
-  // 11. Save cache (merge with any concurrent updates from other agents)
+  // 11. Save cache (merge with any concurrent updates, clear our pending markers)
   mutateCacheAtomically((diskCache) => {
     for (const [ck, entries] of Object.entries(cache)) {
       if (!diskCache[ck]) diskCache[ck] = {};
-      Object.assign(diskCache[ck], entries);
+      for (const [text, entry] of Object.entries(entries)) {
+        // Only write real results — skip any pending markers we may have kept in memory
+        if (!entry.result.startsWith(PENDING_PREFIX)) {
+          diskCache[ck][text] = entry;
+        }
+      }
+      // Clean up any stale pending markers left by crashed processes
+      for (const [text, entry] of Object.entries(diskCache[ck])) {
+        if (entry.result.startsWith(PENDING_PREFIX)) {
+          const ts = parseInt(entry.result.split(':')[2] || '0', 10);
+          if (Date.now() - ts > PENDING_STALE_MS) {
+            delete diskCache[ck][text];
+          }
+        }
+      }
     }
   });
   log(`Cache saved (${Object.keys(cache).length} locale pairs)`);

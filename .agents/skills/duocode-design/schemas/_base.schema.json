@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "duocode-base",
+  "type": "object",
+  "required": ["theme", "assets", "content"],
+  "properties": {
+    "theme": {
+      "type": "object",
+      "required": ["primary", "primaryDark", "accent", "surface", "textTitle", "textBody", "fontDisplay", "fontBody"],
+      "properties": {
+        "primary": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "primaryDark": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "accent": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "surface": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "textTitle": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "textBody": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "fontDisplay": { "type": "string" },
+        "fontBody": { "type": "string" }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "required": ["heroImage", "galleryImages"],
+      "properties": {
+        "heroImage": { "type": "string" },
+        "galleryImages": { "type": "array", "items": { "type": "string" } },
+        "logo": { "type": "string" }
+      }
+    },
+    "content": {
+      "type": "object",
+      "required": ["en", "ms", "zh-CN", "zh-TW"],
+      "patternProperties": {
+        "^(en|ms|zh-CN|zh-TW)$": {
+          "$ref": "#/definitions/localeContent"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "localeContent": {
+      "type": "object",
+      "required": ["meta", "hero", "hours", "location", "contact", "reviews"],
+      "properties": {
+        "meta": {
+          "type": "object",
+          "required": ["title", "description"],
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "ogImage": { "type": "string" }
+          }
+        },
+        "hero": {
+          "type": "object",
+          "required": ["title", "subtitle", "cta"],
+          "properties": {
+            "title": { "type": "string" },
+            "subtitle": { "type": "string" },
+            "cta": { "type": "string" },
+            "image": { "type": "string" },
+            "badge": { "type": "string" }
+          }
+        },
+        "hours": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "location": {
+          "type": "object",
+          "required": ["address", "mapsUrl"],
+          "properties": {
+            "address": { "type": "string" },
+            "mapsUrl": { "type": "string" },
+            "coordinates": {
+              "type": "object",
+              "properties": {
+                "lat": { "type": "number" },
+                "lng": { "type": "number" }
+              }
+            }
+          }
+        },
+        "contact": {
+          "type": "object",
+          "required": ["phone"],
+          "properties": {
+            "phone": { "type": "string" },
+            "email": { "type": "string" },
+            "whatsapp": { "type": "string" }
+          }
+        },
+        "reviews": {
+          "type": "object",
+          "required": ["rating", "count", "featured"],
+          "properties": {
+            "rating": { "type": "number" },
+            "count": { "type": "number" },
+            "featured": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["author", "text", "rating"],
+                "properties": {
+                  "author": { "type": "string" },
+                  "text": { "type": "string" },
+                  "rating": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "trustBar": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["icon", "label", "value"],
+                "properties": {
+                  "icon": { "type": "string" },
+                  "label": { "type": "string" },
+                  "value": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "menu": { "$ref": "#/definitions/sectionGroupContainer" },
+        "ordering": {
+          "type": "object",
+          "properties": {
+            "delivery": { "type": "string" },
+            "pickup": { "type": "string" },
+            "platforms": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "url": { "type": "string" } } } }
+          }
+        },
+        "reservations": {
+          "type": "object",
+          "properties": { "url": { "type": "string" }, "phone": { "type": "string" }, "note": { "type": "string" } }
+        },
+        "services": { "type": "array", "items": { "$ref": "#/definitions/sectionGroup" } },
+        "staff": { "type": "array", "items": { "$ref": "#/definitions/staffMember" } },
+        "beforeAfter": { "type": "array", "items": { "type": "object", "properties": { "before": { "type": "string" }, "after": { "type": "string" }, "caption": { "type": "string" } } } },
+        "credentials": { "type": "array", "items": { "type": "object", "properties": { "label": { "type": "string" }, "value": { "type": "string" }, "icon": { "type": "string" } } } },
+        "serviceAreas": { "type": "object", "properties": { "areas": { "type": "array", "items": { "type": "string" } }, "mapNote": { "type": "string" } } },
+        "caseStudies": { "type": "array", "items": { "type": "object", "properties": { "title": { "type": "string" }, "summary": { "type": "string" }, "result": { "type": "string" }, "image": { "type": "string" } } } },
+        "faq": { "type": "array", "items": { "type": "object", "required": ["question", "answer"], "properties": { "question": { "type": "string" }, "answer": { "type": "string" } } } },
+        "products": { "$ref": "#/definitions/sectionGroupContainer" },
+        "portfolio": { "type": "object", "properties": { "categories": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "images": { "type": "array", "items": { "type": "object", "properties": { "src": { "type": "string" }, "caption": { "type": "string" } } } } } } } } },
+        "packages": { "type": "array", "items": { "$ref": "#/definitions/pricingTier" } },
+        "classes": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "day": { "type": "string" }, "time": { "type": "string" }, "instructor": { "type": "string" }, "level": { "type": "string" } } } },
+        "memberships": { "type": "array", "items": { "$ref": "#/definitions/pricingTier" } },
+        "trainers": { "type": "array", "items": { "$ref": "#/definitions/staffMember" } },
+        "listings": { "type": "array", "items": { "type": "object", "properties": { "title": { "type": "string" }, "price": { "type": "string" }, "image": { "type": "string" }, "features": { "type": "array", "items": { "type": "string" } }, "url": { "type": "string" } } } },
+        "events": { "type": "array", "items": { "type": "object", "properties": { "title": { "type": "string" }, "date": { "type": "string" }, "time": { "type": "string" }, "description": { "type": "string" }, "location": { "type": "string" } } } },
+        "programs": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "description": { "type": "string" }, "schedule": { "type": "string" } } } },
+        "donations": { "type": "object", "properties": { "url": { "type": "string" }, "note": { "type": "string" }, "tiers": { "type": "array", "items": { "type": "object", "properties": { "amount": { "type": "string" }, "label": { "type": "string" } } } } } },
+        "announcements": { "type": "array", "items": { "type": "object", "properties": { "title": { "type": "string" }, "date": { "type": "string" }, "content": { "type": "string" } } } },
+        "sectionHeadings": { "type": "object", "additionalProperties": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "sectionGroup": {
+      "type": "object",
+      "required": ["category", "items"],
+      "properties": {
+        "category": { "type": "string" },
+        "items": { "type": "array", "items": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "description": { "type": "string" }, "price": { "type": "string" }, "image": { "type": "string" }, "popular": { "type": "boolean" }, "tags": { "type": "array", "items": { "type": "string" } } } } }
+      }
+    },
+    "sectionGroupContainer": {
+      "type": "object",
+      "properties": { "categories": { "type": "array", "items": { "$ref": "#/definitions/sectionGroup" } } }
+    },
+    "staffMember": {
+      "type": "object",
+      "required": ["name", "role"],
+      "properties": { "name": { "type": "string" }, "role": { "type": "string" }, "image": { "type": "string" }, "bio": { "type": "string" }, "specialties": { "type": "array", "items": { "type": "string" } } }
+    },
+    "pricingTier": {
+      "type": "object",
+      "required": ["name", "price", "features"],
+      "properties": { "name": { "type": "string" }, "price": { "type": "string" }, "period": { "type": "string" }, "features": { "type": "array", "items": { "type": "string" } }, "popular": { "type": "boolean" } }
+    }
+  }
+}

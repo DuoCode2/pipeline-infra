@@ -8,10 +8,11 @@
   },
   "car-demo-autocare-pro": {
     "slug": "autocare-pro",
-    "url": "https://autocare-pro.vercel.app",
+    "url": "https://autocare-qeeep8lez-duocodetech.vercel.app",
     "industry": "service",
     "regionId": "my",
-    "preparedAt": "2026-03-25T04:29:00.061Z"
+    "preparedAt": "2026-03-25T04:29:00.061Z",
+    "deployedAt": "2026-03-28T02:47:51.450Z"
   },
   "ChIJ_3O7FKdLzDERPluiP3IlnTk": {
     "slug": "bananabro-sri-petaling",
@@ -57,7 +58,7 @@
   },
   "ChIJP557fJ6tzTER58RXpr9HJrA": {
     "slug": "geekfix-klang-smartphone-repair-shop",
-    "url": "https://geekfix-klang-smartphone-repair-shop.vercel.app",
+    "url": "https://geekfix-klang-smartphone-repair-sho-zeta.vercel.app",
     "industry": "generic",
     "regionId": "my",
     "preparedAt": "2026-03-25T06:40:49.259Z"
@@ -78,17 +79,19 @@
   },
   "ChIJkyjYIgqxEmsRQ51KGO7G6uI": {
     "slug": "john-s-mens-hair-stylist",
-    "url": "https://john-s-mens-hair-stylist.vercel.app",
+    "url": "https://john-s-mens-hair-stylist-one.vercel.app",
     "industry": "beauty",
     "regionId": "au",
-    "preparedAt": "2026-03-26T03:08:52.623Z"
+    "preparedAt": "2026-03-26T03:08:52.623Z",
+    "deployedAt": "2026-03-28T03:07:39.375Z"
   },
   "ChIJKUZxmI9JzDERxt0PBbXN9gc": {
     "slug": "k-studio",
-    "url": "https://k-studio.vercel.app",
+    "url": "https://k-studio-weld.vercel.app",
     "industry": null,
     "regionId": "my",
-    "preparedAt": null
+    "preparedAt": null,
+    "deployedAt": "2026-03-28T02:49:55.181Z"
   },
   "ChIJvZtL6jFLzDERgslRIZ1WeN8": {
     "slug": "luckee",
@@ -141,10 +144,11 @@
   },
   "ChIJkRmqZdetzTER4lp5aotp6T4": {
     "slug": "one-stop-phone-repair-centre-bukit-tinggi",
-    "url": "https://one-stop-phone-repair-centre-bukit-tinggi.vercel.app",
+    "url": "https://one-stop-phone-repair-centre-bukit-nu.vercel.app",
     "industry": "generic",
     "regionId": "my",
-    "preparedAt": "2026-03-25T06:34:09.261Z"
+    "preparedAt": "2026-03-25T06:34:09.261Z",
+    "deployedAt": "2026-03-28T02:50:10.287Z"
   },
   "ChIJ0W49DAexEmsRgIn8gico_T0": {
     "slug": "pasalubong-oriental-foods",
@@ -155,17 +159,19 @@
   },
   "ChIJoyA19pCxEmsRnJMUnzDHVWA": {
     "slug": "pochito",
-    "url": "https://pochito.vercel.app",
+    "url": "https://pochito-one.vercel.app",
     "industry": "food",
     "regionId": "au",
-    "preparedAt": "2026-03-26T02:32:19.679Z"
+    "preparedAt": "2026-03-26T02:32:19.679Z",
+    "deployedAt": "2026-03-28T02:50:19.491Z"
   },
   "ChIJoUYal8WtzTERg8od5uUHwjg": {
     "slug": "power-fix-mobile-repair-bukit-tinggi-2",
-    "url": "https://power-fix-mobile-repair-bukit-tinggi-2.vercel.app",
+    "url": "https://power-fix-mobile-repair-bukit-tingg-delta.vercel.app",
     "industry": "generic",
     "regionId": "my",
-    "preparedAt": "2026-03-25T06:57:10.943Z"
+    "preparedAt": "2026-03-25T06:57:10.943Z",
+    "deployedAt": "2026-03-28T02:50:30.307Z"
   },
   "ChIJ_dWIDbmxEmsRlW4asSr4bjM": {
     "slug": "ra-atelier-hair-studio",
@@ -176,10 +182,11 @@
   },
   "ChIJuZqNMgBLzDERlj563wgHMKI": {
     "slug": "restoran-bbq-soon-hing-wantan-mee-sri-petaling",
-    "url": "https://restoran-bbq-soon-hing-wantan-mee-sri-petaling.vercel.app",
+    "url": "https://restoran-bbq-soon-hing-wantan-mee-s-five.vercel.app",
     "industry": "food",
     "regionId": "my",
-    "preparedAt": "2026-03-25T17:03:37.890Z"
+    "preparedAt": "2026-03-25T17:03:37.890Z",
+    "deployedAt": "2026-03-28T02:50:40.436Z"
   },
   "ChIJzW6Ezm6xEmsRym4mpe_dolY": {
     "slug": "sam-po-malaysia-kitchen",
@@ -190,10 +197,11 @@
   },
   "ChIJP5LdcwBLzDERheKdff50cLA": {
     "slug": "sri-petaling-ye-wen-klang-bak-kut-teh",
-    "url": "https://sri-petaling-ye-wen-klang-bak-kut-teh.vercel.app",
+    "url": "https://sri-petaling-ye-wen-klang-bak-kut-t-five.vercel.app",
     "industry": "chinese_restaurant",
     "regionId": "my",
-    "preparedAt": "2026-03-25T03:10:53.553Z"
+    "preparedAt": "2026-03-25T03:10:53.553Z",
+    "deployedAt": "2026-03-28T02:50:57.046Z"
   },
   "ChIJL8_P-qixEmsR7lZ-jM_Dxc0": {
     "slug": "steven-s-laundromat",
@@ -255,8 +263,9 @@
   },
   "slug:paradise-beauty-parlour": {
     "slug": "paradise-beauty-parlour",
-    "url": "https://paradise-beauty-parlour.vercel.app",
-    "regionId": "my"
+    "url": "https://paradise-beauty-parlour-cyan.vercel.app",
+    "regionId": "my",
+    "deployedAt": "2026-03-28T02:51:06.244Z"
   },
   "slug:quick-sport": {
     "slug": "quick-sport",
@@ -275,13 +284,15 @@
   },
   "slug:the-dentist-kl": {
     "slug": "the-dentist-kl",
-    "url": "https://the-dentist-kl.vercel.app",
-    "regionId": "my"
+    "url": "https://the-dentist-kl-one.vercel.app",
+    "regionId": "my",
+    "deployedAt": "2026-03-28T02:53:00.780Z"
   },
   "slug:tyre-sales-installation": {
     "slug": "tyre-sales-installation",
     "url": "https://tyre-sales-installation.vercel.app",
-    "regionId": "my"
+    "regionId": "my",
+    "deployedAt": "2026-03-28T02:53:15.459Z"
   },
   "slug:wtf-restaurant": {
     "slug": "wtf-restaurant",
@@ -588,7 +599,9 @@
     "slug": "mantra-on-sydney-airport-restaurant",
     "industry": "food",
     "regionId": "au",
-    "preparedAt": "2026-03-26T18:20:08.493Z"
+    "preparedAt": "2026-03-26T18:20:08.493Z",
+    "url": "https://mantra-on-sydney-airport-restaurant-ten.vercel.app",
+    "deployedAt": "2026-03-27T15:06:30.524Z"
   },
   "ChIJk6HJorCxEmsRigaon_Ciyq8": {
     "slug": "surpassed-alterations",

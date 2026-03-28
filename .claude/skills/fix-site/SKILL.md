@@ -64,6 +64,7 @@ For each issue found:
 npx tsx packages/pipeline/finalize.ts --dir output/$SLUG/
 ```
 This builds, runs Lighthouse, deploys, and pushes to git in one command.
+Finalize now includes deployed locale-route verification. Do not report success unless the returned URL survives refresh on every configured locale.
 If quality-failed: fix the issues from the structured failure output, then re-run finalize (max 3 retries).
 
 Report the live URL when done.

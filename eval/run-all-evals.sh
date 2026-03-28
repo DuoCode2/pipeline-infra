@@ -52,6 +52,7 @@ RESULTS=()
 RESULTS+=("$(run_eval "Skill Validation" "$EVAL_DIR/validate-skills.sh")")
 RESULTS+=("$(run_eval "Quality Metrics" "$EVAL_DIR/quality-metrics.sh")")
 RESULTS+=("$(run_eval "Template Completeness" "$EVAL_DIR/validate-templates.sh")")
+RESULTS+=("$(run_eval "Locale Route Verification" "$EVAL_DIR/verify-locale-routes.sh")")
 
 # TypeScript compile check
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

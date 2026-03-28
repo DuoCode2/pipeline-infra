@@ -56,14 +56,18 @@ When running /generate or /batch, Claude must:
 | `npx tsx packages/assets/optimize-images.ts --input path/to/images` | Standalone image optimization (any directory) |
 | `npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN` | Auto-translate EN → target locales via Google Translate API (writes back to business.ts) |
 | `npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN --dry-run` | Preview translatable strings without calling API |
+| `npx tsx packages/utils/registry.ts --refresh-urls` | Verify + fix stale URLs via Vercel API (e.g., hostname truncation) |
+| `npx tsx packages/utils/repair-locale-routes.ts --check-only` | Audit all deployed registry URLs; fail if any locale refresh path is broken |
+| `npx tsx packages/utils/repair-locale-routes.ts --slug {slug}` | Re-deploy and repair one broken site with zero remote build cost |
 
 Data flow: `search.ts` → `PlaceResult[]` → `prepare.ts` (via `--lead-file`). Any country auto-detected from address.
 
 ## Automatic Deduplication
 `search.ts` automatically skips businesses that already have a generated site (tracked in `data/sites-registry.json`). This is code-level — no agent action needed.
 - Registry is updated automatically: `prepare.ts` registers on prepare, `finalize.ts` registers on deploy
-- To redo a site: use `--include-existing` flag on search.ts
+- To redo a site: use `--include-all` flag on search.ts
 - To check registry: `npx tsx packages/utils/registry.ts --list`
+- To fix stale URLs (e.g., Vercel hostname truncation): `npx tsx packages/utils/registry.ts --refresh-urls`
 - If search returns 0 results, check if they're already registered (the tool will tell you)
 
 ## RULE: Photos must come from Google Maps
@@ -87,14 +91,18 @@ Prepare auto-classifies from Google Places `primaryType` and provides `hints`:
 ## RULE: Deployment is ONLY through finalize.ts
 - **NEVER run `vercel deploy`, `vercel build`, or any direct Vercel CLI command** — these trigger remote builds ($0.014-$0.476/min)
 - **ALWAYS use `finalize.ts`** which calls `deploy.ts` internally with $0-cost REST API
-- deploy.ts handles clean URLs, aliases, and team scope automatically
+- deploy.ts handles clean URLs, aliases, stable project-domain fallback, and team scope automatically
+- `finalize.ts` now performs **post-deploy locale-route verification** and must not report success unless every generated locale path responds successfully after propagation
 - If an agent needs to redeploy: `npx tsx packages/pipeline/finalize.ts --dir output/{slug}/ --skip-build`
+- For fleet-wide auditing or repair, use `repair-locale-routes.ts` instead of hand-checking URLs
 - See `.claude/rules/deployment.md` for full cost rules
 
 ## Quality Gate
 - **a11y ≥ 95, SEO ≥ 95, best-practices ≥ 90** → hard fail (blocks deploy)
 - **performance ≥ 90** → warn only (does NOT block deploy)
 - Lighthouse runs with `--preset=desktop`; retry up to 3× on warn-level failures only
+- **Deployed locale routes must pass** — after deploy, every locale URL in `src/lib/i18n.ts` must return a non-error response before the site is considered successful
+- Serve process cleanup: SIGTERM → 2s timeout → SIGKILL → `lsof` port kill fallback (prevents port exhaustion in batch)
 
 ## Dev Commands
 ```bash
@@ -124,11 +132,12 @@ npm run build:check      # TypeScript compile check (run from INFRA ROOT, not ou
 ## Translation (multi-locale) — production-validated
 - **One command**: `npx tsx packages/utils/translate.ts --dir output/{slug}/ --locales ms,zh-CN` — zero context cost
 - Script: parse business.ts → extract EN → Google Translate API v2 → write locale blocks back → QA
-- **Cache**: `data/translation-cache.json` — reused across sites. 15-site batch tested: common phrases hit cache after first site
+- **Cache**: `data/translation-cache.json` — reused across sites. Common phrases hit cache after first site in a batch
+- **Claim-based dedup**: concurrent agents mark unclaimed strings as `__pending:{pid}:{ts}` under lock. Only the claiming agent calls the API; others wait (max 60s) then reuse the result. 120s stale timeout prevents deadlocks from crashed processes
 - **Business name protection**: proper nouns (from `businessName` or `lead.json`) never translated ("Mascot Bakery" stays, not "吉祥物面包店")
 - **Weekday normalization**: hardcoded `WEEKDAY_MAP` for 14 languages — guaranteed consistent (周一~周日, never 星期X mixed in)
 - **Skip rules**: addresses, phones, URLs, prices, people's names, image paths, platform names
-- **Parallel-safe**: 15 concurrent translate.ts runs tested with zero conflicts
+- **Parallel-safe**: 15 concurrent translate.ts runs tested — zero file corruption AND zero duplicate API calls
 - **Region → locales mapping** (from `env.ts`): `my` → `ms,zh-CN` | `sg` → `zh-CN,ms` | `au/us/uk` → EN only | `hk` → `zh-TW,zh-CN` etc.
 - **Locale management**: Scaffold defaults to `['en']` only. translate.ts adds target locales. NEVER manually add locales to i18n.ts or business.d.ts
 - Run **after** design (EN content written), **before** finalize

@@ -34,42 +34,137 @@ interface DeploymentState {
   aliasAssigned?: boolean;
 }
 
+interface ShadowedCleanUrl {
+  directory: string;
+  htmlFile: string;
+}
+
+interface CliDeployOutput {
+  id?: string;
+  url?: string;
+  deployment?: {
+    id?: string;
+    url?: string;
+  };
+}
+
 /**
  * Disable Vercel Authentication (ssoProtection) on a project so .vercel.app URLs are public.
  * Pro teams default to Standard Protection which requires Vercel login on all non-custom-domain URLs.
  * This is a no-op if protection is already disabled.
  */
-async function disableDeploymentProtection(slug: string, token: string, scope?: string): Promise<void> {
+async function ensureProjectSettings(slug: string, token: string, scope?: string): Promise<void> {
   const teamQuery = scope ? `?teamId=${scope}` : '';
   try {
-    // Look up project by name to get its ID
     const projRes = await fetch(`${VERCEL_API}/v9/projects/${encodeURIComponent(slug)}${teamQuery}`, {
       headers: { 'Authorization': `Bearer ${token}` },
     });
     if (!projRes.ok) {
-      console.warn(`[deploy] Could not look up project "${slug}" to disable protection: ${projRes.status}`);
+      console.warn(`[deploy] Could not look up project "${slug}": ${projRes.status}`);
       return;
     }
     const proj = await projRes.json() as Record<string, unknown>;
-    if (proj.ssoProtection == null) return; // already disabled
+    const rc = proj.resourceConfig as Record<string, unknown> | undefined;
+
+    // Build patch: disable SSO protection + force Standard build machine
+    const patch: Record<string, unknown> = {};
+    if (proj.ssoProtection != null) patch.ssoProtection = null;
+    if (rc?.buildMachineType !== 'standard') patch.resourceConfig = { buildMachineType: 'standard' };
+
+    if (Object.keys(patch).length === 0) return; // nothing to change
 
     const patchRes = await fetch(`${VERCEL_API}/v9/projects/${encodeURIComponent(slug)}${teamQuery}`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ssoProtection: null }),
+      body: JSON.stringify(patch),
     });
     if (patchRes.ok) {
-      console.log(`[deploy] Disabled Vercel Authentication (ssoProtection) on "${slug}"`);
+      if (patch.ssoProtection === null) console.log(`[deploy] Disabled ssoProtection on "${slug}"`);
+      if (patch.resourceConfig) console.log(`[deploy] Forced Standard build machine on "${slug}" (was ${rc?.buildMachineType || 'unknown'})`);
     } else {
-      console.warn(`[deploy] Failed to disable ssoProtection on "${slug}": ${patchRes.status}`);
+      console.warn(`[deploy] Failed to patch project "${slug}": ${patchRes.status}`);
     }
   } catch (err) {
-    console.warn(`[deploy] Error disabling ssoProtection: ${err instanceof Error ? err.message : err}`);
+    console.warn(`[deploy] Error patching project: ${err instanceof Error ? err.message : err}`);
   }
 }
 
 function toHttps(hostname: string): string {
   return hostname.startsWith('http') ? hostname : `https://${hostname}`;
+}
+
+async function resolveStableProjectUrl(
+  slug: string,
+  token: string,
+  scope?: string,
+): Promise<string | null> {
+  const teamQuery = scope ? `?teamId=${scope}` : '';
+  try {
+    const projRes = await fetch(`${VERCEL_API}/v9/projects/${encodeURIComponent(slug)}${teamQuery}`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!projRes.ok) {
+      console.warn(`[deploy] Could not resolve project domains for "${slug}": ${projRes.status}`);
+      return null;
+    }
+
+    const proj = await projRes.json() as Record<string, unknown>;
+    const domains = Array.isArray(proj.domains)
+      ? proj.domains.filter((domain): domain is string => typeof domain === 'string')
+      : [];
+
+    const preferred = scope ? `${slug}-${scope}.vercel.app` : '';
+    const candidates = [
+      ...(preferred && domains.includes(preferred) ? [preferred] : []),
+      ...domains.filter((domain) => domain !== preferred),
+    ];
+
+    for (const domain of candidates) {
+      const url = toHttps(domain);
+      try {
+        const res = await fetch(url, {
+          method: 'HEAD',
+          redirect: 'manual',
+          signal: AbortSignal.timeout(5_000),
+        });
+        if (res.ok || res.status === 301 || res.status === 308) {
+          return url;
+        }
+      } catch {
+        // Try the next domain.
+      }
+    }
+
+    return candidates.length > 0 ? toHttps(candidates[0]) : null;
+  } catch (err) {
+    console.warn(`[deploy] Error resolving project domains: ${err instanceof Error ? err.message : err}`);
+    return null;
+  }
+}
+
+async function assignAliasToDeployment(
+  deploymentId: string,
+  alias: string,
+  token: string,
+  scope?: string,
+): Promise<boolean> {
+  const teamQuery = scope ? `?teamId=${scope}` : '';
+  try {
+    const aliasRes = await fetch(`${VERCEL_API}/v2/deployments/${deploymentId}/aliases${teamQuery}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ alias }),
+    });
+    if (aliasRes.ok) return true;
+    console.warn(`[deploy] Explicit alias failed: ${aliasRes.status} ${await aliasRes.text()}`);
+    return false;
+  } catch (err) {
+    console.warn(`[deploy] Explicit alias request error: ${err instanceof Error ? err.message : err}`);
+    return false;
+  }
 }
 
 function resolveDeploymentUrl(
@@ -96,7 +191,7 @@ function resolveDeploymentUrl(
  * Overrides map "en.html" → path "en" so Vercel serves /en without extension.
  * This is the ONLY reliable way to get clean URLs with static deploys.
  */
-function generateHtmlOverrides(outDir: string): Record<string, { path: string }> {
+export function generateHtmlOverrides(outDir: string): Record<string, { path: string }> {
   const overrides: Record<string, { path: string }> = {};
   function scan(dir: string, prefix: string = '') {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -114,14 +209,89 @@ function generateHtmlOverrides(outDir: string): Record<string, { path: string }>
 }
 
 /**
+ * Detect clean URL collisions where Vercel's filesystem handling can prefer a
+ * directory (for example /en) over the sibling HTML file (en.html).
+ *
+ * Next.js static export emits exactly this shape when a locale landing page
+ * coexists with nested routes such as /en/products.
+ */
+export function findShadowedCleanUrls(outDir: string): ShadowedCleanUrl[] {
+  const collisions: ShadowedCleanUrl[] = [];
+
+  function scan(dir: string, prefix: string = '') {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    const entryNames = new Set(entries.map((entry) => entry.name));
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (entry.name === '_next' || entry.name === '.vercel') continue;
+
+      const htmlFile = `${entry.name}.html`;
+      if (entryNames.has(htmlFile)) {
+        const relativeDir = prefix ? `${prefix}/${entry.name}` : entry.name;
+        const relativeHtml = prefix ? `${prefix}/${htmlFile}` : htmlFile;
+        collisions.push({ directory: relativeDir, htmlFile: relativeHtml });
+      }
+
+      const childPrefix = prefix ? `${prefix}/${entry.name}` : entry.name;
+      scan(path.join(dir, entry.name), childPrefix);
+    }
+  }
+
+  scan(outDir);
+  return collisions;
+}
+
+function readDefaultLocale(projectDir: string): string {
+  const leadPath = path.join(projectDir, 'lead.json');
+  if (fs.existsSync(leadPath)) {
+    try {
+      const lead = JSON.parse(fs.readFileSync(leadPath, 'utf8')) as Record<string, unknown>;
+      if (typeof lead.defaultLocale === 'string' && lead.defaultLocale) {
+        return lead.defaultLocale;
+      }
+    } catch {
+      // Fall through to file-based detection.
+    }
+  }
+
+  const i18nPath = path.join(projectDir, 'src/lib/i18n.ts');
+  if (fs.existsSync(i18nPath)) {
+    const source = fs.readFileSync(i18nPath, 'utf8');
+    const match = source.match(/defaultLocale:\s*Locale\s*=\s*'([^']+)'/);
+    if (match?.[1]) return match[1];
+  }
+
+  return 'en';
+}
+
+export function buildFallbackVercelConfig(projectDir: string, buildDir: string): string | null {
+  const defaultLocale = readDefaultLocale(projectDir);
+  const defaultLocaleHtml = path.join(buildDir, `${defaultLocale}.html`);
+  if (!fs.existsSync(defaultLocaleHtml)) return null;
+
+  return JSON.stringify({
+    cleanUrls: true,
+    trailingSlash: false,
+    redirects: [
+      { source: '/', destination: `/${defaultLocale}`, statusCode: 301 },
+    ],
+  }, null, 2);
+}
+
+/**
  * Convert out/ into Vercel Build Output API v3 format (.vercel/output/).
  * This is required for --prebuilt deploys which skip remote builds entirely.
  * Structure: .vercel/output/config.json + .vercel/output/static/{files}
  *
  * COST IMPACT: --prebuilt = $0 build charges (no remote build machine spins up).
  * Without --prebuilt, even buildCommand="" still costs ~$0.04/deploy on Standard.
+ *
+ * IMPORTANT: the output directory must be self-contained. Symlinks inside
+ * `.vercel/output/static` are not reliable once the CLI uploads the archive,
+ * so we copy the files instead of linking them.
  */
-function prepareBuildOutputAPI(outDir: string): string {
+export function prepareBuildOutputAPI(outDir: string): string {
   const outputDir = path.join(outDir, '.vercel', 'output');
   const staticDir = path.join(outputDir, 'static');
 
@@ -145,7 +315,7 @@ function prepareBuildOutputAPI(outDir: string): string {
   fs.writeFileSync(path.join(outputDir, 'config.json'), JSON.stringify(config, null, 2));
   console.log(`[deploy] Build Output API: ${Object.keys(overrides).length} HTML overrides for clean URLs`);
 
-  // Symlink static/ → out/ contents (avoid copying GBs of files)
+  // Copy static/ contents so the uploaded Build Output archive is self-contained.
   if (fs.existsSync(staticDir)) fs.rmSync(staticDir, { recursive: true });
   fs.mkdirSync(staticDir, { recursive: true });
 
@@ -153,11 +323,7 @@ function prepareBuildOutputAPI(outDir: string): string {
     if (entry === '.vercel') continue;
     const src = path.join(outDir, entry);
     const dest = path.join(staticDir, entry);
-    try {
-      fs.symlinkSync(src, dest);
-    } catch {
-      fs.cpSync(src, dest, { recursive: true });
-    }
+    fs.cpSync(src, dest, { recursive: true });
   }
 
   return outputDir;
@@ -168,7 +334,7 @@ function prepareBuildOutputAPI(outDir: string): string {
  * Uses --prebuilt with Build Output API v3 format to completely skip
  * remote builds. $0 build charges.
  */
-function tryDeployViaCLI(projectDir: string, slug: string, token: string, scope?: string): DeployResult | null {
+async function tryDeployViaCLI(projectDir: string, slug: string, token: string, scope?: string): Promise<DeployResult | null> {
   try {
     execSync('npx vercel --version', { stdio: 'pipe', timeout: 10_000 });
   } catch {
@@ -230,7 +396,7 @@ function tryDeployViaCLI(projectDir: string, slug: string, token: string, scope?
     // --prebuilt: uses .vercel/output/ directly, NO remote build, $0 cost
     const deployScopeFlag = scope ? ` --scope ${scope}` : '';
     const output = execSync(
-      `npx vercel deploy --prebuilt --prod --archive=tgz --yes --token ${token}${deployScopeFlag}`,
+      `npx vercel deploy --prebuilt --prod --archive=tgz --yes --json --token ${token}${deployScopeFlag}`,
       {
         cwd: outDir,
         stdio: 'pipe',
@@ -239,14 +405,45 @@ function tryDeployViaCLI(projectDir: string, slug: string, token: string, scope?
       },
     ).toString().trim();
 
-    const lines = output.split('\n');
-    const deployUrl = lines[lines.length - 1]?.trim();
+    let deployUrl = '';
+    let deploymentId = '';
 
-    if (deployUrl && deployUrl.startsWith('http')) {
+    try {
+      const parsed = JSON.parse(output) as CliDeployOutput;
+      deployUrl = parsed.deployment?.url || parsed.url || '';
+      deploymentId = parsed.deployment?.id || parsed.id || deployUrl;
+    } catch {
+      const lines = output.split('\n');
+      const fallbackUrl = lines[lines.length - 1]?.trim();
+      if (fallbackUrl && fallbackUrl.startsWith('http')) {
+        deployUrl = fallbackUrl;
+        deploymentId = fallbackUrl;
+      }
+    }
+
+    if (deployUrl) {
+      const rawUrl = toHttps(deployUrl);
       const prodUrl = `https://${slug}.vercel.app`;
-      console.log(`[deploy] CLI deployed (no remote build): ${deployUrl}`);
-      console.log(`[deploy] Production URL: ${prodUrl}`);
-      return { url: prodUrl, projectId: slug, deploymentId: deployUrl };
+      const alias = `${slug}.vercel.app`;
+      const aliasAssigned = deploymentId
+        ? await assignAliasToDeployment(deploymentId, alias, token, scope)
+        : false;
+      const stableProjectUrl = aliasAssigned
+        ? prodUrl
+        : await resolveStableProjectUrl(slug, token, scope);
+      console.log(`[deploy] CLI deployed (no remote build): ${rawUrl}`);
+      if (aliasAssigned) {
+        console.log(`[deploy] Production URL: ${prodUrl}`);
+      } else {
+        console.log(
+          `[deploy] Production alias not confirmed, using ${stableProjectUrl || rawUrl} instead of ${prodUrl}`,
+        );
+      }
+      return {
+        url: aliasAssigned ? prodUrl : (stableProjectUrl || rawUrl),
+        projectId: slug,
+        deploymentId,
+      };
     }
 
     console.warn(`[deploy] CLI output unexpected: ${output.slice(0, 200)}`);
@@ -276,6 +473,26 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
 
   if (scope) {
     console.log(`[deploy] Using Vercel Team scope: ${scope}`);
+  }
+
+  const shadowedCleanUrls = findShadowedCleanUrls(buildDir);
+  if (shadowedCleanUrls.length > 0) {
+    const sample = shadowedCleanUrls.slice(0, 3)
+      .map((item) => `${item.directory} ↔ ${item.htmlFile}`)
+      .join(', ');
+    console.log(
+      `[deploy] Detected ${shadowedCleanUrls.length} clean URL collisions (${sample}). ` +
+      'Using CLI --prebuilt with Build Output API overrides to preserve locale refresh routes.',
+    );
+    const cliResult = await tryDeployViaCLI(projectDir, slug, token, scope);
+    if (cliResult) {
+      await ensureProjectSettings(slug, token, scope);
+      return cliResult;
+    }
+    throw new Error(
+      'Detected directory/html clean URL collisions that require Build Output API overrides, ' +
+      'but CLI --prebuilt deployment failed. Install or enable the Vercel CLI and retry.',
+    );
   }
 
   // ── Strategy 1: REST API (preferred — uploads prebuilt static files, NO remote build) ──
@@ -310,15 +527,26 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   // The REST API body does NOT support cleanUrls/redirects/headers properties —
   // Vercel silently ignores them. Only vercel.json in the uploaded files works.
   const vercelConfigPath = path.join(projectDir, 'vercel.json');
-  if (fs.existsSync(vercelConfigPath)) {
+  const fallbackVercelConfig = !fs.existsSync(vercelConfigPath)
+    ? buildFallbackVercelConfig(projectDir, buildDir)
+    : null;
+  if (fs.existsSync(vercelConfigPath) || fallbackVercelConfig) {
     // Remove any existing vercel.json from files (may be in out/)
     const idx = files.findIndex(f => f.file === 'vercel.json');
     if (idx >= 0) files.splice(idx, 1);
     files.push({
       file: 'vercel.json',
-      data: fs.readFileSync(vercelConfigPath).toString('base64'),
+      data: (
+        fs.existsSync(vercelConfigPath)
+          ? fs.readFileSync(vercelConfigPath)
+          : Buffer.from(fallbackVercelConfig ?? '', 'utf8')
+      ).toString('base64'),
     });
-    console.log('[deploy] Including vercel.json as uploaded file for clean URL routing');
+    console.log(
+      fs.existsSync(vercelConfigPath)
+        ? '[deploy] Including vercel.json as uploaded file for clean URL routing'
+        : '[deploy] Synthesized vercel.json for clean locale routes',
+    );
   }
 
   const totalBytes = files.reduce((sum, f) => sum + Buffer.byteLength(f.data, 'base64') * 0.75, 0);
@@ -329,9 +557,9 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
     // ── Strategy 2: CLI fallback for large sites (>10MB) ──────────────
     // Uses --prebuilt with Build Output API v3 to skip remote builds. $0 cost.
     console.log(`[deploy] REST API limit exceeded (${totalMB.toFixed(1)}MB > 10MB), falling back to CLI --prebuilt...`);
-    const cliResult = tryDeployViaCLI(projectDir, slug, token, scope);
+    const cliResult = await tryDeployViaCLI(projectDir, slug, token, scope);
     if (cliResult) {
-      await disableDeploymentProtection(slug, token, scope);
+      await ensureProjectSettings(slug, token, scope);
       return cliResult;
     }
     throw new Error(
@@ -367,7 +595,7 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   console.log(`Deployment created: ${deployment.url} (${deployment.readyState})`);
 
   // Disable Vercel Authentication so .vercel.app URLs are publicly accessible
-  await disableDeploymentProtection(slug, token, scope);
+  await ensureProjectSettings(slug, token, scope);
 
   // Detect slug collision: if Vercel added a scope suffix, the URL won't match {slug}.vercel.app
   const expectedHost = `${slug}.vercel.app`;
@@ -430,22 +658,18 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
   const expectedAlias = `${slug}.vercel.app`;
   console.log(`Alias not auto-assigned, explicitly setting ${expectedAlias}...`);
   try {
-    const aliasRes = await fetch(`${VERCEL_API}/v2/deployments/${deployment.id}/aliases${teamQuery}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ alias: expectedAlias }),
-    });
-    if (aliasRes.ok) {
+    if (await assignAliasToDeployment(deployment.id, expectedAlias, token, scope)) {
       const prodUrl = `https://${expectedAlias}`;
       console.log(`Deployed: ${prodUrl} (alias set explicitly)`);
       return { url: prodUrl, projectId: slug, deploymentId: deployment.id };
     }
-    console.warn(`Explicit alias failed: ${aliasRes.status} ${await aliasRes.text()}`);
-  } catch (err) {
-    console.warn(`Explicit alias request error: ${err instanceof Error ? err.message : err}`);
+  }
+  catch { /* assignAliasToDeployment already logged */ }
+
+  const stableProjectUrl = await resolveStableProjectUrl(slug, token, scope);
+  if (stableProjectUrl) {
+    console.log(`Deployed: ${stableProjectUrl} (project domain fallback)`);
+    return { url: stableProjectUrl, projectId: slug, deploymentId: deployment.id };
   }
 
   // Final fallback: verify the URL actually responds before returning it.

@@ -237,3 +237,9 @@ When all agents complete, report:
 | 2 | Mr. Nam | deployed | https://mr-nam.vercel.app | perf:92 a11y:98 seo:97 |
 | 3 | Noodle Bar | quality-failed | — | a11y:89 (3 retries exhausted) |
 ```
+
+Before reporting the batch complete, run:
+```bash
+npx tsx packages/utils/repair-locale-routes.ts --check-only
+```
+If any generated site still fails locale refresh verification, repair it before giving the user final URLs.
