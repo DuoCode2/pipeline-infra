@@ -12,6 +12,7 @@ import {
   type LocaleRoutesAudit,
 } from '../quality/deployed-locale-routes';
 import { getArg, hasFlag } from './cli';
+import { getLocalesForRegion } from './env';
 import { readRegistry, registerDeployed, type SiteEntry } from './registry';
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
@@ -24,6 +25,7 @@ interface SiteAudit extends LocaleRoutesAudit {
   slug: string;
   outputDir: string;
   deployedUrl: string;
+  registryUrlMissing: boolean;
   auditedBaseUrls: string[];
   extraDomainAudits: Array<{
     baseUrl: string;
@@ -100,28 +102,57 @@ async function getProjectOwnedDomains(outputDir: string, slug: string): Promise<
   try {
     const domainsById = collectDomains(await fetchProject(projectId));
     const domainsBySlug = collectDomains(await fetchProject(slug));
-    return [...domainsById, ...domainsBySlug];
+    const resolved = [...domainsById, ...domainsBySlug];
+    if (resolved.length > 0) return resolved;
+
+    const heuristicCandidates = [
+      `https://${slug}.vercel.app`,
+      `https://${slug}-one.vercel.app`,
+      `https://${slug}-${scope}.vercel.app`,
+      `https://${slug}-sunflowers-${scope}.vercel.app`,
+    ];
+
+    const liveHeuristics: string[] = [];
+    for (const candidate of heuristicCandidates) {
+      try {
+        const res = await fetch(candidate, {
+          redirect: 'manual',
+          signal: AbortSignal.timeout(5_000),
+        });
+        if (res.ok || res.status === 301 || res.status === 302 || res.status === 308) {
+          liveHeuristics.push(candidate);
+        }
+      } catch {
+        // Ignore dead heuristic candidates.
+      }
+    }
+
+    return Array.from(new Set(liveHeuristics));
   } catch {
     return [];
   }
 }
 
 async function auditSite(registryKey: string, entry: SiteEntry): Promise<SiteAudit | null> {
-  if (!entry.slug || !entry.url) return null;
+  if (!entry.slug) return null;
 
   const outputDir = path.join(PROJECT_ROOT, 'output', entry.slug);
+  if (!fs.existsSync(outputDir)) return null;
+
   const locales = readLocalesFromProjectDir(outputDir);
-  if (locales.length === 0) return null;
+  const resolvedLocales = locales.length > 0 ? locales : getLocalesForRegion(entry.regionId);
+  if (resolvedLocales.length === 0) return null;
   const projectDomainUrls = await getProjectOwnedDomains(outputDir, entry.slug);
   const auditedBaseUrls = Array.from(new Set([
-    trimTrailingSlash(entry.url),
+    ...(entry.url ? [trimTrailingSlash(entry.url)] : []),
     ...projectDomainUrls.map(trimTrailingSlash),
   ]));
+  if (auditedBaseUrls.length === 0) return null;
   const [primaryUrl, ...extraUrls] = auditedBaseUrls;
-  const audit = await waitForHealthyLocaleRoutes(primaryUrl, locales, AUDIT_ATTEMPTS, AUDIT_DELAY_MS);
+  const audit = await waitForHealthyLocaleRoutes(primaryUrl, resolvedLocales, AUDIT_ATTEMPTS, AUDIT_DELAY_MS);
   const extraDomainAudits = await Promise.all(
     extraUrls.map(async (baseUrl) => ({
-      ...(await waitForHealthyLocaleRoutes(baseUrl, locales, AUDIT_ATTEMPTS, AUDIT_DELAY_MS)),
+      ...(await waitForHealthyLocaleRoutes(baseUrl, resolvedLocales, AUDIT_ATTEMPTS, AUDIT_DELAY_MS)),
       baseUrl,
     })),
   );
@@ -132,6 +163,7 @@ async function auditSite(registryKey: string, entry: SiteEntry): Promise<SiteAud
     slug: entry.slug,
     outputDir,
     deployedUrl: audit.baseUrl,
+    registryUrlMissing: !entry.url,
     auditedBaseUrls,
     extraDomainAudits,
     ...audit,
@@ -171,6 +203,7 @@ async function repairSite(audit: SiteAudit): Promise<RepairResult> {
       slug: audit.slug,
       outputDir: audit.outputDir,
       deployedUrl: afterAudit.baseUrl,
+      registryUrlMissing: audit.registryUrlMissing,
       auditedBaseUrls: Array.from(new Set([afterAudit.baseUrl, ...projectDomainUrls.map(trimTrailingSlash)])),
       extraDomainAudits,
       ...afterAudit,
@@ -202,6 +235,7 @@ async function main(): Promise<void> {
   const limit = limitRaw ? Number.parseInt(limitRaw, 10) : Number.POSITIVE_INFINITY;
   const checkOnly = hasFlag(args, 'check-only');
   const includeHealthy = hasFlag(args, 'include-healthy');
+  const fillMissing = hasFlag(args, 'fill-missing');
 
   const audits: SiteAudit[] = [];
   for (const [registryKey, entry] of Object.entries(readRegistry())) {
@@ -217,6 +251,14 @@ async function main(): Promise<void> {
   log(`Audited ${audits.length} sites, found ${failing.length} sites with broken locale refresh routes`);
 
   const repairs: RepairResult[] = [];
+  let filledMissing = 0;
+  if ((fillMissing || !checkOnly) && !onlySlug) {
+    for (const audit of healthy) {
+      if (!audit.registryUrlMissing) continue;
+      registerDeployed(audit.registryKey, audit.slug, audit.deployedUrl);
+      filledMissing++;
+    }
+  }
   if (!checkOnly) {
     for (const audit of failing) {
       repairs.push(await repairSite(audit));
@@ -229,6 +271,7 @@ async function main(): Promise<void> {
     broken: failing.length,
     repaired: repairs.filter((repair) => repair.repaired).length,
     failedRepairs: repairs.filter((repair) => !repair.repaired).length,
+    filledMissing,
     sites: [
       ...(includeHealthy ? healthy : []),
       ...(checkOnly ? failing : repairs),
