@@ -588,6 +588,14 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
 
   if (!res.ok) {
     const err = await res.text();
+    if (res.status === 400 && /request body too large/i.test(err)) {
+      console.warn('[deploy] REST API rejected payload as too large, falling back to CLI --prebuilt...');
+      const cliResult = await tryDeployViaCLI(projectDir, slug, token, scope);
+      if (cliResult) {
+        await ensureProjectSettings(slug, token, scope);
+        return cliResult;
+      }
+    }
     throw new Error(`Vercel deploy failed: ${res.status} ${err}`);
   }
 
@@ -639,6 +647,12 @@ export async function deployToVercel(buildDir: string, slug: string): Promise<De
     }
 
     if (status.readyState === 'ERROR') {
+      console.warn(`[deploy] REST deployment entered ERROR for ${slug}; falling back to CLI --prebuilt...`);
+      const cliResult = await tryDeployViaCLI(projectDir, slug, token, scope);
+      if (cliResult) {
+        await ensureProjectSettings(slug, token, scope);
+        return cliResult;
+      }
       throw new Error(`Vercel deployment failed (id=${deployment.id}, state=${status.readyState})`);
     }
 

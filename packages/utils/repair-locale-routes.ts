@@ -116,8 +116,9 @@ async function getProjectOwnedDomains(outputDir: string, slug: string): Promise<
     for (const candidate of heuristicCandidates) {
       try {
         const res = await fetch(candidate, {
+          method: 'HEAD',
           redirect: 'manual',
-          signal: AbortSignal.timeout(5_000),
+          signal: AbortSignal.timeout(1_500),
         });
         if (res.ok || res.status === 301 || res.status === 302 || res.status === 308) {
           liveHeuristics.push(candidate);
